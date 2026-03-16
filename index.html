@@ -436,12 +436,24 @@ function olahDataMentah(rawData) {
   let kabMap = {};
   let userMap = {};
   let totalRecords = rawData.length;
+  
+  // Variabel untuk menyimpan waktu paling baru
+  let latestUpdate = ""; 
 
   rawData.forEach(row => {
-    let kabName = row.kabupaten_kota;
+    let kabName = row.Kabupaten_Kota;
     let uname = row.username;
-    // Mengambil tanggal saja (10 karakter pertama) dari tanggal_input
-    let tgl = row.created_at ? row.created_at.substring(0, 10) : "2024-01-01";
+    
+    // MENGUBAH TANGGAL_INPUT MENJADI created_at
+    let tglFull = row.created_at ? row.created_at : "2024-01-01 00:00:00";
+    
+    // Mengambil 10 karakter pertama (YYYY-MM-DD) untuk grafik harian
+    let tgl = tglFull.substring(0, 10);
+
+    // Membandingkan dan menyimpan waktu yang paling baru (terbesar)
+    if (tglFull > latestUpdate) {
+      latestUpdate = tglFull;
+    }
 
     // 1. Menghitung total per Kabupaten
     if (!kabMap[kabName]) {
@@ -468,15 +480,29 @@ function olahDataMentah(rawData) {
   let kabupatenArray = Object.values(kabMap).sort((a, b) => b.total - a.total);
   let usersArray = Object.values(userMap).sort((a, b) => b.total - a.total);
 
-  // Membuat waktu update otomatis saat data diakses
-  let now = new Date();
-  let lastUpdated = now.toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  // Merapikan format tampilan waktu terbaru
+  // Dari "2026-03-16 10:25:34" menjadi "16/03/2026 10:25"
+  let formattedUpdate = latestUpdate;
+  if (latestUpdate.length >= 16) {
+    let year = latestUpdate.substring(0,4);
+    let month = latestUpdate.substring(5,7);
+    let day = latestUpdate.substring(8,10);
+    // Mengambil jam dan menit (karakter ke-11 sampai 16), sesuaikan jika format data berbeda
+    let time = latestUpdate.substring(11,16); 
+    
+    // Khusus jika format created_at memakai huruf T di tengah (contoh: 2026-03-16T10:25:34.000000Z)
+    if (latestUpdate.includes('T')) {
+       time = latestUpdate.substring(11,16);
+    }
+
+    formattedUpdate = `${day}/${month}/${year} ${time}`;
+  }
 
   return {
     kabupaten: kabupatenArray,
     users: usersArray,
     total_records: totalRecords,
-    last_updated: lastUpdated
+    last_updated: formattedUpdate
   };
 }
 
