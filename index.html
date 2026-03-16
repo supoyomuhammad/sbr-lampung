@@ -483,7 +483,7 @@ function olahDataMentah(rawData) {
 // ── INIT (MENGAMBIL DATA JSON DARI LUAR) ──────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Kurir fetch mengambil file json mentah
-  fetch('data_hasil_tambah_usaha.json')
+  fetch('https://github.com/supoyomuhammad/sbr-lampung/blob/main/data_hasil_tambah_usaha.json')
     .then(response => response.json())
     .then(rawData => {
       // Olah data mentah menjadi data dashboard
