@@ -364,15 +364,16 @@
 <!-- TABS -->
 <div class="tabs-wrap">
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('kab', this)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-      Kabupaten / Kota
-      <span class="cnt" id="cnt-kab">—</span>
-    </button>
-    <button class="tab-btn" onclick="switchTab('user', this)">
+    <button class="tab-btn active" onclick="switchTab('user', this)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       Petugas / User
       <span class="cnt" id="cnt-user">—</span>
+    </button>
+    
+    <button class="tab-btn" onclick="switchTab('kab', this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Kabupaten / Kota
+      <span class="cnt" id="cnt-kab">—</span>
     </button>
   </div>
 </div>
@@ -390,7 +391,7 @@
   </div>
 
   <!-- PANEL: USER -->
-  <div class="panel" id="panel-user">
+  <div class="panel active" id="panel-user">
     <div class="section-header">
       <div class="section-title">Capaian per Petugas <small id="user-count"></small></div>
       <div class="search-box">
@@ -429,7 +430,7 @@ const PAGE_SIZE  = 25;
 let appData     = null;
 let filteredUsers = [];
 let currentPage = 1;
-let activeTab   = 'kab';
+let activeTab   = 'user';
 
 // ── FUNGSI PENGOLAH DATA (PIVOT OTOMATIS) ─────────────────
 function olahDataMentah(rawData) {
