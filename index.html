@@ -12,6 +12,9 @@
       --orange-dark:  #C2540A;
       --orange-light: #FED7AA;
       --orange-pale:  #FFF7ED;
+      --green:        #10B981;
+      --green-light:  #34D399;
+      --red:          #EF4444;
       --white:        #FFFFFF;
       --gray-50:      #F9FAFB;
       --gray-100:     #F3F4F6;
@@ -82,10 +85,10 @@
     }
     .last-updated { font-size: 12px; color: var(--gray-400); font-family: 'DM Mono', monospace; }
 
-   /* ── HERO ──────────────────────────────────────────────── */
+    /* ── HERO ──────────────────────────────────────────────── */
     .hero {
       background: linear-gradient(135deg, var(--gray-900) 0%, #2d1a0e 100%);
-      padding: 56px 24px 48px;
+      padding: 100px 24px 60px; 
       position: relative; overflow: hidden;
     }
     .hero::before {
@@ -227,7 +230,7 @@
     }
     .kab-bar-pct { font-size: 11px; color: var(--gray-400); margin-top: 5px; font-family: 'DM Mono', monospace; }
 
-    /* ── USER TABLE ─────────────────────────────────────────── */
+    /* ── TABLES (USER & REKAP) ──────────────────────────────── */
     .table-wrap {
       background: var(--white); border: 1px solid var(--gray-200);
       border-radius: var(--radius); overflow: hidden;
@@ -262,6 +265,7 @@
     .mini-bar-fill {
       height: 100%; border-radius: 99px;
       background: linear-gradient(90deg, var(--orange-light), var(--orange));
+      transition: width 0.5s ease-in-out;
     }
     .mini-pct { font-size: 11px; color: var(--gray-400); font-family: 'DM Mono', monospace; white-space: nowrap; }
     .kab-tags { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -303,7 +307,7 @@
 
     /* ── RESPONSIVE ─────────────────────────────────────────── */
     @media (max-width: 640px) {
-      .hero { padding: 80px 16px 40px; } /* <--- Ubah angka 36px menjadi 80px di sini */
+      .hero { padding: 80px 16px 40px; } 
       .main { padding: 24px 16px 40px; }
       .kab-grid { grid-template-columns: 1fr; }
       th:nth-child(5), td:nth-child(5) { display: none; }
@@ -372,11 +376,16 @@
         Kabupaten / Kota
         <span class="cnt" id="cnt-kab">—</span>
       </button>
+
+      <button class="tab-btn" onclick="switchTab('rekap', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Rekap Target
+      </button>
     </div>
 
     <div class="search-box" style="display: flex; align-items: center; gap: 8px;">
       <span style="font-size: 13px; font-weight: 600; color: var(--gray-600);">Mulai Tanggal:</span>
-      <input type="date" id="filter-date" onchange="applyDateFilter()" style="padding: 7px 12px; width: 140px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); outline: none; font-family: inherit; color: var(--gray-800);" />
+      <input type="date" id="filter-date" onchange="applyDateFilter()" style="padding: 7px 12px; width: 140px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); outline: none; font-family: inherit; color: var(--gray-800);" title="Hanya memfilter Tab Petugas dan Kabupaten" />
     </div>
 
   </div>
@@ -384,13 +393,6 @@
 
 <div class="main">
   <div id="loading"><div class="spinner"></div>Memuat data…</div>
-
-  <div class="panel" id="panel-kab"> 
-    <div class="section-header">
-      <div class="section-title">Capaian per Kabupaten / Kota <small id="kab-count"></small></div>
-      </div>
-    <div class="kab-grid" id="kab-grid"></div>
-  </div>
 
   <div class="panel active" id="panel-user">
     <div class="section-header">
@@ -421,6 +423,37 @@
       </div>
     </div>
   </div>
+
+  <div class="panel" id="panel-kab"> 
+    <div class="section-header">
+      <div class="section-title">Capaian per Kabupaten / Kota <small id="kab-count"></small></div>
+    </div>
+    <div class="kab-grid" id="kab-grid"></div>
+  </div>
+
+  <div class="panel" id="panel-rekap">
+    <div class="section-header">
+      <div class="section-title">Rekapitulasi Target vs Realisasi <small>(Akumulasi Real-Time)</small></div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-inner">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Kabupaten/Kota</th>
+              <th>Target Akhir</th>
+              <th>Realisasi (Kumulatif)</th>
+              <th>Persentase Capaian</th>
+              <th>Kekurangan / Sisa</th>
+            </tr>
+          </thead>
+          <tbody id="rekap-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -432,12 +465,31 @@ let filteredUsers = [];
 let currentPage = 1;
 let activeTab   = 'user'; 
 
+// ── DATA TARGET BAKU BPS (DENGAN BASELINE 11 MARET) ───────
+const TARGET_DATA = [
+  { id: "LAMPUNG BARAT", nama: "Lampung Barat", target: 26934, base_11_maret: 28127 },
+  { id: "TANGGAMUS", nama: "Tanggamus", target: 55836, base_11_maret: 44337 },
+  { id: "LAMPUNG SELATAN", nama: "Lampung Selatan", target: 91766, base_11_maret: 86855 },
+  { id: "LAMPUNG TIMUR", nama: "Lampung Timur", target: 122148, base_11_maret: 82222 },
+  { id: "LAMPUNG TENGAH", nama: "Lampung Tengah", target: 126365, base_11_maret: 101134 },
+  { id: "LAMPUNG UTARA", nama: "Lampung Utara", target: 60666, base_11_maret: 53358 },
+  { id: "WAY KANAN", nama: "Way Kanan", target: 40258, base_11_maret: 35736 },
+  { id: "TULANG BAWANG", nama: "Tulang Bawang", target: 37413, base_11_maret: 39465 },
+  { id: "PESAWARAN", nama: "Pesawaran", target: 45527, base_11_maret: 49386 },
+  { id: "PRINGSEWU", nama: "Pringsewu", target: 44567, base_11_maret: 48353 },
+  { id: "MESUJI", nama: "Mesuji", target: 18236, base_11_maret: 20729 },
+  { id: "TULANG BAWANG BARAT", nama: "Tulang Bawang Barat", target: 23332, base_11_maret: 24676 },
+  { id: "PESISIR BARAT", nama: "Pesisir Barat", target: 11925, base_11_maret: 13420 },
+  { id: "BANDAR LAMPUNG", nama: "Bandar Lampung", target: 130401, base_11_maret: 101472 },
+  { id: "METRO", nama: "Metro", target: 26242, base_11_maret: 29336 }
+];
+
 // ── FUNGSI PENGOLAH DATA (DENGAN FILTER TANGGAL) ──────────
 function olahDataMentah(rawData, startDate) {
   let kabMap = {};
   let userMap = {};
   
-  // 1. Filter Data Berdasarkan Tanggal Mulai
+  // Filter Data Berdasarkan Tanggal Mulai
   let dataToProcess = rawData;
   if (startDate) {
     dataToProcess = rawData.filter(row => {
@@ -451,14 +503,13 @@ function olahDataMentah(rawData, startDate) {
   let latestUpdate = ""; 
   let earliestDate = "9999-12-31"; 
 
-  // 2. Lakukan Perhitungan (Pivot)
+  // Lakukan Perhitungan (Pivot)
   dataToProcess.forEach(row => {
     let kabName = row.Kabupaten_Kota || row.kabupaten_kota || "Tidak Diketahui";
     let uname = row.username || "Tidak Diketahui";
     let tglFull = row.created_at ? row.created_at : "2024-01-01 00:00:00";
     let tgl = tglFull.substring(0, 10);
 
-    // Lacak waktu terbaru dan paling awal
     if (tglFull > latestUpdate) latestUpdate = tglFull;
     if (tgl < earliestDate) earliestDate = tgl; 
 
@@ -516,7 +567,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function init() {
   document.getElementById('loading').style.display = 'none';
   
-  // Set nilai kalender ke tanggal paling awal secara otomatis saat web dibuka
   const dateInput = document.getElementById('filter-date');
   if (dateInput && !dateInput.value && appData.earliest_date) {
     dateInput.value = appData.earliest_date;
@@ -528,10 +578,8 @@ function init() {
 // ── FUNGSI APPLY FILTER TANGGAL ───────────────────────────
 function applyDateFilter() {
   const selectedDate = document.getElementById('filter-date').value;
-  // Olah ulang data
   appData = olahDataMentah(globalRawData, selectedDate);
   
-  // Reset kotak pencarian user agar tidak terganggu
   const searchInput = document.getElementById('user-search');
   if(searchInput) searchInput.value = "";
   
@@ -547,7 +595,7 @@ function updateUI() {
   });
 
   document.getElementById('stat-total').textContent   = appData.total_records.toLocaleString('id-ID');
-  document.getElementById('stat-kab').textContent     = appData.kabupaten.length;
+  document.getElementById('stat-kab').textContent     = TARGET_DATA.length; 
   document.getElementById('stat-user').textContent    = appData.users.length;
   document.getElementById('stat-today').textContent   = todayTotal.toLocaleString('id-ID');
   
@@ -563,6 +611,8 @@ function updateUI() {
   document.getElementById('user-count').textContent   = appData.users.length + ' petugas';
 
   renderKabupaten();
+  renderRekapTarget(); 
+  
   filteredUsers = [...appData.users];
   renderUsersPage(1);
 }
@@ -574,6 +624,108 @@ function switchTab(tab, btn) {
   btn.classList.add('active');
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + tab).classList.add('active');
+}
+
+// ── REKAP TARGET & REALISASI (LOGIKA KUMULATIF AKURAT) ────
+function renderRekapTarget() {
+  const tbody = document.getElementById('rekap-tbody');
+  tbody.innerHTML = '';
+  
+  let totalTarget = 0;
+  let totalRealisasi = 0;
+
+  // 1. Hitung HANYA tambahan capaian sejak 12 Maret 2026 dari raw data JSON
+  let tambahanSejak12Maret = {};
+  globalRawData.forEach(row => {
+    let tglFull = row.created_at ? row.created_at : "2024-01-01 00:00:00";
+    let tgl = tglFull.substring(0, 10);
+    
+    // Hanya hitung jika tanggal input >= 12 Maret 2026
+    if (tgl >= "2026-03-12") {
+      let kabName = row.Kabupaten_Kota || row.kabupaten_kota || "Tidak Diketahui";
+      // Normalisasi teks agar cocok dengan ID (misal: "KOTA METRO" jadi "METRO")
+      let norm = kabName.toUpperCase().replace("KOTA ", "").replace("TULANGBAWANG", "TULANG BAWANG"); 
+      
+      if (!tambahanSejak12Maret[norm]) tambahanSejak12Maret[norm] = 0;
+      tambahanSejak12Maret[norm] += 1;
+    }
+  });
+
+  // 2. Gabungkan Angka Dasar (11 Maret) + Tambahan Baru
+  let rekapData = TARGET_DATA.map(item => {
+    let normId = item.id.replace("TULANGBAWANG", "TULANG BAWANG");
+    let tambahanBaru = tambahanSejak12Maret[normId] || 0; 
+    
+    // Rumus Akurat: Base 11 Maret + JSON baru
+    let realisasi = item.base_11_maret + tambahanBaru; 
+    let sisa = item.target - realisasi;
+    let pct = (realisasi / item.target) * 100;
+    
+    totalTarget += item.target;
+    totalRealisasi += realisasi;
+
+    return { ...item, realisasi, sisa, pct };
+  });
+
+  // Urutkan dari persentase capaian tertinggi ke terendah
+  rekapData.sort((a, b) => b.pct - a.pct);
+
+  // Gambar baris tabel
+  rekapData.forEach((row, idx) => {
+    const isSelesai = row.sisa <= 0;
+    
+    // Format teks sisa (Kekurangan)
+    const sisaText = isSelesai 
+      ? `<span style="color: var(--green); font-weight: 700;">+${Math.abs(row.sisa).toLocaleString('id-ID')} (Lebih)</span>` 
+      : `<span style="color: var(--red); font-weight: 700;">-${row.sisa.toLocaleString('id-ID')}</span>`;
+      
+    // Warna untuk progress bar
+    const barColor = isSelesai ? 'linear-gradient(90deg, var(--green-light), var(--green))' : 'linear-gradient(90deg, var(--orange-light), var(--orange))';
+    const pctDisplay = row.pct > 100 ? 100 : row.pct; 
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td style="font-weight: 600; color: var(--gray-900);">${row.nama}</td>
+      <td style="font-family: 'DM Mono', monospace;">${row.target.toLocaleString('id-ID')}</td>
+      <td style="font-family: 'DM Mono', monospace; font-weight: 700; color: var(--gray-900);">${row.realisasi.toLocaleString('id-ID')}</td>
+      <td>
+        <div class="mini-bar-wrap">
+          <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${pctDisplay}%; background: ${barColor}"></div></div>
+          <span class="mini-pct" style="${isSelesai ? 'color: var(--green); font-weight: 700;' : ''}">${row.pct.toFixed(1)}%</span>
+        </div>
+      </td>
+      <td style="font-family: 'DM Mono', monospace;">${sisaText}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Baris TOTAL di paling bawah
+  const totalSisa = totalTarget - totalRealisasi;
+  const totalPct = (totalRealisasi / totalTarget) * 100;
+  const isTotalSelesai = totalSisa <= 0;
+  
+  const totalSisaText = isTotalSelesai 
+      ? `<span style="color: var(--green); font-weight: 800;">+${Math.abs(totalSisa).toLocaleString('id-ID')} (Lebih)</span>` 
+      : `<span style="color: var(--red); font-weight: 800;">-${totalSisa.toLocaleString('id-ID')}</span>`;
+      
+  const totalBarColor = isTotalSelesai ? 'linear-gradient(90deg, var(--green-light), var(--green))' : 'linear-gradient(90deg, var(--orange-light), var(--orange))';
+
+  const trTotal = document.createElement('tr');
+  trTotal.style.background = 'var(--gray-50)';
+  trTotal.innerHTML = `
+    <td colspan="2" style="font-weight: 800; text-align: right; color: var(--gray-900);">TOTAL PROVINSI LAMPUNG</td>
+    <td style="font-family: 'DM Mono', monospace; font-weight: 800; color: var(--gray-900);">${totalTarget.toLocaleString('id-ID')}</td>
+    <td style="font-family: 'DM Mono', monospace; font-weight: 800; color: var(--gray-900);">${totalRealisasi.toLocaleString('id-ID')}</td>
+    <td>
+        <div class="mini-bar-wrap">
+          <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${totalPct > 100 ? 100 : totalPct}%; background: ${totalBarColor}"></div></div>
+          <span class="mini-pct" style="font-weight: 800; color: var(--gray-900);">${totalPct.toFixed(1)}%</span>
+        </div>
+    </td>
+    <td style="font-family: 'DM Mono', monospace;">${totalSisaText}</td>
+  `;
+  tbody.appendChild(trTotal);
 }
 
 // ── KABUPATEN ─────────────────────────────────────────────
