@@ -82,10 +82,10 @@
     }
     .last-updated { font-size: 12px; color: var(--gray-400); font-family: 'DM Mono', monospace; }
 
-    /* ── HERO ──────────────────────────────────────────────── */
+   /* ── HERO ──────────────────────────────────────────────── */
     .hero {
       background: linear-gradient(135deg, var(--gray-900) 0%, #2d1a0e 100%);
-      padding: 56px 24px 48px;
+      padding: 56px 24px 50px; /* <--- Ubah angka 56px menjadi 100px di sini */
       position: relative; overflow: hidden;
     }
     .hero::before {
@@ -303,7 +303,7 @@
 
     /* ── RESPONSIVE ─────────────────────────────────────────── */
     @media (max-width: 640px) {
-      .hero { padding: 36px 16px 32px; }
+      .hero { padding: 80px 16px 40px; } /* <--- Ubah angka 36px menjadi 80px di sini */
       .main { padding: 24px 16px 40px; }
       .kab-grid { grid-template-columns: 1fr; }
       th:nth-child(5), td:nth-child(5) { display: none; }
