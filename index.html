@@ -124,14 +124,24 @@
     .hstat-val span { color: var(--orange); }
     .hstat-lbl { font-size: 12px; color: var(--gray-400); margin-top: 4px; font-weight: 500; }
 
-    /* ── NAV TABS ───────────────────────────────────────────── */
+    /* ── NAV TABS & FILTER ──────────────────────────────────── */
     .tabs-wrap {
       background: var(--white);
       border-bottom: 1px solid var(--gray-200);
     }
+    .tabs-header {
+      max-width: 1280px; margin: 0 auto; padding: 0 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
     .tabs {
       display: flex; gap: 0;
+      overflow-x: auto; /* Memungkinkan geser/swipe di HP */
+      -webkit-overflow-scrolling: touch; /* Efek swipe mulus di iPhone */
+      scrollbar-width: none; /* Sembunyikan scrollbar di Firefox */
     }
+    .tabs::-webkit-scrollbar { display: none; /* Sembunyikan scrollbar di Chrome/Safari */ }
+    
     .tab-btn {
       padding: 16px 20px;
       font-size: 14px; font-weight: 600;
@@ -140,6 +150,8 @@
       border-bottom: 2px solid transparent;
       transition: all .2s;
       display: flex; align-items: center; gap: 7px;
+      flex-shrink: 0; /* Mencegah tombol menyusut/gepeng di HP */
+      white-space: nowrap; /* Mencegah tulisan turun ke bawah */
     }
     .tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
     .tab-btn:hover:not(.active) { color: var(--gray-600); }
@@ -236,8 +248,11 @@
       border-radius: var(--radius); overflow: hidden;
       box-shadow: var(--shadow-sm);
     }
-    .table-inner { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
+    .table-inner { 
+      overflow-x: auto; 
+      -webkit-overflow-scrolling: touch; /* Scroll horizontal mulus di HP */
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; /* Memaksa tabel tidak penyok */ }
     thead tr { background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
     th {
       padding: 12px 16px; text-align: left;
@@ -252,7 +267,7 @@
       color: var(--gray-400); font-weight: 500;
     }
     .rank-top { color: var(--orange); font-weight: 700; }
-    .user-name { font-weight: 600; color: var(--gray-900); }
+    .user-name { font-weight: 600; color: var(--gray-900); white-space: nowrap; }
     .total-cell {
       font-family: 'DM Mono', monospace; font-weight: 700;
       color: var(--gray-900); font-size: 14px;
@@ -268,7 +283,7 @@
       transition: width 0.5s ease-in-out;
     }
     .mini-pct { font-size: 11px; color: var(--gray-400); font-family: 'DM Mono', monospace; white-space: nowrap; }
-    .kab-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .kab-tags { display: flex; flex-wrap: wrap; gap: 4px; min-width: 150px; }
     .kab-tag {
       background: var(--gray-100); color: var(--gray-600);
       font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500;
@@ -305,13 +320,27 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    /* ── RESPONSIVE (TAMPILAN HP) ───────────────────────────── */
     @media (max-width: 640px) {
       .hero { padding: 80px 16px 40px; } 
       .main { padding: 24px 16px 40px; }
       .kab-grid { grid-template-columns: 1fr; }
-      th:nth-child(5), td:nth-child(5) { display: none; }
-      .search-box input[type="text"] { width: 160px; }
+      
+      /* Modifikasi Header Tab agar filter turun ke bawah di HP */
+      .tabs-header { 
+        padding: 0 16px; 
+        flex-direction: column; 
+        align-items: flex-start; 
+        gap: 12px;
+      }
+      .tabs { width: 100%; padding-bottom: 4px; }
+      .search-box { width: 100%; display: flex; justify-content: space-between; margin-bottom: 12px;}
+      .search-box input[type="date"] { flex-grow: 1; margin-left: 10px; }
+      .search-box input[type="text"] { width: 100%; }
+      
+      /* Sembunyikan kolom Kabupaten khusus di tabel Petugas agar muat di HP */
+      #panel-user th:nth-child(5), #panel-user td:nth-child(5) { display: none; }
+      /* Tabel Rekap dibiarkan utuh, user cukup geser kiri-kanan untuk melihat */
     }
   </style>
 </head>
@@ -362,9 +391,9 @@
 </section>
 
 <div class="tabs-wrap">
-  <div style="max-width: 1280px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+  <div class="tabs-header">
     
-    <div class="tabs" style="padding: 0; margin: 0;">
+    <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('user', this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Petugas / User
@@ -383,8 +412,8 @@
       </button>
     </div>
 
-    <div class="search-box" style="display: flex; align-items: center; gap: 8px;">
-      <span style="font-size: 13px; font-weight: 600; color: var(--gray-600);">Mulai Tanggal:</span>
+    <div class="search-box" style="display: flex; align-items: center;">
+      <span style="font-size: 13px; font-weight: 600; color: var(--gray-600); white-space: nowrap;">Mulai Tanggal:</span>
       <input type="date" id="filter-date" onchange="applyDateFilter()" style="padding: 7px 12px; width: 140px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); outline: none; font-family: inherit; color: var(--gray-800);" title="Hanya memfilter Tab Petugas dan Kabupaten" />
     </div>
 
@@ -643,7 +672,7 @@ function renderRekapTarget() {
     // Hanya hitung jika tanggal input >= 12 Maret 2026
     if (tgl >= "2026-03-12") {
       let kabName = row.Kabupaten_Kota || row.kabupaten_kota || "Tidak Diketahui";
-      // Normalisasi teks agar cocok dengan ID (misal: "KOTA METRO" jadi "METRO")
+      // Normalisasi teks agar cocok dengan ID
       let norm = kabName.toUpperCase().replace("KOTA ", "").replace("TULANGBAWANG", "TULANG BAWANG"); 
       
       if (!tambahanSejak12Maret[norm]) tambahanSejak12Maret[norm] = 0;
