@@ -29,8 +29,6 @@
       --radius:       14px;
       --radius-sm:    8px;
     }
-
-    /* ── RESET ─────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
@@ -39,8 +37,6 @@
       color: var(--gray-800);
       min-height: 100vh;
     }
-
-    /* ── HEADER ────────────────────────────────────────────── */
     header {
       background: var(--white);
       border-bottom: 1px solid var(--gray-200);
@@ -53,10 +49,7 @@
       height: 64px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .logo {
-      display: flex; align-items: center; gap: 10px;
-      text-decoration: none;
-    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .logo-icon {
       width: 36px; height: 36px; background: var(--orange);
       border-radius: 9px;
@@ -65,9 +58,7 @@
     .logo-icon svg { width: 20px; height: 20px; fill: white; }
     .logo-text { font-weight: 800; font-size: 15px; color: var(--gray-900); line-height: 1.2; }
     .logo-text span { color: var(--orange); }
-    .header-right {
-      display: flex; align-items: center; gap: 10px;
-    }
+    .header-right { display: flex; align-items: center; gap: 10px; }
     .badge-live {
       display: flex; align-items: center; gap: 6px;
       background: var(--orange-pale); border: 1px solid var(--orange-light);
@@ -84,8 +75,6 @@
       50%      { opacity: .5; transform: scale(1.35); }
     }
     .last-updated { font-size: 12px; color: var(--gray-400); font-family: 'DM Mono', monospace; }
-
-    /* ── HERO ──────────────────────────────────────────────── */
     .hero {
       background: linear-gradient(135deg, var(--gray-900) 0%, #2d1a0e 100%);
       padding: 48px 24px 36px; 
@@ -113,9 +102,7 @@
     }
     .hero h1 span { color: var(--orange); }
     .hero-sub { color: var(--gray-400); font-size: 15px; max-width: 500px; line-height: 1.6; }
-    .hero-stats {
-      display: flex; gap: 32px; margin-top: 36px; flex-wrap: wrap;
-    }
+    .hero-stats { display: flex; gap: 32px; margin-top: 36px; flex-wrap: wrap; }
     .hstat { display: flex; flex-direction: column; }
     .hstat-val {
       font-size: 32px; font-weight: 800; color: var(--white);
@@ -123,8 +110,6 @@
     }
     .hstat-val span { color: var(--orange); }
     .hstat-lbl { font-size: 12px; color: var(--gray-400); margin-top: 4px; font-weight: 500; }
-
-    /* ── NAV TABS & FILTER ──────────────────────────────────── */
     .tabs-wrap {
       background: var(--white);
       border-bottom: 1px solid var(--gray-200);
@@ -136,12 +121,11 @@
     }
     .tabs {
       display: flex; gap: 0;
-      overflow-x: auto; /* Memungkinkan geser/swipe di HP */
-      -webkit-overflow-scrolling: touch; /* Efek swipe mulus di iPhone */
-      scrollbar-width: none; /* Sembunyikan scrollbar di Firefox */
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
-    .tabs::-webkit-scrollbar { display: none; /* Sembunyikan scrollbar di Chrome/Safari */ }
-    
+    .tabs::-webkit-scrollbar { display: none; }
     .tab-btn {
       padding: 16px 20px;
       font-size: 14px; font-weight: 600;
@@ -150,8 +134,7 @@
       border-bottom: 2px solid transparent;
       transition: all .2s;
       display: flex; align-items: center; gap: 7px;
-      flex-shrink: 0; /* Mencegah tombol menyusut/gepeng di HP */
-      white-space: nowrap; /* Mencegah tulisan turun ke bawah */
+      flex-shrink: 0; white-space: nowrap;
     }
     .tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
     .tab-btn:hover:not(.active) { color: var(--gray-600); }
@@ -161,30 +144,21 @@
       font-family: 'DM Mono', monospace;
     }
     .tab-btn.active .cnt { background: var(--orange-pale); color: var(--orange-dark); }
-
-    /* ── MAIN CONTENT ───────────────────────────────────────── */
     .main { max-width: 1280px; margin: 0 auto; padding: 32px 24px 60px; }
     .panel { display: none; }
     .panel.active { display: block; }
-
-    /* ── SECTION TITLE ──────────────────────────────────────── */
     .section-header {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
     }
-    .section-title {
-      font-size: 18px; font-weight: 700; color: var(--gray-900);
-    }
+    .section-title { font-size: 18px; font-weight: 700; color: var(--gray-900); }
     .section-title small { font-size: 13px; font-weight: 500; color: var(--gray-400); margin-left: 6px; }
-
-    /* ── SEARCH & FILTER ────────────────────────────────────── */
-    .search-box {
-      position: relative;
-    }
+    .section-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .search-box { position: relative; }
     .search-box input[type="text"] {
       border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
       padding: 9px 12px 9px 36px;
-      font-size: 13px; width: 220px;
+      font-size: 13px; width: 200px;
       outline: none; font-family: inherit; color: var(--gray-800);
       background: var(--white);
       transition: border .2s;
@@ -194,8 +168,35 @@
       position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
       width: 15px; height: 15px; color: var(--gray-400);
     }
+    /* ── SELECT SATKER FILTER ── */
+    .satker-filter {
+      border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+      padding: 9px 32px 9px 12px;
+      font-size: 13px;
+      outline: none; font-family: inherit; color: var(--gray-800);
+      background: var(--white);
+      cursor: pointer;
+      transition: border .2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    .satker-filter:focus { border-color: var(--orange); }
 
-    /* ── KABUPATEN CARDS ────────────────────────────────────── */
+    /* ── DOWNLOAD BUTTON ── */
+    .btn-download {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--green); color: white;
+      border: none; border-radius: var(--radius-sm);
+      padding: 9px 16px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .2s;
+      font-family: inherit; white-space: nowrap;
+    }
+    .btn-download:hover { background: #059669; box-shadow: 0 4px 12px rgba(16,185,129,.3); }
+    .btn-download svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* ── KABUPATEN CARDS ── */
     .kab-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -213,83 +214,45 @@
       display: flex; align-items: flex-start; justify-content: space-between;
       margin-bottom: 14px;
     }
-    .kab-name {
-      font-size: 14px; font-weight: 700; color: var(--gray-900);
-      text-transform: uppercase; letter-spacing: .03em;
-    }
-    .kab-rank {
-      background: var(--orange); color: white;
-      font-size: 11px; font-weight: 700; font-family: 'DM Mono', monospace;
-      padding: 3px 9px; border-radius: 99px;
-    }
-    .kab-total {
-      font-size: 36px; font-weight: 800; color: var(--gray-900);
-      font-family: 'DM Mono', monospace; line-height: 1;
-      margin-bottom: 4px;
-    }
+    .kab-name { font-size: 14px; font-weight: 700; color: var(--gray-900); text-transform: uppercase; letter-spacing: .03em; }
+    .kab-rank { background: var(--orange); color: white; font-size: 11px; font-weight: 700; font-family: 'DM Mono', monospace; padding: 3px 9px; border-radius: 99px; }
+    .kab-total { font-size: 36px; font-weight: 800; color: var(--gray-900); font-family: 'DM Mono', monospace; line-height: 1; margin-bottom: 4px; }
     .kab-lbl { font-size: 12px; color: var(--gray-400); margin-bottom: 16px; font-weight: 500; }
-    /* sparkline */
     .sparkline { width: 100%; height: 44px; }
     .kab-bar-wrap { margin-top: 14px; }
-    .kab-bar-bg {
-      background: var(--gray-100); border-radius: 99px;
-      height: 6px; overflow: hidden;
-    }
-    .kab-bar-fill {
-      height: 100%; border-radius: 99px;
-      background: linear-gradient(90deg, var(--orange-light), var(--orange));
-      transition: width .8s cubic-bezier(.4,0,.2,1);
-    }
+    .kab-bar-bg { background: var(--gray-100); border-radius: 99px; height: 6px; overflow: hidden; }
+    .kab-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--orange-light), var(--orange)); transition: width .8s cubic-bezier(.4,0,.2,1); }
     .kab-bar-pct { font-size: 11px; color: var(--gray-400); margin-top: 5px; font-family: 'DM Mono', monospace; }
-
-    /* ── TABLES (USER & REKAP) ──────────────────────────────── */
     .table-wrap {
       background: var(--white); border: 1px solid var(--gray-200);
       border-radius: var(--radius); overflow: hidden;
       box-shadow: var(--shadow-sm);
     }
-    .table-inner { 
-      overflow-x: auto; 
-      -webkit-overflow-scrolling: touch; /* Scroll horizontal mulus di HP */
-    }
-    table { width: 100%; border-collapse: collapse; min-width: 600px; /* Memaksa tabel tidak penyok */ }
+    .table-inner { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
     thead tr { background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
-    th {
-      padding: 12px 16px; text-align: left;
-      font-size: 11px; font-weight: 700; color: var(--gray-400);
-      text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
-    }
+    th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
     td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--gray-100); }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover td { background: var(--orange-pale); }
-    .rank-cell {
-      font-family: 'DM Mono', monospace; font-size: 12px;
-      color: var(--gray-400); font-weight: 500;
-    }
+    .rank-cell { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--gray-400); font-weight: 500; }
     .rank-top { color: var(--orange); font-weight: 700; }
     .user-name { font-weight: 600; color: var(--gray-900); white-space: nowrap; }
-    .total-cell {
-      font-family: 'DM Mono', monospace; font-weight: 700;
-      color: var(--gray-900); font-size: 14px;
+    .satker-cell {
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600;
+      color: var(--white);
+      background: var(--orange);
+      padding: 2px 8px; border-radius: 5px;
+      display: inline-block; white-space: nowrap;
     }
+    .satker-cell.unknown { background: var(--gray-400); }
+    .total-cell { font-family: 'DM Mono', monospace; font-weight: 700; color: var(--gray-900); font-size: 14px; }
     .mini-bar-wrap { display: flex; align-items: center; gap: 8px; min-width: 120px; }
-    .mini-bar-bg {
-      flex: 1; height: 5px; background: var(--gray-100);
-      border-radius: 99px; overflow: hidden;
-    }
-    .mini-bar-fill {
-      height: 100%; border-radius: 99px;
-      background: linear-gradient(90deg, var(--orange-light), var(--orange));
-      transition: width 0.5s ease-in-out;
-    }
+    .mini-bar-bg { flex: 1; height: 5px; background: var(--gray-100); border-radius: 99px; overflow: hidden; }
+    .mini-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--orange-light), var(--orange)); transition: width 0.5s ease-in-out; }
     .mini-pct { font-size: 11px; color: var(--gray-400); font-family: 'DM Mono', monospace; white-space: nowrap; }
     .kab-tags { display: flex; flex-wrap: wrap; gap: 4px; min-width: 150px; }
-    .kab-tag {
-      background: var(--gray-100); color: var(--gray-600);
-      font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500;
-    }
-
-    /* pagination */
+    .kab-tag { background: var(--gray-100); color: var(--gray-600); font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
     .pagination {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 16px; border-top: 1px solid var(--gray-100);
@@ -306,41 +269,21 @@
     .page-btn:hover:not(:disabled) { border-color: var(--orange); color: var(--orange); }
     .page-btn.active { background: var(--orange); border-color: var(--orange); color: white; }
     .page-btn:disabled { opacity: .4; cursor: not-allowed; }
-
-    /* ── LOADING ────────────────────────────────────────────── */
-    #loading {
-      text-align: center; padding: 60px 0;
-      color: var(--gray-400); font-size: 14px;
-    }
-    .spinner {
-      width: 32px; height: 32px; border: 3px solid var(--gray-200);
-      border-top-color: var(--orange); border-radius: 50%;
-      animation: spin .7s linear infinite;
-      margin: 0 auto 12px;
-    }
+    #loading { text-align: center; padding: 60px 0; color: var(--gray-400); font-size: 14px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--gray-200); border-top-color: var(--orange); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── RESPONSIVE (TAMPILAN HP) ───────────────────────────── */
     @media (max-width: 640px) {
       .hero { padding: 40px 16px 28px; } 
       .main { padding: 24px 16px 40px; }
       .kab-grid { grid-template-columns: 1fr; }
-      
-      /* Modifikasi Header Tab agar filter turun ke bawah di HP */
-      .tabs-header { 
-        padding: 0 16px; 
-        flex-direction: column; 
-        align-items: flex-start; 
-        gap: 12px;
-      }
+      .tabs-header { padding: 0 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
       .tabs { width: 100%; padding-bottom: 4px; }
-      .search-box { width: 100%; display: flex; justify-content: space-between; margin-bottom: 12px;}
-      .search-box input[type="date"] { flex-grow: 1; margin-left: 10px; }
+      .section-actions { width: 100%; }
+      .search-box { width: 100%; }
       .search-box input[type="text"] { width: 100%; }
-      
-      /* Sembunyikan kolom Kabupaten khusus di tabel Petugas agar muat di HP */
-      #panel-user th:nth-child(5), #panel-user td:nth-child(5) { display: none; }
-      /* Tabel Rekap dibiarkan utuh, user cukup geser kiri-kanan untuk melihat */
+      .satker-filter { width: 100%; }
+      .btn-download { width: 100%; justify-content: center; }
+      #panel-user th:nth-child(6), #panel-user td:nth-child(6) { display: none; }
     }
   </style>
 </head>
@@ -370,53 +313,36 @@
     <h1>Dashboard Capaian<br><span>Tambah Usaha</span></h1>
     <p class="hero-sub">Pantau progress pengumpulan data usaha seluruh Kabupaten/Kota di Provinsi Lampung secara real-time.</p>
     <div class="hero-stats">
-      <div class="hstat">
-        <div class="hstat-val" id="stat-total">—</div>
-        <div class="hstat-lbl">Total Usaha Terinput</div>
-      </div>
-      <div class="hstat">
-        <div class="hstat-val" id="stat-kab">—</div>
-        <div class="hstat-lbl">Kabupaten/Kota</div>
-      </div>
-      <div class="hstat">
-        <div class="hstat-val" id="stat-user">—</div>
-        <div class="hstat-lbl">Petugas Aktif</div>
-      </div>
-      <div class="hstat">
-        <div class="hstat-val" id="stat-today">—</div>
-        <div class="hstat-lbl">Input Hari Ini</div>
-      </div>
+      <div class="hstat"><div class="hstat-val" id="stat-total">—</div><div class="hstat-lbl">Total Usaha Terinput</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-kab">—</div><div class="hstat-lbl">Kabupaten/Kota</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-user">—</div><div class="hstat-lbl">Petugas Aktif</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-today">—</div><div class="hstat-lbl">Input Hari Ini</div></div>
     </div>
   </div>
 </section>
 
 <div class="tabs-wrap">
   <div class="tabs-header">
-    
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('user', this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Petugas / User
         <span class="cnt" id="cnt-user">—</span>
       </button>
-      
       <button class="tab-btn" onclick="switchTab('kab', this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Kabupaten / Kota
         <span class="cnt" id="cnt-kab">—</span>
       </button>
-
       <button class="tab-btn" onclick="switchTab('rekap', this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Rekap Target
       </button>
     </div>
-
     <div class="search-box" style="display: flex; align-items: center;">
       <span style="font-size: 13px; font-weight: 600; color: var(--gray-600); white-space: nowrap;">Mulai Tanggal:</span>
       <input type="date" id="filter-date" onchange="applyDateFilter()" style="padding: 7px 12px; width: 140px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); outline: none; font-family: inherit; color: var(--gray-800);" title="Hanya memfilter Tab Petugas dan Kabupaten" />
     </div>
-
   </div>
 </div>
 
@@ -426,9 +352,21 @@
   <div class="panel active" id="panel-user">
     <div class="section-header">
       <div class="section-title">Capaian per Petugas <small id="user-count"></small></div>
-      <div class="search-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="user-search" placeholder="Cari username…" oninput="filterUsers()" />
+      <div class="section-actions">
+        <!-- Search Username -->
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="user-search" placeholder="Cari username / satker…" oninput="filterUsers()" />
+        </div>
+        <!-- Filter Satker -->
+        <select class="satker-filter" id="satker-filter" onchange="filterUsers()">
+          <option value="">Semua Satker</option>
+        </select>
+        <!-- Download Button -->
+        <button class="btn-download" onclick="downloadExcel()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Unduh Excel
+        </button>
       </div>
     </div>
     <div class="table-wrap">
@@ -437,6 +375,7 @@
           <thead>
             <tr>
               <th>#</th>
+              <th>Satker</th>
               <th>Username</th>
               <th>Total Usaha</th>
               <th>Kontribusi</th>
@@ -482,10 +421,15 @@
       </div>
     </div>
   </div>
-
 </div>
 
+<!-- SheetJS for Excel download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
+// ── SATKER MAP ────────────────────────────────────────────
+const SATKER_MAP = {"ahmadriswan": "1800", "ajid.hajiji": "1800", "atikh": "1800", "nurjanah": "1800", "mridu": "1800", "sartono-pppk": "1800", "moviyanti": "1800", "anggiaw": "1800", "arip.poerwanto": "1800", "denisetia-pppk": "1800", "firna": "1800", "eduanmirza-pppk": "1800", "prima.putri": "1800", "mrizky-pppk": "1800", "sonisaputra-pppk": "1800", "petrusbayu-pppk": "1800", "redo.noviansyah": "1800", "bimaprastya-pppk": "1800", "imasanakis-pppk": "1800", "beni.siswanto": "1800", "mudina.sari": "1800", "herum": "1800", "supian": "1800", "jeff": "1800", "knedi": "1800", "srezki": "1800", "nurindah": "1800", "poniran": "1800", "eka.yusda": "1800", "dhyan": "1800", "santi.novitasari": "1800", "m.salam": "1800", "herman8": "1800", "bayuj": "1800", "mega.astuti": "1800", "hennys": "1800", "tribuana_k": "1800", "dewi": "1800", "rina_eka": "1800", "tri.apriliya": "1800", "aatina": "1800", "wikki": "1800", "arirusmasari": "1800", "maya.hati": "1800", "heru.wijayanto": "1800", "prabudi.dharma": "1800", "erni.hanifah": "1800", "sukrisno": "1800", "febiyana.qomariyah": "1800", "soleh": "1800", "rochayatini": "1800", "yenia": "1800", "nurika": "1800", "wike_yulia": "1800", "nugrohopy": "1800", "desykhoti": "1800", "hardianty": "1800", "radika": "1800", "andrawina": "1800", "herpas": "1800", "rkningrum": "1800", "risma.arisandi": "1800", "luxmaning": "1800", "aan.andriatno": "1800", "arifinjafar": "1800", "renya": "1800", "siskafran": "1800", "ivan_sharon": "1800", "hendra.sunaryo": "1800", "ekoteguh": "1800", "dwiochta": "1800", "muhammadsepta": "1800", "tetiyeni": "1800", "nk.auwalun": "1800", "teta.puti": "1800", "hestiayu": "1800", "irvan.simamora": "1800", "arief.almursyid": "1800", "ranggiadityan": "1800", "sabiel.prakasa": "1800", "ghessani": "1800", "m.mukhlis": "1800", "karom": "1800", "dita.christina": "1800", "viamanda.putri": "1800", "m.shalih": "1800", "nanto.dwi": "1800", "abdul.muid": "1800", "faza.fuadina": "1800", "thomson": "1800", "fajriana.fikri": "1800", "muharofah": "1801", "susyanto-pppk": "1801", "dekkasafutra-pppk": "1801", "nurhayati-pppk": "1801", "ayu.winarni": "1801", "matkusairi": "1801", "haresmadeka-pppk": "1801", "musaddad": "1801", "tambat": "1801", "luluk.tanjung": "1801", "mudirrussalam": "1801", "sriwahyuni2": "1801", "nurdi": "1801", "bayu.rahmawan": "1801", "febyola.martha": "1804", "ajeng.pangestu": "1801", "nike.hartati": "1801", "ayu.pratiwi": "1801", "fani.rahmadhany": "1801", "aisyahchairani": "1801", "elok.nurfatika": "1801", "ardhan.setyo": "1801", "afifahdheany": "1801", "nurfi.ardillah": "1801", "aryafarezi": "1801", "soimahsiti": "1801", "nenycahya": "1801", "kadirjailani": "1801", "lukmanhadiansyah": "1801", "niken": "1802", "arifki": "1802", "sunakyah-pppk": "1802", "rahmadfebrian-pppk": "1802", "solihin-pppk": "1802", "wahyusanjaya-pppk": "1802", "muhnurfauzi-pppk": "1802", "dhimasdestian-pppk": "1802", "supriyanto2": "1802", "ambo.upek": "1802", "ahmadfauzi": "1802", "irwan5": "1802", "erizal": "1802", "dwiastuti": "1802", "rita.fidella": "1802", "nansi": "1802", "mmalik": "1802", "lisawati": "1802", "sulistyohadi": "1802", "firmansyah4": "1802", "ahmad.ova": "1802", "rengganis": "1802", "aan.ardiansyah": "1802", "ihsandi.awal": "1802", "gindo.nainggolan": "1802", "intan.silaban": "1802", "wahyu.prastowo": "1802", "ardelia.raras": "1802", "imam.sujono": "1802", "suci.utami": "1802", "fransiskafara": "1802", "slamet.suroto": "1802", "lulut.ariyadi": "1802", "yarup": "1802", "imron3": "1802", "ar.maulana": "1803", "rosadi.zein": "1803", "ferry-pppk": "1803", "yudisusanto-pppk": "1803", "pudjiono": "1803", "ramadani": "1803", "mudjono": "1803", "kartini.nani": "1803", "nastra": "1803", "supard": "1803", "jusman": "1803", "yopi.androva": "1803", "joni.sampurno": "1803", "triatmoko_dedi": "1803", "nyomz_nhb": "1803", "winda.ws": "1803", "fridajubil": "1803", "riva.hestaria": "1303", "indri.puspitasari": "1803", "yogagumbira": "1803", "devipratiwi": "1803", "rarakarina": "1803", "erisa.ni": "1803", "febrianadj": "1803", "ade.rilyani": "1803", "nadiyah.robbaniyah": "1803", "farda.zayana": "1803", "wasilahnura": "1803", "dizapotenza": "1803", "radithyapurwanto": "1803", "zainal.haris": "1803", "ferry": "1803", "zaenal.suryono": "1803", "asri.k": "1803", "zulkifli": "1804", "akhino.pranata": "1804", "saifudi-pppk": "1804", "safri-pppk": "1804", "haston.handono": "1804", "hermanto-pppk": "1804", "retno.prihandiah": "1804", "asita": "1804", "agus.suroso": "1804", "sarino": "1804", "suwarto2": "1804", "sri.guntoro": "1804", "puput.priyanto": "1804", "tri.wahyuni": "1804", "maulana.asprala": "1804", "indra3": "1804", "ariyanto2": "1804", "fmustaqim": "1804", "sugiyanto2": "1804", "ika.novianti": "1804", "nurhayati5": "1804", "r.inayah": "1804", "diah.septia": "1804", "zazaperwira": "1804", "may.silviana": "1804", "nur.megantoro": "1804", "mustika.putri": "1804", "dinaanggraena": "1804", "johan.darmawan": "1804", "natanardi": "1804", "rusli.rais": "1804", "juliadi": "1804", "imanullah": "1804", "trianto2": "1804", "andi.yusman": "1804", "santoso.edy": "1804", "ika.nurfadillah": "1804", "kunt": "1805", "arif.eko": "1805", "ekowardiyanto-pppk": "1805", "febbialqausar-pppk": "1805", "normaseptri-pppk": "1805", "arief.novriansyah": "1800", "turyono": "1805", "warsito": "1805", "lakoni.husin": "1805", "suryani3": "1805", "dwi.es": "1805", "parman": "1805", "mujikuat": "1805", "mesagus.at": "1805", "cahyo.novi": "1805", "erry.roma": "1872", "clara_tridiana": "1805", "ari.arnantyo": "1805", "haris.sugara": "1805", "yunita.susila": "1805", "dr.ranggawuni": "1805", "bang": "1805", "sucimelati": "1805", "hetty.rahayu": "1805", "bima.ghafara": "1805", "pr.yurida": "1871", "tiasusanti-pppk": "1805", "dechiyp": "1805", "rayhan.fahd": "1805", "ahmad.febri": "1805", "nungki.yunikasari": "1805", "probowati.cahyani": "1805", "ihza.mahendra": "1805", "riskaamalia": "1805", "alfinapiana": "3171", "istuindah": "1805", "naufal.faishal": "1805", "darel.sutrawhana": "1805", "aguswana.saputra": "1805", "rahman2": "1805", "ardi.yansyah": "1805", "devie.ts": "1806", "jemali-pppk": "1806", "martadinata-pppk": "1806", "yudairijaka-pppk": "1806", "okkytaufik-pppk": "1806", "rismawati-pppk": "1806", "sujito": "1806", "arya.jaya": "1806", "siswanto": "1806", "irawan.adi": "1806", "romli.afandi": "1806", "andries": "1806", "gusmalia": "1806", "amri.darwin": "1806", "charrido": "1806", "ismail.yusuf": "1806", "ripan.zadi": "1806", "hana.fitia": "1806", "ika.septiana": "1806", "siectio": "1806", "vivi.handayanti": "1806", "hanik.devianingrum": "1806", "dita.kartika": "1806", "devinovanti": "1806", "langlangpurwa": "1806", "rizquna.nurul": "1806", "renaldisyarief": "1806", "agustini": "1806", "ruder.yosepha": "1806", "radius.as": "1806", "jua": "1807", "munir.novrianto": "1807", "dadangsupri-pppk": "1807", "renisugiarsih-pppk": "1807", "herifitriyan-pppk": "1807", "sinta.zahra": "1807", "ludi.indra": "1807", "lusi.oktari": "1807", "sita.sari": "1807", "inah.angelia": "1807", "agungharry-pppk": "1807", "aldi.rizqul": "1807", "citra.tantri": "1803", "weli.selianta": "1807", "viky.wijaya": "1807", "fadheelwisnu": "1807", "delviracindy": "1807", "azelea.juliastita": "1807", "iqbal.maulana": "1807", "fajar.berlian": "1807", "riskadian": "1807", "risangayusiwi": "1807", "lailatus.syifa": "1807", "erzalesmana": "1807", "gunawan4": "1807", "supadan": "1807", "sulistianto": "1807", "ujangfatoni": "1807", "yudi.purwanto": "1807", "muh.ansori": "1807", "arismunandar": "1807", "drisnaf": "1808", "yunida.rachmawati": "1808", "andicandra-pppk": "1808", "suryatama-pppk": "1808", "santoriz-pppk": "1808", "mayaarisa-pppk": "1808", "sitiq": "1808", "defika": "1808", "yuliadi": "1808", "astryati": "1808", "lenna.nalurita": "1808", "wpratiko": "1808", "purwanto4": "1808", "john.fs": "1808", "iin.aryani": "1808", "rizqi.bagaskoro": "1808", "dellakape": "1808", "ediristanto-pppk": "1808", "dwi.hendro": "1808", "woro.ayu": "1808", "ahmadmutawally": "1808", "nurul.afifah": "1808", "adit.anggit": "1808", "jantika.ayu": "1808", "wiwik.dwi": "1808", "josephgabriel": "1808", "faradilla.anastasya": "1808", "fidya.alhayu": "1808", "aisyah.azizah": "1808", "rahma.fajri": "1808", "susanto5": "1808", "gunawan_catur": "1809", "wayans": "1809", "priyanto-pppk": "1809", "yondriz-pppk": "1809", "supriyatin-pppk": "1809", "defkisuherman-pppk": "1809", "sukisno2": "1809", "nugro.asmoro": "1809", "riyanti2": "1809", "andriazi": "1809", "abdulkadir": "1809", "mat.darustan": "1809", "amri.kusuma": "1809", "narang.maya": "1809", "venri.sitohang": "1809", "lia_gst": "1809", "ganes.aw": "1809", "arlienhp": "1809", "rizqa.fithriani": "1809", "ana.destriana": "1809", "pipit.susilo": "1809", "dinnypravita": "1809", "henida.widyatama": "1809", "tri.mayasari": "1809", "wahyu.kautsar": "1809", "dira.annisa": "1809", "aisyah.salsabila": "1809", "putra.yoga": "1809", "aguspras-pppk": "1809", "guruh.dewa": "1809", "maulidiasopa": "1809", "johan.irawan": "1809", "dicky.suharto": "1809", "siti.masayu": "1809", "novi.ismail": "1809", "eko.purnomo": "1810", "ambriyanto": "1810", "suprayitno-pppk": "1810", "priyoariyanto-pppk": "1810", "diah.hp": "1810", "singgih.adiwijaya": "1810", "fitri.nurjanah": "1810", "eklesia.valentia": "1810", "hariyanto-pppk": "1810", "lisaerlina-pppk": "1810", "suratman-pppk": "1810", "andi.stiawan": "1810", "bahri.syamsul": "1810", "muh.zaenuri": "1810", "dewiyuliana": "1810", "arump": "1810", "budi.surachman": "1810", "fitriyah": "1810", "nisalasi": "1810", "sresty": "1810", "rikiafrianto-pppk": "1810", "annisa.mardiyah": "1810", "fanisa": "1810", "sela.anisada": "1810", "esa.anindika": "1810", "miftahul.husna": "1810", "dinialfitrizahra": "1810", "ayusetianingsih": "1810", "ahmadrifjayansyah": "1810", "agustin.nafta": "1810", "erwansyah": "1810", "tri.bs": "1810", "saifu.rohmatullah": "1810", "fazani": "1810", "sunarto3": "1811", "dapriyawan": "1811", "indragunawan-pppk": "1811", "damayanti-pppk": "1811", "prastyo": "1811", "hamzah.saifudin": "1811", "imron.rosyadi": "1811", "herny.wahyuni": "1811", "aroki.yudha": "1811", "sriutami": "1800", "rizkamaulana-pppk": "1811", "syahidul": "1811", "eka.pratiwi": "1811", "rnarulita": "1811", "arifatul.aurora": "1811", "muiz.fahmi": "1811", "aisyah.fahma": "1811", "rizki.adriansah": "1811", "dipta.adani": "1811", "mega.fenny": "1811", "akwilla.bahkti": "1811", "auliya.saufi": "1811", "elva.kristiani": "1811", "maulaazka.f": "1811", "fahmi.sahal": "1811", "sartika.siregar": "1812", "giovanifebrian": "1812", "zainudd-pppk": "1812", "hermansyah-pppk": "1812", "noni.fitriani": "1812", "nuralfiah-pppk": "1812", "hendrop": "1812", "priasetya": "1812", "erwan": "1812", "ebi.heriyanto": "1812", "merisa.widyasari": "1812", "khalida.hanum": "1812", "anaufal": "1812", "abizar.alghifari": "1812", "martin.yuliani": "1812", "lissa.wardana": "1812", "ayu.nova": "1812", "laraayu": "1812", "putri.tareka": "1812", "qorinul.huda": "1812", "alharis.faiz": "1812", "nurul.azizah": "1812", "zulfaning.tyas": "1812", "sanjaya.saputra": "1812", "ervina": "1813", "purwanda": "1813", "istiqlal": "1813", "tuhir": "1813", "hendrit": "1813", "pinki.reynaldo": "1813", "evan": "1813", "meiru.rezki": "1813", "elpa.heryanti": "1813", "darmansyah": "1813", "hadys": "1871", "gun.nugraha": "1871", "sulianto-pppk": "1871", "ekorahmat-pppk": "1871", "yulianradian-pppk": "1871", "wasilawati": "1871", "dian_wurya": "1871", "santi.aritonang": "1871", "darul": "1871", "indrak": "1871", "ican": "1871", "sasma": "1871", "erwan.jafrilda": "1871", "edi.kurniawan": "1871", "risdianto": "1871", "merthap": "1871", "evie": "1871", "erikasanti": "1871", "baguspriosambodo": "1871", "kaisar.samudra": "1871", "erika.hs": "1871", "virgowinatha": "1871", "andika.nb": "1805", "aprilia": "1871", "abdi.utama": "1871", "anneoktaviaandriyani": "1871", "desli": "1871", "sari.pratiwi": "1871", "anggi.budi": "1871", "anita.desmarini": "1871", "vicky.lukito": "1871", "rafiqo.ardi": "1871", "belinda.putri": "1871", "habnihamara": "1871", "viona.rahma": "1871", "dini.arianindy": "1871", "akhmad.riadi": "1871", "fahroni.agustarita": "1871", "alberto.maradona": "1871", "arum": "1872", "ade_fitriansyah": "1872", "agussusilo-pppk": "1872", "billychristy-pppk": "1872", "erfankurnia-pppk": "1872", "titissulis-pppk": "1872", "arum.adiza": "1872", "eko.guswanto": "1872", "hendarwanto": "1872", "ariyanto3": "1872", "yosep": "1872", "farid.indrajaya": "1872", "febriana": "1872", "novi.etrisia": "1872", "arter": "1872", "okfrisdasakti": "1872", "delvi.rp": "1872", "rahmawatin": "1872", "ambarningrum": "1872", "noverlina": "1872", "putudewi": "1872", "erma.fitriana": "1872", "fikri.pazanudin": "1872", "chintia.arisandi": "1872", "isnaeni.nur": "1872", "austin.jr": "1872", "fitra.saputra": "1872", "isna.syafira": "1800", "ahmad.janizar": "1872"};
+
 // ── CONFIG & STATE ────────────────────────────────────────
 const PAGE_SIZE  = 25;
 let globalRawData = []; 
@@ -513,12 +457,16 @@ const TARGET_DATA = [
   { id: "METRO", nama: "Metro", target: 26242, base_11_maret: 29336 }
 ];
 
-// ── FUNGSI PENGOLAH DATA (DENGAN FILTER TANGGAL) ──────────
+// ── HELPERS ───────────────────────────────────────────────
+function getSatker(username) {
+  return SATKER_MAP[username] || "0000";
+}
+
+// ── FUNGSI PENGOLAH DATA ──────────────────────────────────
 function olahDataMentah(rawData, startDate) {
   let kabMap = {};
   let userMap = {};
   
-  // Filter Data Berdasarkan Tanggal Mulai
   let dataToProcess = rawData;
   if (startDate) {
     dataToProcess = rawData.filter(row => {
@@ -532,7 +480,6 @@ function olahDataMentah(rawData, startDate) {
   let latestUpdate = ""; 
   let earliestDate = "9999-12-31"; 
 
-  // Lakukan Perhitungan (Pivot)
   dataToProcess.forEach(row => {
     let kabName = row.Kabupaten_Kota || row.kabupaten_kota || "Tidak Diketahui";
     let uname = row.username || "Tidak Diketahui";
@@ -542,14 +489,12 @@ function olahDataMentah(rawData, startDate) {
     if (tglFull > latestUpdate) latestUpdate = tglFull;
     if (tgl < earliestDate) earliestDate = tgl; 
 
-    // Hitung Kabupaten
     if (!kabMap[kabName]) kabMap[kabName] = { nama: kabName, total: 0, harian: {} };
     kabMap[kabName].total += 1;
     if (!kabMap[kabName].harian[tgl]) kabMap[kabName].harian[tgl] = 0;
     kabMap[kabName].harian[tgl] += 1;
 
-    // Hitung User
-    if (!userMap[uname]) userMap[uname] = { username: uname, total: 0, kabupaten: {} };
+    if (!userMap[uname]) userMap[uname] = { username: uname, total: 0, kabupaten: {}, satker: getSatker(uname) };
     userMap[uname].total += 1;
     if (!userMap[uname].kabupaten[kabName]) userMap[uname].kabupaten[kabName] = 0;
     userMap[uname].kabupaten[kabName] += 1;
@@ -565,7 +510,7 @@ function olahDataMentah(rawData, startDate) {
     let year = latestUpdate.substring(0,4);
     let month = latestUpdate.substring(5,7);
     let day = latestUpdate.substring(8,10);
-    let time = latestUpdate.includes('T') ? latestUpdate.substring(11,16) : latestUpdate.substring(11,16);
+    let time = latestUpdate.substring(11,16);
     formattedUpdate = `${day}/${month}/${year} ${time}`;
   }
 
@@ -578,7 +523,7 @@ function olahDataMentah(rawData, startDate) {
   };
 }
 
-// ── INIT (MENGAMBIL DATA PERTAMA KALI) ────────────────────
+// ── INIT ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   fetch('data_hasil_tambah_usaha.json')
     .then(response => response.json())
@@ -601,10 +546,24 @@ function init() {
     dateInput.value = appData.earliest_date;
   }
 
+  populateSatkerFilter();
   updateUI(); 
 }
 
-// ── FUNGSI APPLY FILTER TANGGAL ───────────────────────────
+// ── POPULATE SATKER DROPDOWN ──────────────────────────────
+function populateSatkerFilter() {
+  const select = document.getElementById('satker-filter');
+  const allCodes = [...new Set(appData.users.map(u => u.satker))].sort();
+  select.innerHTML = '<option value="">Semua Satker</option>';
+  allCodes.forEach(code => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = 'Satker ' + code;
+    select.appendChild(opt);
+  });
+}
+
+// ── APPLY FILTER TANGGAL ──────────────────────────────────
 function applyDateFilter() {
   const selectedDate = document.getElementById('filter-date').value;
   appData = olahDataMentah(globalRawData, selectedDate);
@@ -612,32 +571,28 @@ function applyDateFilter() {
   const searchInput = document.getElementById('user-search');
   if(searchInput) searchInput.value = "";
   
+  populateSatkerFilter();
   updateUI();
 }
 
-// ── FUNGSI RENDER TAMPILAN KESELURUHAN ────────────────────
+// ── RENDER UI ─────────────────────────────────────────────
 function updateUI() {
   const today = new Date().toISOString().slice(0,10);
   let todayTotal = 0;
-  appData.kabupaten.forEach(k => {
-    todayTotal += (k.harian[today] || 0);
-  });
+  appData.kabupaten.forEach(k => { todayTotal += (k.harian[today] || 0); });
 
   document.getElementById('stat-total').textContent   = appData.total_records.toLocaleString('id-ID');
   document.getElementById('stat-kab').textContent     = TARGET_DATA.length; 
   document.getElementById('stat-user').textContent    = appData.users.length;
   document.getElementById('stat-today').textContent   = todayTotal.toLocaleString('id-ID');
   
-  if (appData.total_records > 0) {
-     document.getElementById('hdr-updated').textContent = 'Update: ' + appData.last_updated;
-  } else {
-     document.getElementById('hdr-updated').textContent = 'Update: -';
-  }
+  document.getElementById('hdr-updated').textContent = appData.total_records > 0 
+    ? 'Update: ' + appData.last_updated : 'Update: -';
 
-  document.getElementById('cnt-kab').textContent      = appData.kabupaten.length;
-  document.getElementById('cnt-user').textContent     = appData.users.length;
-  document.getElementById('kab-count').textContent    = appData.kabupaten.length + ' wilayah';
-  document.getElementById('user-count').textContent   = appData.users.length + ' petugas';
+  document.getElementById('cnt-kab').textContent  = appData.kabupaten.length;
+  document.getElementById('cnt-user').textContent = appData.users.length;
+  document.getElementById('kab-count').textContent = appData.kabupaten.length + ' wilayah';
+  document.getElementById('user-count').textContent = appData.users.length + ' petugas';
 
   renderKabupaten();
   renderRekapTarget(); 
@@ -655,63 +610,44 @@ function switchTab(tab, btn) {
   document.getElementById('panel-' + tab).classList.add('active');
 }
 
-// ── REKAP TARGET & REALISASI (LOGIKA KUMULATIF AKURAT) ────
+// ── REKAP TARGET ──────────────────────────────────────────
 function renderRekapTarget() {
   const tbody = document.getElementById('rekap-tbody');
   tbody.innerHTML = '';
-  
-  let totalTarget = 0;
-  let totalRealisasi = 0;
+  let totalTarget = 0, totalRealisasi = 0;
 
-  // 1. Hitung HANYA tambahan capaian sejak 12 Maret 2026 dari raw data JSON
   let tambahanSejak12Maret = {};
   globalRawData.forEach(row => {
     let tglFull = row.created_at ? row.created_at : "2024-01-01 00:00:00";
     let tgl = tglFull.substring(0, 10);
-    
-    // Hanya hitung jika tanggal input >= 12 Maret 2026
     if (tgl >= "2026-03-12") {
       let kabName = row.Kabupaten_Kota || row.kabupaten_kota || "Tidak Diketahui";
-      // Normalisasi teks agar cocok dengan ID
       let norm = kabName.toUpperCase().replace("KOTA ", "").replace("TULANGBAWANG", "TULANG BAWANG"); 
-      
       if (!tambahanSejak12Maret[norm]) tambahanSejak12Maret[norm] = 0;
       tambahanSejak12Maret[norm] += 1;
     }
   });
 
-  // 2. Gabungkan Angka Dasar (11 Maret) + Tambahan Baru
   let rekapData = TARGET_DATA.map(item => {
     let normId = item.id.replace("TULANGBAWANG", "TULANG BAWANG");
     let tambahanBaru = tambahanSejak12Maret[normId] || 0; 
-    
-    // Rumus Akurat: Base 11 Maret + JSON baru
     let realisasi = item.base_11_maret + tambahanBaru; 
     let sisa = item.target - realisasi;
     let pct = (realisasi / item.target) * 100;
-    
     totalTarget += item.target;
     totalRealisasi += realisasi;
-
     return { ...item, realisasi, sisa, pct };
   });
 
-  // Urutkan dari persentase capaian tertinggi ke terendah
   rekapData.sort((a, b) => b.pct - a.pct);
 
-  // Gambar baris tabel
   rekapData.forEach((row, idx) => {
     const isSelesai = row.sisa <= 0;
-    
-    // Format teks sisa (Kekurangan)
     const sisaText = isSelesai 
       ? `<span style="color: var(--green); font-weight: 700;">+${Math.abs(row.sisa).toLocaleString('id-ID')} (Lebih)</span>` 
       : `<span style="color: var(--red); font-weight: 700;">-${row.sisa.toLocaleString('id-ID')}</span>`;
-      
-    // Warna untuk progress bar
     const barColor = isSelesai ? 'linear-gradient(90deg, var(--green-light), var(--green))' : 'linear-gradient(90deg, var(--orange-light), var(--orange))';
     const pctDisplay = row.pct > 100 ? 100 : row.pct; 
-
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${idx + 1}</td>
@@ -729,28 +665,25 @@ function renderRekapTarget() {
     tbody.appendChild(tr);
   });
 
-  // Baris TOTAL di paling bawah
   const totalSisa = totalTarget - totalRealisasi;
   const totalPct = (totalRealisasi / totalTarget) * 100;
   const isTotalSelesai = totalSisa <= 0;
-  
   const totalSisaText = isTotalSelesai 
-      ? `<span style="color: var(--green); font-weight: 800;">+${Math.abs(totalSisa).toLocaleString('id-ID')} (Lebih)</span>` 
-      : `<span style="color: var(--red); font-weight: 800;">-${totalSisa.toLocaleString('id-ID')}</span>`;
-      
+    ? `<span style="color: var(--green); font-weight: 800;">+${Math.abs(totalSisa).toLocaleString('id-ID')} (Lebih)</span>` 
+    : `<span style="color: var(--red); font-weight: 800;">-${totalSisa.toLocaleString('id-ID')}</span>`;
   const totalBarColor = isTotalSelesai ? 'linear-gradient(90deg, var(--green-light), var(--green))' : 'linear-gradient(90deg, var(--orange-light), var(--orange))';
 
   const trTotal = document.createElement('tr');
   trTotal.style.background = 'var(--gray-50)';
   trTotal.innerHTML = `
     <td colspan="2" style="font-weight: 800; text-align: right; color: var(--gray-900);">TOTAL PROVINSI LAMPUNG</td>
-    <td style="font-family: 'DM Mono', monospace; font-weight: 800; color: var(--gray-900);">${totalTarget.toLocaleString('id-ID')}</td>
+    <td style="font-family: 'DM Mono', monospace; font-weight: 800;">${totalTarget.toLocaleString('id-ID')}</td>
     <td style="font-family: 'DM Mono', monospace; font-weight: 800; color: var(--gray-900);">${totalRealisasi.toLocaleString('id-ID')}</td>
     <td>
-        <div class="mini-bar-wrap">
-          <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${totalPct > 100 ? 100 : totalPct}%; background: ${totalBarColor}"></div></div>
-          <span class="mini-pct" style="font-weight: 800; color: var(--gray-900);">${totalPct.toFixed(1)}%</span>
-        </div>
+      <div class="mini-bar-wrap">
+        <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${totalPct > 100 ? 100 : totalPct}%; background: ${totalBarColor}"></div></div>
+        <span class="mini-pct" style="font-weight: 800; color: var(--gray-900);">${totalPct.toFixed(1)}%</span>
+      </div>
     </td>
     <td style="font-family: 'DM Mono', monospace;">${totalSisaText}</td>
   `;
@@ -759,18 +692,17 @@ function renderRekapTarget() {
 
 // ── KABUPATEN ─────────────────────────────────────────────
 function renderKabupaten() {
-  const grid   = document.getElementById('kab-grid');
+  const grid = document.getElementById('kab-grid');
   grid.innerHTML = '';
   
   if (appData.kabupaten.length === 0) {
-     grid.innerHTML = '<div style="color:var(--gray-400); padding: 20px;">Tidak ada data pada tanggal tersebut.</div>';
-     return;
+    grid.innerHTML = '<div style="color:var(--gray-400); padding: 20px;">Tidak ada data pada tanggal tersebut.</div>';
+    return;
   }
 
   const maxVal = appData.kabupaten[0].total;
-
   const cards = appData.kabupaten.map((kab, i) => {
-    const pct  = ((kab.total / appData.total_records) * 100).toFixed(1);
+    const pct = ((kab.total / appData.total_records) * 100).toFixed(1);
     const card = document.createElement('div');
     card.className = 'kab-card';
     card.innerHTML = `
@@ -803,45 +735,48 @@ function renderKabupaten() {
 function buildSparkline(harian) {
   const entries = Object.entries(harian).sort((a,b) => a[0].localeCompare(b[0]));
   if (!entries.length) return '';
-  const vals    = entries.map(e => e[1]);
-  const maxV    = Math.max(...vals, 1);
+  const vals = entries.map(e => e[1]);
+  const maxV = Math.max(...vals, 1);
   const W = 280, H = 44, pad = 2;
   const pts = vals.map((v, i) => {
     const x = pad + (i / (vals.length - 1 || 1)) * (W - pad*2);
     const y = H - pad - (v / maxV) * (H - pad*2);
     return `${x},${y}`;
   }).join(' ');
-
   const area = `${pad},${H} ` + pts + ` ${W-pad},${H}`;
-
+  const gid = 'sg' + Math.random().toString(36).slice(2);
   return `<svg class="sparkline" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="sg${Math.random().toString(36).slice(2)}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#F97316" stop-opacity=".25"/>
-        <stop offset="100%" stop-color="#F97316" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-    <polygon points="${area}" fill="url(#sg${Math.random().toString(36).slice(2)})" />
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F97316" stop-opacity=".25"/>
+      <stop offset="100%" stop-color="#F97316" stop-opacity="0"/>
+    </linearGradient></defs>
+    <polygon points="${area}" fill="url(#${gid})" />
     <polyline points="${pts}" fill="none" stroke="#F97316" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
   </svg>`;
 }
 
-// ── USERS ─────────────────────────────────────────────────
+// ── USERS FILTER ──────────────────────────────────────────
 function filterUsers() {
   const q = document.getElementById('user-search').value.toLowerCase().trim();
-  filteredUsers = q
-    ? appData.users.filter(u => u.username.toLowerCase().includes(q))
-    : [...appData.users];
+  const satkerVal = document.getElementById('satker-filter').value;
+
+  filteredUsers = appData.users.filter(u => {
+    const matchText = !q || u.username.toLowerCase().includes(q) || u.satker.includes(q);
+    const matchSatker = !satkerVal || u.satker === satkerVal;
+    return matchText && matchSatker;
+  });
+
   document.getElementById('user-count').textContent = filteredUsers.length + ' petugas';
   renderUsersPage(1);
 }
 
+// ── RENDER USERS TABLE ────────────────────────────────────
 function renderUsersPage(page) {
   currentPage = page;
-  const total  = filteredUsers.length;
-  const pages  = Math.ceil(total / PAGE_SIZE) || 1;
-  const start  = (page - 1) * PAGE_SIZE;
-  const slice  = filteredUsers.slice(start, start + PAGE_SIZE);
+  const total = filteredUsers.length;
+  const pages = Math.ceil(total / PAGE_SIZE) || 1;
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = filteredUsers.slice(start, start + PAGE_SIZE);
   const maxVal = appData.users[0]?.total || 1;
 
   document.getElementById('user-count').textContent = filteredUsers.length + ' petugas';
@@ -850,24 +785,26 @@ function renderUsersPage(page) {
   tbody.innerHTML = '';
   
   if (slice.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Tidak ada petugas yang ditemukan.</td></tr>';
-      document.getElementById('page-info').textContent = "Menampilkan 0 petugas";
-      document.getElementById('page-btns').innerHTML = '';
-      return;
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Tidak ada petugas yang ditemukan.</td></tr>';
+    document.getElementById('page-info').textContent = "Menampilkan 0 petugas";
+    document.getElementById('page-btns').innerHTML = '';
+    return;
   }
 
   slice.forEach((u, idx) => {
-    const rank     = start + idx + 1;
-    const pct      = ((u.total / appData.total_records) * 100).toFixed(2);
-    const barPct   = ((u.total / maxVal) * 100).toFixed(1);
-    const kabTags  = Object.entries(u.kabupaten)
+    const rank    = start + idx + 1;
+    const pct     = ((u.total / appData.total_records) * 100).toFixed(2);
+    const barPct  = ((u.total / maxVal) * 100).toFixed(1);
+    const kabTags = Object.entries(u.kabupaten)
       .slice(0, 3)
       .map(([k,v]) => `<span class="kab-tag">${k.split(' ').slice(0,2).join(' ')} (${v})</span>`)
       .join('');
+    const satkerClass = u.satker === '0000' ? 'satker-cell unknown' : 'satker-cell';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="rank-cell ${rank<=3?'rank-top':''}">${rank<=3?'🏆':''}${rank}</td>
+      <td class="rank-cell ${rank<=3?'rank-top':''}">${rank<=3?'🏆':''} ${rank}</td>
+      <td><span class="${satkerClass}">${u.satker}</span></td>
       <td class="user-name">${u.username}</td>
       <td class="total-cell">${u.total.toLocaleString('id-ID')}</td>
       <td>
@@ -911,6 +848,65 @@ function getPageRange(cur, total) {
   if (cur <= 4) return [1,2,3,4,5,'…',total];
   if (cur >= total-3) return [1,'…',total-4,total-3,total-2,total-1,total];
   return [1,'…',cur-1,cur,cur+1,'…',total];
+}
+
+// ── DOWNLOAD EXCEL ────────────────────────────────────────
+function downloadExcel() {
+  if (!filteredUsers || filteredUsers.length === 0) {
+    alert('Tidak ada data untuk diunduh.');
+    return;
+  }
+
+  // Siapkan data untuk sheet
+  const rows = filteredUsers.map((u, idx) => {
+    const pct = ((u.total / appData.total_records) * 100).toFixed(2);
+    const kabList = Object.entries(u.kabupaten)
+      .sort((a,b) => b[1]-a[1])
+      .map(([k,v]) => `${k} (${v})`)
+      .join('; ');
+    return {
+      'No': idx + 1,
+      'Kode Satker': u.satker,
+      'Username': u.username,
+      'Total Usaha': u.total,
+      'Kontribusi (%)': parseFloat(pct),
+      'Kabupaten/Kota': kabList
+    };
+  });
+
+  // Baris total
+  rows.push({
+    'No': '',
+    'Kode Satker': '',
+    'Username': 'TOTAL',
+    'Total Usaha': filteredUsers.reduce((s,u) => s + u.total, 0),
+    'Kontribusi (%)': 100,
+    'Kabupaten/Kota': ''
+  });
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  // Lebar kolom
+  ws['!cols'] = [
+    { wch: 5 },   // No
+    { wch: 14 },  // Kode Satker
+    { wch: 28 },  // Username
+    { wch: 14 },  // Total Usaha
+    { wch: 16 },  // Kontribusi
+    { wch: 60 }   // Kab/Kota
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Capaian Petugas');
+
+  // Nama file dengan tanggal filter
+  const filterDate = document.getElementById('filter-date').value || 'semua';
+  const satkerLabel = document.getElementById('satker-filter').value || 'semua';
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const filename = `capaian_petugas_satker${satkerLabel}_mulai${filterDate}_${stamp}.xlsx`;
+
+  XLSX.writeFile(wb, filename);
 }
 </script>
 </body>
