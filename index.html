@@ -312,11 +312,49 @@ let filterDate   = '';
 let totalGrand   = 0;
 let todayGrand   = 0;
 
-// ── HELPER SUPABASE FETCH ─────────────────────────────────
+// ── HELPER SUPABASE FETCH (dengan pagination otomatis) ────
 async function sbFetch(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: SB_HEADERS });
   if (!res.ok) throw new Error(`Supabase error ${res.status}: ${await res.text()}`);
   return res.json();
+}
+
+// Ambil SEMUA data dengan pagination (bypass limit 1000)
+async function sbFetchAll(basePath, chunkSize = 1000) {
+  let allData = [];
+  let offset  = 0;
+  // Pisahkan path dari query string agar bisa append range
+  const [endpoint, qs] = basePath.includes('?') 
+    ? basePath.split('?') 
+    : [basePath, ''];
+  
+  while (true) {
+    const rangeHeader = {
+      ...SB_HEADERS,
+      "Range-Unit": "items",
+      "Range": `${offset}-${offset + chunkSize - 1}`
+    };
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}${qs ? '?' + qs : ''}`;
+    const res = await fetch(url, { headers: rangeHeader });
+    
+    if (!res.ok) throw new Error(`Supabase error ${res.status}: ${await res.text()}`);
+    
+    const chunk = await res.json();
+    if (!chunk || chunk.length === 0) break;
+    
+    allData = allData.concat(chunk);
+    
+    // Kalau chunk < chunkSize berarti sudah halaman terakhir
+    if (chunk.length < chunkSize) break;
+    
+    offset += chunkSize;
+    // Tampilkan progress di loading
+    const el = document.getElementById('loading');
+    if (el && el.style.display !== 'none') {
+      el.querySelector('div').textContent = `Memuat data… (${allData.length.toLocaleString('id-ID')} baris)`;
+    }
+  }
+  return allData;
 }
 
 // ── QUERY UTAMA KE SUPABASE ───────────────────────────────
@@ -327,16 +365,13 @@ async function loadData() {
   // Query paralel: rekap user, rekap kabupaten, total hari ini
   const today = new Date().toISOString().slice(0,10);
 
-  const [rawUser, rawKab, rawToday, rawTotal] = await Promise.all([
-    // Rekap per user — ambil semua kolom yang dibutuhkan
-    sbFetch(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=username`),
-    // Rekap per kabupaten
-    sbFetch(`hasil_usaha?select=kabupaten_kota${dateFilter}&order=kabupaten_kota`),
-    // Hitung hari ini
+  // Gunakan sbFetchAll agar semua data termuat (bukan hanya 1000 pertama)
+  const [rawUser, rawToday, rawTotal] = await Promise.all([
+    sbFetchAll(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=username`),
     sbFetch(`hasil_usaha?select=id&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59`),
-    // Total keseluruhan (tanpa filter tanggal, untuk rekap target)
-    sbFetch(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00`)
+    sbFetchAll(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00`)
   ]);
+  const rawKab = rawUser; // rawKab tidak perlu query terpisah
 
   // Pivot user
   const userMap = {};
@@ -376,20 +411,41 @@ async function loadData() {
 // ── LOAD HARIAN (butuh created_at per baris utk sparkline) ─
 async function loadHarian() {
   const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
-  const rawAll = await sbFetch(`hasil_usaha?select=kabupaten_kota,created_at${dateFilter}&order=created_at`);
+  const rawAll = await sbFetchAll(`hasil_usaha?select=kabupaten_kota,created_at${dateFilter}&order=created_at`);
   
   // Reset harian
   allKab.forEach(k => { k.harian = {}; });
   const kabIdx = {};
   allKab.forEach(k => { kabIdx[k.nama] = k; });
 
+  let latestTs = '';
   rawAll.forEach(r => {
     const kn = r.kabupaten_kota || 'Tidak Diketahui';
     const tgl = (r.created_at||'').substring(0,10);
     if (kabIdx[kn] && tgl) {
       kabIdx[kn].harian[tgl] = (kabIdx[kn].harian[tgl]||0) + 1;
     }
+    // Track tanggal terbaru
+    if (r.created_at && r.created_at > latestTs) latestTs = r.created_at;
   });
+
+  // Format tanggal update terakhir: DD/MM/YYYY HH:MM
+  if (latestTs.length >= 16) {
+    const d = latestTs.substring(0,10).split('-');
+    const t = latestTs.substring(11,16);
+    window._latestCreatedAt = d[2] + '/' + d[1] + '/' + d[0] + ' ' + t;
+  } else {
+    // Fallback: ambil langsung 1 baris terbaru dari Supabase
+    try {
+      const latest = await sbFetch(`hasil_usaha?select=created_at&order=created_at.desc&limit=1`);
+      if (latest[0]?.created_at) {
+        const ts = latest[0].created_at;
+        const d = ts.substring(0,10).split('-');
+        const t = ts.substring(11,16);
+        window._latestCreatedAt = d[2] + '/' + d[1] + '/' + d[0] + ' ' + t;
+      }
+    } catch(e) { /* silent fail */ }
+  }
 }
 
 // ── INIT ──────────────────────────────────────────────────
@@ -436,7 +492,11 @@ function updateUI() {
   document.getElementById('stat-total').textContent = totalGrand.toLocaleString('id-ID');
   document.getElementById('stat-user').textContent  = allUsers.length;
   document.getElementById('stat-today').textContent = todayGrand.toLocaleString('id-ID');
-  document.getElementById('hdr-updated').textContent = 'Live · ' + new Date().toLocaleTimeString('id-ID');
+  // Tampilkan tanggal update terakhir dari data (di-set oleh loadHarian)
+  const latestDate = window._latestCreatedAt || '';
+  document.getElementById('hdr-updated').textContent = latestDate
+    ? 'Update: ' + latestDate
+    : 'Memuat…';
   document.getElementById('cnt-kab').textContent    = allKab.length;
   document.getElementById('cnt-user').textContent   = allUsers.length;
   document.getElementById('kab-count').textContent  = allKab.length + ' wilayah';
