@@ -457,7 +457,7 @@ async function loadData() {
   // Gunakan sbFetchAll agar semua data termuat (bukan hanya 1000 pertama)
   const [rawUser, rawToday, rawTotal] = await Promise.all([
     sbFetchAll(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=username`),
-    sbFetch(`hasil_usaha?select=id&created_at=gte.${today}T00:00:00+07:00&created_at=lt.${today}T23:59:59+07:00`),
+    sbFetch(`hasil_usaha?select=id&created_at=gte.${today}T00:00:00%2B07:00&created_at=lt.${today}T23:59:59%2B07:00`),
     sbFetchAll(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00`)
   ]);
   const rawKab = rawUser; // rawKab tidak perlu query terpisah
