@@ -228,6 +228,21 @@
 </head>
 <body>
 
+<!-- LOADING OVERLAY (fixed, di luar semua konten) -->
+<div id="loading">
+  <div class="ld-logo">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" style="fill:none;stroke:white;stroke-width:1.5"/></svg>
+  </div>
+  <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
+  <div class="ld-count" id="ld-count">—</div>
+  <div class="ld-label">baris data dimuat</div>
+  <div class="ld-dots">
+    <div class="ld-dot"></div>
+    <div class="ld-dot"></div>
+    <div class="ld-dot"></div>
+  </div>
+</div>
+
 <header>
   <div class="header-inner">
     <a class="logo" href="#">
@@ -253,7 +268,7 @@
       <div class="hstat"><div class="hstat-val" id="stat-total">—</div><div class="hstat-lbl">Total Usaha Terinput</div></div>
       <div class="hstat"><div class="hstat-val" id="stat-kab">15</div><div class="hstat-lbl">Kabupaten/Kota</div></div>
       <div class="hstat"><div class="hstat-val" id="stat-user">—</div><div class="hstat-lbl">Petugas Aktif</div></div>
-      <div class="hstat"><div class="hstat-val" id="stat-today">—</div><div class="hstat-lbl">Input Hari Ini</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-today">—</div><div class="hstat-lbl" id="lbl-today">Input Hari Ini</div></div>
     </div>
   </div>
 </section>
@@ -284,19 +299,6 @@
 </div>
 
 <div class="main">
-  <div id="loading">
-    <div class="ld-logo">
-      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" style="fill:none;stroke:white;stroke-width:1.5"/></svg>
-    </div>
-    <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
-    <div class="ld-count" id="ld-count">—</div>
-    <div class="ld-label">baris data dimuat</div>
-    <div class="ld-dots">
-      <div class="ld-dot"></div>
-      <div class="ld-dot"></div>
-      <div class="ld-dot"></div>
-    </div>
-  </div>
 
   <!-- TAB PETUGAS -->
   <div class="panel active" id="panel-user">
@@ -444,19 +446,25 @@ async function sbFetchAll(basePath, chunkSize = 1000) {
 
 // ── QUERY UTAMA KE SUPABASE ───────────────────────────────
 async function loadData() {
-  // Bangun filter tanggal jika ada
+  // Filter tanggal (untuk tab petugas & kabupaten)
   const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
 
-  // Query paralel: rekap user, rekap kabupaten, total hari ini
-  const today = new Date().toISOString().slice(0,10);
+  // "Hari ini" dalam WIB — pakai Intl agar akurat tidak peduli lokasi server
+  const todayWIB   = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Jakarta', year:'numeric', month:'2-digit', day:'2-digit'
+  }).format(new Date());
 
-  // Gunakan sbFetchAll agar semua data termuat (bukan hanya 1000 pertama)
+  // Jika filter tanggal aktif → "input tanggal tsb", kalau tidak → "input hari ini WIB"
+  const countDate  = filterDate || todayWIB;
+
   const [rawUser, rawToday, rawTotal] = await Promise.all([
+    // Rekap per user & kabupaten (ikut filter tanggal)
     sbFetchAll(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=username`),
-    sbFetch(`hasil_usaha?select=id&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59`),
+    // Hitung input sesuai countDate (00:00 – 23:59 lokal)
+    sbFetch(`hasil_usaha?select=id&created_at=gte.${countDate}T00:00:00&created_at=lte.${countDate}T23:59:59`),
+    // Total sejak 12 Maret untuk rekap target (tidak terpengaruh filter)
     sbFetchAll(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00`)
   ]);
-  const rawKab = rawUser; // rawKab tidak perlu query terpisah
 
   // Pivot user
   const userMap = {};
@@ -469,20 +477,25 @@ async function loadData() {
   });
   allUsers = Object.values(userMap).sort((a,b) => b.total - a.total);
 
-  // Pivot kabupaten + hitung harian dari rawUser
+  // Pivot kabupaten
   const kabMap = {};
   rawUser.forEach(r => {
     const k = r.kabupaten_kota || 'Tidak Diketahui';
     if (!kabMap[k]) kabMap[k] = { nama:k, total:0, harian:{} };
     kabMap[k].total++;
   });
-  // Hitung harian dari rawKab (hanya nama kab, tapi kita sudah punya dari rawUser)
   allKab = Object.values(kabMap).sort((a,b) => b.total - a.total);
 
   totalGrand = rawUser.length;
   todayGrand = rawToday.length;
 
-  // Hitung rekap target (dari data sejak 12 Maret)
+  // Label dinamis "Input Hari Ini" atau "Input tgl XX"
+  const lblToday = document.getElementById('lbl-today');
+  if (lblToday) {
+    lblToday.textContent = filterDate ? `Input ${filterDate}` : 'Input Hari Ini';
+  }
+
+  // Hitung rekap target (sejak 12 Maret)
   const tambahan = {};
   rawTotal.forEach(r => {
     const k = (r.kabupaten_kota||'').toUpperCase().replace('KOTA ','').replace('TULANGBAWANG','TULANG BAWANG');
@@ -586,6 +599,9 @@ function updateUI() {
   document.getElementById('stat-total').textContent = totalGrand.toLocaleString('id-ID');
   document.getElementById('stat-user').textContent  = allUsers.length;
   document.getElementById('stat-today').textContent = todayGrand.toLocaleString('id-ID');
+  // Label dinamis sesuai filter
+  const todayLabel = document.getElementById('lbl-today');
+  if (todayLabel) todayLabel.textContent = filterDate ? `Input ${filterDate}` : 'Input Hari Ini';
   // Tampilkan tanggal update terakhir dari data (di-set oleh loadHarian)
   const latestDate = window._latestCreatedAt || '';
   document.getElementById('hdr-updated').textContent = latestDate
