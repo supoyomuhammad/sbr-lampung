@@ -450,14 +450,24 @@ async function loadData() {
   const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
 
   // Query paralel: rekap user, rekap kabupaten, total hari ini
-  // Hitung tanggal hari ini dalam WIB (UTC+7) — bukan UTC
-  const nowWIB  = new Date(Date.now() + 7 * 60 * 60 * 1000);
-  const today   = nowWIB.toISOString().slice(0,10);
+  // Hitung range "hari ini WIB" dalam UTC
+  // WIB = UTC+7, jadi hari ini WIB 00:00 = kemarin UTC 17:00
+  // Contoh: 23 Mar WIB 00:00 = 22 Mar UTC 17:00
+  const nowWIB       = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const today        = nowWIB.toISOString().slice(0,10); // tanggal WIB
+  // Batas bawah: today 00:00 WIB = today-1 17:00:00 UTC
+  const todayStartUTC = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate(), 0, 0, 0);
+  todayStartUTC.setHours(todayStartUTC.getHours() - 7); // geser ke UTC
+  const todayStart = todayStartUTC.toISOString().replace('.000Z','');
+  // Batas atas: today 23:59:59 WIB = today 16:59:59 UTC
+  const todayEndUTC = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate(), 23, 59, 59);
+  todayEndUTC.setHours(todayEndUTC.getHours() - 7);
+  const todayEnd = todayEndUTC.toISOString().replace('.000Z','');
 
   // Gunakan sbFetchAll agar semua data termuat (bukan hanya 1000 pertama)
   const [rawUser, rawToday, rawTotal] = await Promise.all([
     sbFetchAll(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=username`),
-    sbFetch(`hasil_usaha?select=id&created_at=gte.${today}T00:00:00%2B07:00&created_at=lt.${today}T23:59:59%2B07:00`),
+    sbFetch(`hasil_usaha?select=id&created_at=gte.${todayStart}&created_at=lte.${todayEnd}`),
     sbFetchAll(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00`)
   ]);
   const rawKab = rawUser; // rawKab tidak perlu query terpisah
