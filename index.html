@@ -124,10 +124,89 @@
     .page-btn.active{background:var(--orange);border-color:var(--orange);color:white}
     .page-btn:disabled{opacity:.4;cursor:not-allowed}
 
-    /* LOADING */
-    #loading{text-align:center;padding:80px 0;color:var(--gray-400);font-size:14px}
-    .spinner{width:36px;height:36px;border:3px solid var(--gray-200);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
-    .loading-msg{font-size:13px;color:var(--gray-400);margin-top:8px}
+    /* LOADING OVERLAY */
+    #loading{
+      position:fixed;inset:0;z-index:9999;
+      background:linear-gradient(135deg,var(--gray-900) 0%,#1a0a00 100%);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:0;
+    }
+    /* Orbs background */
+    #loading::before,#loading::after{
+      content:'';position:absolute;border-radius:50%;pointer-events:none;
+    }
+    #loading::before{
+      width:400px;height:400px;
+      background:radial-gradient(circle,rgba(249,115,22,.15) 0%,transparent 70%);
+      top:-80px;right:-80px;animation:orbFloat 6s ease-in-out infinite;
+    }
+    #loading::after{
+      width:300px;height:300px;
+      background:radial-gradient(circle,rgba(249,115,22,.1) 0%,transparent 70%);
+      bottom:-60px;left:-60px;animation:orbFloat 8s ease-in-out infinite reverse;
+    }
+    @keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-20px)}}
+
+    /* Logo bounce */
+    .ld-logo{
+      width:64px;height:64px;background:var(--orange);border-radius:18px;
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:32px;
+      box-shadow:0 0 0 0 rgba(249,115,22,.5);
+      animation:logoPulse 2s ease-in-out infinite;
+      position:relative;z-index:1;
+    }
+    .ld-logo svg{width:34px;height:34px;fill:white}
+    @keyframes logoPulse{
+      0%{box-shadow:0 0 0 0 rgba(249,115,22,.5);transform:scale(1)}
+      50%{box-shadow:0 0 0 18px rgba(249,115,22,0);transform:scale(1.05)}
+      100%{box-shadow:0 0 0 0 rgba(249,115,22,0);transform:scale(1)}
+    }
+
+    /* Progress bar */
+    .ld-bar-wrap{
+      width:220px;height:3px;background:rgba(255,255,255,.1);
+      border-radius:99px;overflow:hidden;margin-bottom:20px;
+      position:relative;z-index:1;
+    }
+    .ld-bar{
+      height:100%;border-radius:99px;
+      background:linear-gradient(90deg,var(--orange-dark),var(--orange),var(--orange-light));
+      background-size:200% 100%;
+      animation:barSlide 1.6s ease-in-out infinite;
+      width:40%;
+    }
+    @keyframes barSlide{
+      0%{background-position:100% 0;transform:translateX(-100%)}
+      50%{background-position:0% 0;transform:translateX(150%)}
+      100%{background-position:100% 0;transform:translateX(250%)}
+    }
+
+    /* Counter text */
+    .ld-count{
+      font-family:'DM Mono',monospace;font-size:22px;font-weight:500;
+      color:var(--orange);letter-spacing:.05em;
+      position:relative;z-index:1;margin-bottom:8px;
+      min-height:32px;
+    }
+    .ld-label{
+      font-size:12px;color:rgba(255,255,255,.35);font-weight:500;
+      text-transform:uppercase;letter-spacing:.12em;
+      position:relative;z-index:1;
+    }
+
+    /* Dots */
+    .ld-dots{display:flex;gap:7px;margin-top:28px;position:relative;z-index:1;}
+    .ld-dot{
+      width:6px;height:6px;border-radius:50%;background:rgba(249,115,22,.3);
+    }
+    .ld-dot:nth-child(1){animation:dotPop 1.4s .0s ease-in-out infinite}
+    .ld-dot:nth-child(2){animation:dotPop 1.4s .2s ease-in-out infinite}
+    .ld-dot:nth-child(3){animation:dotPop 1.4s .4s ease-in-out infinite}
+    @keyframes dotPop{
+      0%,100%{background:rgba(249,115,22,.3);transform:scale(1)}
+      50%{background:var(--orange);transform:scale(1.5)}
+    }
     @keyframes spin{to{transform:rotate(360deg)}}
 
     /* SKELETON shimmer */
@@ -206,9 +285,17 @@
 
 <div class="main">
   <div id="loading">
-    <div class="spinner"></div>
-    <div>Menghubungkan ke database…</div>
-    <div class="loading-msg">Data dimuat langsung dari Supabase, tidak perlu download file besar.</div>
+    <div class="ld-logo">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" style="fill:none;stroke:white;stroke-width:1.5"/></svg>
+    </div>
+    <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
+    <div class="ld-count" id="ld-count">—</div>
+    <div class="ld-label">baris data dimuat</div>
+    <div class="ld-dots">
+      <div class="ld-dot"></div>
+      <div class="ld-dot"></div>
+      <div class="ld-dot"></div>
+    </div>
   </div>
 
   <!-- TAB PETUGAS -->
@@ -348,11 +435,9 @@ async function sbFetchAll(basePath, chunkSize = 1000) {
     if (chunk.length < chunkSize) break;
     
     offset += chunkSize;
-    // Tampilkan progress di loading
-    const el = document.getElementById('loading');
-    if (el && el.style.display !== 'none') {
-      el.querySelector('div').textContent = `Memuat data… (${allData.length.toLocaleString('id-ID')} baris)`;
-    }
+    // Update counter animasi loading
+    const ldCount = document.getElementById('ld-count');
+    if (ldCount) ldCount.textContent = allData.length.toLocaleString('id-ID');
   }
   return allData;
 }
@@ -453,7 +538,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await loadData();
     await loadHarian();
-    document.getElementById('loading').style.display = 'none';
+    const ldEl = document.getElementById('loading');
+    ldEl.style.transition = 'opacity .5s ease';
+    ldEl.style.opacity = '0';
+    setTimeout(() => { ldEl.style.display = 'none'; ldEl.style.opacity = '1'; }, 500);
     
     // Set tanggal awal filter ke tanggal terlama di data
     const dateInput = document.getElementById('filter-date');
@@ -474,7 +562,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ── APPLY FILTER TANGGAL ──────────────────────────────────
 async function applyDateFilter() {
   filterDate = document.getElementById('filter-date').value;
-  document.getElementById('loading').style.display = 'block';
+  const ldEl = document.getElementById('loading');
+  ldEl.style.display = 'flex';
+  const ldCnt = document.getElementById('ld-count');
+  if (ldCnt) ldCnt.textContent = '—';
   document.querySelectorAll('.panel').forEach(p => p.style.opacity = '0.4');
   try {
     await loadData();
@@ -483,7 +574,10 @@ async function applyDateFilter() {
     populateSatkerFilter();
     updateUI();
   } catch(e) { console.error(e); }
-  document.getElementById('loading').style.display = 'none';
+  const ldEl2 = document.getElementById('loading');
+  ldEl2.style.transition = 'opacity .3s ease';
+  ldEl2.style.opacity = '0';
+  setTimeout(() => { ldEl2.style.display = 'none'; ldEl2.style.opacity = '1'; }, 300);
   document.querySelectorAll('.panel').forEach(p => p.style.opacity = '1');
 }
 
