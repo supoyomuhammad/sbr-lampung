@@ -275,7 +275,7 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const SB_HEADERS = {
   "apikey": SUPABASE_KEY,
-  "Authorization": `Bearer $eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0dG52eW92enhpenNiemVub3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODczNzcsImV4cCI6MjA4OTc2MzM3N30.g2MbRT4yTilyM3j6t3ANK0ADZ5Mmxg3Y9ylyJigK-Hk`,
+  "Authorization": `Bearer ${SUPABASE_KEY}`,
   "Content-Type": "application/json"
 };
 
@@ -314,7 +314,7 @@ let todayGrand   = 0;
 
 // ── HELPER SUPABASE FETCH ─────────────────────────────────
 async function sbFetch(path) {
-  const res = await fetch(`$https://tttnvyovzxizsbzenoxd.supabase.co/rest/v1/${path}`, { headers: SB_HEADERS });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: SB_HEADERS });
   if (!res.ok) throw new Error(`Supabase error ${res.status}: ${await res.text()}`);
   return res.json();
 }
