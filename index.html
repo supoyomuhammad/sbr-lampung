@@ -447,40 +447,18 @@ async function sbFetchAll(basePath, chunkSize = 1000) {
 // ── QUERY UTAMA KE SUPABASE ───────────────────────────────
 async function loadData() {
   // Bangun filter tanggal jika ada
-  const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
+  // Filter tanggal: pakai +07:00 agar WIB-aware
+  const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00%2B07:00` : '';
 
   // Query paralel: rekap user, rekap kabupaten, total hari ini
-  // Hitung "hari ini WIB" dengan cara yang akurat:
-  // Ambil tanggal WIB dari Supabase langsung (sudah tahu server timezone-nya)
-  // Gunakan filter: tanggal di WIB = cast created_at ke Asia/Jakarta
-  // Karena REST API tidak bisa SQL ekspresi, kita pakai pendekatan:
-  // cari data dengan created_at_wib (AT TIME ZONE) = hari ini WIB
-  // 
-  // Cara akurat: ambil "now()" dari Supabase via query kosong, 
-  // lalu hitung range UTC yang tepat berdasarkan offset server
-  const nowLocal = new Date();
-  // Minta Supabase return 1 row dengan current_date WIB
-  let todayWIB = '';
-  try {
-    const tzRes = await sbFetch('hasil_usaha?select=created_at&order=created_at.desc&limit=1');
-    // Gunakan Intl API untuk dapat tanggal WIB yang akurat dari browser
-    todayWIB = new Intl.DateTimeFormat('en-CA', { 
-      timeZone: 'Asia/Jakarta', 
-      year: 'numeric', month: '2-digit', day: '2-digit' 
-    }).format(nowLocal); // format: YYYY-MM-DD
-  } catch(e) {
-    // Fallback: offset manual UTC+7
-    const wib = new Date(nowLocal.getTime() + 7*60*60*1000);
-    todayWIB = wib.toISOString().slice(0,10);
-  }
-  const today = todayWIB;
-  
-  // Hitung range UTC yang setara dengan 00:00 - 23:59:59 WIB hari ini
-  // Pakai Intl untuk tahu offset aktual WIB vs UTC saat ini
-  const todayStartWIB = new Date(`${todayWIB}T00:00:00+07:00`);
-  const todayEndWIB   = new Date(`${todayWIB}T23:59:59+07:00`);
-  const todayStart    = todayStartWIB.toISOString().replace('.000Z','');
-  const todayEnd      = todayEndWIB.toISOString().replace('.000Z','');
+  // Hitung "hari ini WIB" langsung dari browser — akurat 100%
+  const todayWIB    = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Jakarta', year:'numeric', month:'2-digit', day:'2-digit'
+  }).format(new Date());
+  const today       = todayWIB;
+  // Range UTC: 00:00 WIB s/d 23:59:59 WIB hari ini
+  const todayStart  = new Date(`${todayWIB}T00:00:00+07:00`).toISOString().slice(0,19);
+  const todayEnd    = new Date(`${todayWIB}T23:59:59+07:00`).toISOString().slice(0,19);
 
   // Gunakan sbFetchAll agar semua data termuat (bukan hanya 1000 pertama)
   const [rawUser, rawToday, rawTotal] = await Promise.all([
@@ -527,7 +505,8 @@ async function loadData() {
 
 // ── LOAD HARIAN (butuh created_at per baris utk sparkline) ─
 async function loadHarian() {
-  const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
+  // Filter tanggal: pakai +07:00 agar WIB-aware
+  const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00%2B07:00` : '';
   const rawAll = await sbFetchAll(`hasil_usaha?select=kabupaten_kota,created_at${dateFilter}&order=created_at`);
   
   // Reset harian
