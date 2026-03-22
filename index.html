@@ -1,180 +1,684 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maintenance Dashboard SBR - BPS Provinsi Lampung</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        serif: ['Playfair Display', 'serif'],
-                    },
-                    colors: {
-                        bps: {
-                            orange: '#F26522',
-                            dark: '#E05A1C',
-                            light: '#FFF0E8'
-                        }
-                    },
-                    animation: {
-                        'float': 'float 4s ease-in-out infinite',
-                        'float-delayed': 'float 4s ease-in-out 2s infinite',
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-12px)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .bg-pattern {
-            background-color: #f8fafc;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f26522' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-        
-        /* Memfokuskan potongan gambar pada karakter Bung Itung agar pas di dalam lingkaran */
-        .maskot-img {
-            object-fit: cover;
-            object-position: center 15%; /* Fokus ke bagian wajah dan tangan */
-        }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Capaian Tambah Usaha – Provinsi Lampung</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --orange:#F97316;--orange-dark:#C2540A;--orange-light:#FED7AA;--orange-pale:#FFF7ED;
+      --green:#10B981;--green-light:#34D399;--red:#EF4444;
+      --white:#FFFFFF;--gray-50:#F9FAFB;--gray-100:#F3F4F6;--gray-200:#E5E7EB;
+      --gray-400:#9CA3AF;--gray-600:#4B5563;--gray-800:#1F2937;--gray-900:#111827;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+      --radius:14px;--radius-sm:8px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--gray-50);color:var(--gray-800);min-height:100vh}
+
+    /* HEADER */
+    header{background:var(--white);border-bottom:1px solid var(--gray-200);position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
+    .header-inner{max-width:1280px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .logo-icon{width:36px;height:36px;background:var(--orange);border-radius:9px;display:flex;align-items:center;justify-content:center}
+    .logo-icon svg{width:20px;height:20px;fill:white}
+    .logo-text{font-weight:800;font-size:15px;color:var(--gray-900);line-height:1.2}
+    .logo-text span{color:var(--orange)}
+    .header-right{display:flex;align-items:center;gap:10px}
+    .badge-live{display:flex;align-items:center;gap:6px;background:var(--orange-pale);border:1px solid var(--orange-light);color:var(--orange-dark);padding:5px 12px;border-radius:99px;font-size:12px;font-weight:600}
+    .dot-live{width:7px;height:7px;background:var(--orange);border-radius:50%;animation:pulse 1.8s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.35)}}
+    .last-updated{font-size:12px;color:var(--gray-400);font-family:'DM Mono',monospace}
+
+    /* HERO */
+    .hero{background:linear-gradient(135deg,var(--gray-900) 0%,#2d1a0e 100%);padding:48px 24px 36px;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 80% 50%,rgba(249,115,22,.18) 0%,transparent 70%);pointer-events:none}
+    .hero-inner{max-width:1280px;margin:0 auto;position:relative}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);color:var(--orange-light);font-size:12px;font-weight:600;padding:5px 12px;border-radius:99px;margin-bottom:18px;text-transform:uppercase;letter-spacing:.06em}
+    .hero h1{font-size:clamp(26px,4vw,42px);font-weight:800;color:var(--white);line-height:1.18;max-width:640px;margin-bottom:10px}
+    .hero h1 span{color:var(--orange)}
+    .hero-sub{color:var(--gray-400);font-size:15px;max-width:500px;line-height:1.6}
+    .hero-stats{display:flex;gap:32px;margin-top:36px;flex-wrap:wrap}
+    .hstat{display:flex;flex-direction:column}
+    .hstat-val{font-size:32px;font-weight:800;color:var(--white);font-family:'DM Mono',monospace;line-height:1}
+    .hstat-val span{color:var(--orange)}
+    .hstat-lbl{font-size:12px;color:var(--gray-400);margin-top:4px;font-weight:500}
+
+    /* TABS */
+    .tabs-wrap{background:var(--white);border-bottom:1px solid var(--gray-200)}
+    .tabs-header{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+    .tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab-btn{padding:16px 20px;font-size:14px;font-weight:600;background:none;border:none;cursor:pointer;color:var(--gray-400);border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:7px;flex-shrink:0;white-space:nowrap}
+    .tab-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
+    .tab-btn:hover:not(.active){color:var(--gray-600)}
+    .tab-btn .cnt{background:var(--gray-100);color:var(--gray-600);font-size:11px;padding:1px 7px;border-radius:99px;font-family:'DM Mono',monospace}
+    .tab-btn.active .cnt{background:var(--orange-pale);color:var(--orange-dark)}
+
+    /* MAIN */
+    .main{max-width:1280px;margin:0 auto;padding:32px 24px 60px}
+    .panel{display:none}.panel.active{display:block}
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+    .section-title{font-size:18px;font-weight:700;color:var(--gray-900)}
+    .section-title small{font-size:13px;font-weight:500;color:var(--gray-400);margin-left:6px}
+    .section-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+    /* SEARCH & FILTER */
+    .search-box{position:relative}
+    .search-box input[type="text"]{border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:9px 12px 9px 36px;font-size:13px;width:200px;outline:none;font-family:inherit;color:var(--gray-800);background:var(--white);transition:border .2s}
+    .search-box input[type="text"]:focus{border-color:var(--orange)}
+    .search-box svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--gray-400)}
+    .satker-filter{border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:9px 32px 9px 12px;font-size:13px;outline:none;font-family:inherit;color:var(--gray-800);background:var(--white);cursor:pointer;transition:border .2s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+    .satker-filter:focus{border-color:var(--orange)}
+
+    /* DOWNLOAD BUTTON */
+    .btn-download{display:flex;align-items:center;gap:7px;background:var(--green);color:white;border:none;border-radius:var(--radius-sm);padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap}
+    .btn-download:hover{background:#059669;box-shadow:0 4px 12px rgba(16,185,129,.3)}
+    .btn-download svg{width:15px;height:15px;flex-shrink:0}
+
+    /* KAB CARDS */
+    .kab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+    .kab-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);padding:22px 24px;box-shadow:var(--shadow-sm);transition:box-shadow .2s,transform .2s}
+    .kab-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+    .kab-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+    .kab-name{font-size:14px;font-weight:700;color:var(--gray-900);text-transform:uppercase;letter-spacing:.03em}
+    .kab-rank{background:var(--orange);color:white;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;padding:3px 9px;border-radius:99px}
+    .kab-total{font-size:36px;font-weight:800;color:var(--gray-900);font-family:'DM Mono',monospace;line-height:1;margin-bottom:4px}
+    .kab-lbl{font-size:12px;color:var(--gray-400);margin-bottom:16px;font-weight:500}
+    .sparkline{width:100%;height:44px}
+    .kab-bar-wrap{margin-top:14px}
+    .kab-bar-bg{background:var(--gray-100);border-radius:99px;height:6px;overflow:hidden}
+    .kab-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--orange-light),var(--orange));transition:width .8s cubic-bezier(.4,0,.2,1)}
+    .kab-bar-pct{font-size:11px;color:var(--gray-400);margin-top:5px;font-family:'DM Mono',monospace}
+
+    /* TABLE */
+    .table-wrap{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)}
+    .table-inner{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    table{width:100%;border-collapse:collapse;min-width:600px}
+    thead tr{background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
+    th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+    td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--gray-100)}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover td{background:var(--orange-pale)}
+    .rank-cell{font-family:'DM Mono',monospace;font-size:12px;color:var(--gray-400);font-weight:500}
+    .rank-top{color:var(--orange);font-weight:700}
+    .user-name{font-weight:600;color:var(--gray-900);white-space:nowrap}
+    .satker-cell{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--white);background:var(--orange);padding:2px 8px;border-radius:5px;display:inline-block;white-space:nowrap}
+    .satker-cell.unknown{background:var(--gray-400)}
+    .total-cell{font-family:'DM Mono',monospace;font-weight:700;color:var(--gray-900);font-size:14px}
+    .mini-bar-wrap{display:flex;align-items:center;gap:8px;min-width:120px}
+    .mini-bar-bg{flex:1;height:5px;background:var(--gray-100);border-radius:99px;overflow:hidden}
+    .mini-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--orange-light),var(--orange));transition:width 0.5s ease-in-out}
+    .mini-pct{font-size:11px;color:var(--gray-400);font-family:'DM Mono',monospace;white-space:nowrap}
+    .kab-tags{display:flex;flex-wrap:wrap;gap:4px;min-width:150px}
+    .kab-tag{background:var(--gray-100);color:var(--gray-600);font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
+
+    /* PAGINATION */
+    .pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--gray-100);flex-wrap:wrap;gap:10px}
+    .pagination-info{font-size:12px;color:var(--gray-400)}
+    .pagination-btns{display:flex;gap:6px}
+    .page-btn{border:1px solid var(--gray-200);background:var(--white);color:var(--gray-600);padding:6px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+    .page-btn:hover:not(:disabled){border-color:var(--orange);color:var(--orange)}
+    .page-btn.active{background:var(--orange);border-color:var(--orange);color:white}
+    .page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+    /* LOADING */
+    #loading{text-align:center;padding:80px 0;color:var(--gray-400);font-size:14px}
+    .spinner{width:36px;height:36px;border:3px solid var(--gray-200);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+    .loading-msg{font-size:13px;color:var(--gray-400);margin-top:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* SKELETON shimmer */
+    .skeleton{background:linear-gradient(90deg,var(--gray-100) 25%,var(--gray-200) 50%,var(--gray-100) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:14px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* RESPONSIVE */
+    @media(max-width:640px){
+      .hero{padding:40px 16px 28px}.main{padding:24px 16px 40px}
+      .kab-grid{grid-template-columns:1fr}
+      .tabs-header{padding:0 16px;flex-direction:column;align-items:flex-start;gap:12px}
+      .tabs{width:100%;padding-bottom:4px}
+      .section-actions{width:100%}
+      .search-box{width:100%}.search-box input[type="text"]{width:100%}
+      .satker-filter{width:100%}.btn-download{width:100%;justify-content:center}
+      #panel-user th:nth-child(6),#panel-user td:nth-child(6){display:none}
+    }
+  </style>
 </head>
-<body class="bg-pattern min-h-screen flex items-center justify-center p-4 md:p-8 text-slate-800">
+<body>
 
-    <!-- Ornamen Latar Belakang Idul Fitri -->
-    <div class="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <!-- Lentera Kiri -->
-        <svg class="absolute top-0 left-4 md:left-10 w-20 h-40 md:w-24 md:h-48 text-bps-orange opacity-20 animate-float" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L10 6H14L12 2ZM8 7V17L12 22L16 17V7L12 12L8 7ZM10 18H14V20H10V18ZM11 21H13V23H11V21Z"/>
-        </svg>
-        <!-- Lentera Kanan (Delayed animation) -->
-        <svg class="absolute top-10 right-4 md:right-16 w-16 h-32 md:w-20 md:h-40 text-bps-orange opacity-15 animate-float-delayed" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L10 6H14L12 2ZM8 7V17L12 22L16 17V7L12 12L8 7ZM10 18H14V20H10V18ZM11 21H13V23H11V21Z"/>
-        </svg>
-        <!-- Bulan Sabit -->
-        <svg class="absolute bottom-10 right-10 w-32 h-32 text-bps-orange opacity-10 animate-pulse-slow" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10c1.88 0 3.63-.52 5.14-1.42-3.1-1.23-5.3-4.22-5.3-7.79 0-3.23 1.83-6.04 4.54-7.44C15.01 4.21 13.56 3.4 12 3.4c-4.74 0-8.6 3.86-8.6 8.6s3.86 8.6 8.6 8.6c1.16 0 2.27-.23 3.29-.65C12.87 18.91 11.2 15.65 11.2 12c0-3.64 1.66-6.91 4.29-8.94C14.47 2.41 13.27 2 12 2z"/>
-        </svg>
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <div class="logo-text">Capaian <span>Tambah Usaha</span><br><span style="font-weight:500;color:var(--gray-400);font-size:12px;">Provinsi Lampung</span></div>
+    </a>
+    <div class="header-right">
+      <div class="badge-live"><div class="dot-live"></div>Live</div>
+      <div class="last-updated" id="hdr-updated">Memuat…</div>
     </div>
+  </div>
+</header>
 
-    <!-- Container Utama -->
-    <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden max-w-5xl w-full flex flex-col md:flex-row relative z-10 border border-slate-100">
-        
-        <!-- Bagian Kiri: Maskot & Tema -->
-        <div class="md:w-5/12 bg-gradient-to-br from-bps-orange to-bps-dark p-8 flex flex-col items-center justify-center relative overflow-hidden">
-            <!-- Overlay Pola Ketupat/Geometris Tipis -->
-            <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 20px 20px;"></div>
-            
-            <!-- AREA MASKOT -->
-            <div class="relative z-10 w-full flex flex-col items-center h-full justify-center">
-                <!-- Efek cahaya di belakang gambar -->
-                <div class="absolute inset-0 bg-white rounded-full blur-3xl opacity-20 animate-pulse-slow"></div>
-                
-                <!-- Bingkai Gambar (Ditambahkan animasi float agar seperti bergerak) -->
-                <div class="relative w-56 h-56 md:w-72 md:h-72 bg-white/10 backdrop-blur-sm rounded-full border-4 border-white/50 flex items-center justify-center shadow-2xl mb-6 overflow-hidden animate-float">
-                    
-                    <!-- Gambar Bung Itung Spesial Idul Fitri -->
-                    <img src="1000837178.png" alt="Maskot Bung Itung BPS Edisi Idul Fitri" class="w-full h-full maskot-img transform hover:scale-105 transition duration-500">
-                    
-                    <!-- Ornamen Idul Fitri overlay pada gambar -->
-                    <div class="absolute -bottom-2 -right-2 text-4xl transform -rotate-12 drop-shadow-lg">✨</div>
-                    <div class="absolute top-4 left-4 text-2xl opacity-80 drop-shadow-md text-white"><i class="fas fa-star"></i></div>
-                </div>
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Monitoring Real-Time · Powered by Supabase
+    </div>
+    <h1>Dashboard Capaian<br><span>Tambah Usaha</span></h1>
+    <p class="hero-sub">Pantau progress pengumpulan data usaha seluruh Kabupaten/Kota di Provinsi Lampung secara real-time.</p>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hstat-val" id="stat-total">—</div><div class="hstat-lbl">Total Usaha Terinput</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-kab">15</div><div class="hstat-lbl">Kabupaten/Kota</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-user">—</div><div class="hstat-lbl">Petugas Aktif</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-today">—</div><div class="hstat-lbl">Input Hari Ini</div></div>
+    </div>
+  </div>
+</section>
 
-                <div class="mt-4 z-10 w-full text-center">
-                    <span class="inline-block px-5 py-2 rounded-full bg-white/20 text-white text-sm font-semibold backdrop-blur-md border border-white/30 shadow-lg">
-                        <i class="fas fa-hands-praying mr-1"></i> Sapa Bung Itung!
-                    </span>
-                </div>
-            </div>
+<div class="tabs-wrap">
+  <div class="tabs-header">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('user',this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Petugas / User <span class="cnt" id="cnt-user">—</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('kab',this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Kabupaten / Kota <span class="cnt" id="cnt-kab">—</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('rekap',this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Rekap Target
+      </button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:13px;font-weight:600;color:var(--gray-600);white-space:nowrap;">Mulai:</span>
+      <input type="date" id="filter-date" onchange="applyDateFilter()"
+        style="padding:7px 12px;width:150px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);outline:none;font-family:inherit;color:var(--gray-800);"
+        title="Filter tanggal (Tab Petugas & Kabupaten)"/>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div id="loading">
+    <div class="spinner"></div>
+    <div>Menghubungkan ke database…</div>
+    <div class="loading-msg">Data dimuat langsung dari Supabase, tidak perlu download file besar.</div>
+  </div>
+
+  <!-- TAB PETUGAS -->
+  <div class="panel active" id="panel-user">
+    <div class="section-header">
+      <div class="section-title">Capaian per Petugas <small id="user-count"></small></div>
+      <div class="section-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="user-search" placeholder="Cari username / satker…" oninput="filterUsers()"/>
         </div>
-
-        <!-- Bagian Kanan: Konten Teks -->
-        <div class="md:w-7/12 p-8 md:p-12 lg:p-14 flex flex-col bg-white relative">
-            
-            <!-- Header Atas -->
-            <div class="flex items-center gap-3 text-bps-orange font-semibold tracking-wider text-sm mb-8">
-                <div class="w-8 h-8 rounded-lg bg-bps-light flex items-center justify-center">
-                    <i class="fas fa-chart-pie"></i>
-                </div>
-                <span>TIM SBR BPS PROVINSI LAMPUNG</span>
-            </div>
-
-            <!-- Label Maintenance -->
-            <div class="mb-4">
-                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-50 text-amber-600 font-bold text-sm border border-amber-200 shadow-sm">
-                    <span class="relative flex h-3 w-3">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-                    </span>
-                    System Maintenance
-                </span>
-            </div>
-
-            <!-- Judul Utama -->
-            <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-800 mb-4 leading-tight">
-                Pembaruan Sistem <br>
-                <span class="text-bps-orange">Dashboard SBR</span>
-            </h1>
-            
-            <p class="text-slate-600 text-lg mb-8 leading-relaxed">
-                Dashboard penambahan usaha SBR sedang dalam maintenance. Kami sedang melakukan peningkatan sistem untuk pelayanan yang lebih baik.
-            </p>
-
-            <!-- Kotak Tanggal Kembali Aktif -->
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 md:p-6 flex items-center gap-5 mb-8 transform transition hover:-translate-y-1 hover:shadow-lg duration-300">
-                <div class="w-14 h-14 rounded-full bg-bps-light text-bps-orange flex items-center justify-center shrink-0">
-                    <i class="far fa-calendar-check text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-slate-500 font-medium mb-1">Akan kembali aktif pada:</p>
-                    <p class="text-xl md:text-2xl font-bold text-slate-800">24 Maret 2026</p>
-                </div>
-            </div>
-
-            <!-- Garis Pembatas -->
-            <div class="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-8"></div>
-
-            <!-- Ucapan Idul Fitri -->
-            <div class="mt-auto relative text-center md:text-left bg-bps-light/30 p-6 rounded-2xl border border-bps-light">
-                <i class="fas fa-mosque absolute right-4 bottom-4 text-bps-orange opacity-10 text-6xl z-0"></i>
-                <div class="relative z-10">
-                    <h2 class="font-serif text-xl md:text-2xl font-bold text-slate-800 mb-2">
-                        Kami Mengucapkan Selamat Idul Fitri 1447 H
-                    </h2>
-                    <p class="text-bps-orange font-semibold italic text-lg mb-2">
-                        "Taqabalallahu Minna wa minkum"
-                    </p>
-                    <p class="text-slate-600 text-sm">
-                        Semoga amal ibadah kita diterima oleh Allah SWT. Mohon maaf lahir dan batin.
-                    </p>
-                </div>
-            </div>
-
-        </div>
+        <select class="satker-filter" id="satker-filter" onchange="filterUsers()">
+          <option value="">Semua Satker</option>
+        </select>
+        <button class="btn-download" onclick="downloadExcel()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Unduh Excel
+        </button>
+      </div>
     </div>
-
-    <!-- Footer Copyright -->
-    <div class="fixed bottom-4 text-center w-full z-0 pointer-events-none">
-        <p class="text-slate-500 text-xs md:text-sm font-medium">
-            &copy; 2026 Badan Pusat Statistik Provinsi Lampung
-        </p>
+    <div class="table-wrap">
+      <div class="table-inner">
+        <table>
+          <thead><tr><th>#</th><th>Satker</th><th>Username</th><th>Total Usaha</th><th>Kontribusi</th><th>Kabupaten/Kota</th></tr></thead>
+          <tbody id="user-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <div class="pagination-info" id="page-info"></div>
+        <div class="pagination-btns" id="page-btns"></div>
+      </div>
     </div>
+  </div>
 
+  <!-- TAB KABUPATEN -->
+  <div class="panel" id="panel-kab">
+    <div class="section-header">
+      <div class="section-title">Capaian per Kabupaten / Kota <small id="kab-count"></small></div>
+    </div>
+    <div class="kab-grid" id="kab-grid"></div>
+  </div>
+
+  <!-- TAB REKAP -->
+  <div class="panel" id="panel-rekap">
+    <div class="section-header">
+      <div class="section-title">Rekapitulasi Target vs Realisasi <small>(Akumulasi Real-Time)</small></div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-inner">
+        <table>
+          <thead><tr><th>#</th><th>Kabupaten/Kota</th><th>Target Akhir</th><th>Realisasi (Kumulatif)</th><th>Persentase Capaian</th><th>Kekurangan / Sisa</th></tr></thead>
+          <tbody id="rekap-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── KONFIGURASI SUPABASE ──────────────────────────────────
+const SUPABASE_URL = "https://tttnvyovzxizsbzenoxd.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0dG52eW92enhpenNiemVub3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODczNzcsImV4cCI6MjA4OTc2MzM3N30.g2MbRT4yTilyM3j6t3ANK0ADZ5Mmxg3Y9ylyJigK-Hk";
+
+const SB_HEADERS = {
+  "apikey": SUPABASE_KEY,
+  "Authorization": `Bearer $eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0dG52eW92enhpenNiemVub3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODczNzcsImV4cCI6MjA4OTc2MzM3N30.g2MbRT4yTilyM3j6t3ANK0ADZ5Mmxg3Y9ylyJigK-Hk`,
+  "Content-Type": "application/json"
+};
+
+// ── SATKER MAP ────────────────────────────────────────────
+const SATKER_MAP = {"ahmadriswan": "1800", "ajid.hajiji": "1800", "atikh": "1800", "nurjanah": "1800", "mridu": "1800", "sartono-pppk": "1800", "moviyanti": "1800", "anggiaw": "1800", "arip.poerwanto": "1800", "denisetia-pppk": "1800", "firna": "1800", "eduanmirza-pppk": "1800", "prima.putri": "1800", "mrizky-pppk": "1800", "sonisaputra-pppk": "1800", "petrusbayu-pppk": "1800", "redo.noviansyah": "1800", "bimaprastya-pppk": "1800", "imasanakis-pppk": "1800", "beni.siswanto": "1800", "mudina.sari": "1800", "herum": "1800", "supian": "1800", "jeff": "1800", "knedi": "1800", "srezki": "1800", "nurindah": "1800", "poniran": "1800", "eka.yusda": "1800", "dhyan": "1800", "santi.novitasari": "1800", "m.salam": "1800", "herman8": "1800", "bayuj": "1800", "mega.astuti": "1800", "hennys": "1800", "tribuana_k": "1800", "dewi": "1800", "rina_eka": "1800", "tri.apriliya": "1800", "aatina": "1800", "wikki": "1800", "arirusmasari": "1800", "maya.hati": "1800", "heru.wijayanto": "1800", "prabudi.dharma": "1800", "erni.hanifah": "1800", "sukrisno": "1800", "febiyana.qomariyah": "1800", "soleh": "1800", "rochayatini": "1800", "yenia": "1800", "nurika": "1800", "wike_yulia": "1800", "nugrohopy": "1800", "desykhoti": "1800", "hardianty": "1800", "radika": "1800", "andrawina": "1800", "herpas": "1800", "rkningrum": "1800", "risma.arisandi": "1800", "luxmaning": "1800", "aan.andriatno": "1800", "arifinjafar": "1800", "renya": "1800", "siskafran": "1800", "ivan_sharon": "1800", "hendra.sunaryo": "1800", "ekoteguh": "1800", "dwiochta": "1800", "muhammadsepta": "1800", "tetiyeni": "1800", "nk.auwalun": "1800", "teta.puti": "1800", "hestiayu": "1800", "irvan.simamora": "1800", "arief.almursyid": "1800", "ranggiadityan": "1800", "sabiel.prakasa": "1800", "ghessani": "1800", "m.mukhlis": "1800", "karom": "1800", "dita.christina": "1800", "viamanda.putri": "1800", "m.shalih": "1800", "nanto.dwi": "1800", "abdul.muid": "1800", "faza.fuadina": "1800", "thomson": "1800", "fajriana.fikri": "1800", "muharofah": "1801", "susyanto-pppk": "1801", "dekkasafutra-pppk": "1801", "nurhayati-pppk": "1801", "ayu.winarni": "1801", "matkusairi": "1801", "haresmadeka-pppk": "1801", "musaddad": "1801", "tambat": "1801", "luluk.tanjung": "1801", "mudirrussalam": "1801", "sriwahyuni2": "1801", "nurdi": "1801", "bayu.rahmawan": "1801", "febyola.martha": "1804", "ajeng.pangestu": "1801", "nike.hartati": "1801", "ayu.pratiwi": "1801", "fani.rahmadhany": "1801", "aisyahchairani": "1801", "elok.nurfatika": "1801", "ardhan.setyo": "1801", "afifahdheany": "1801", "nurfi.ardillah": "1801", "aryafarezi": "1801", "soimahsiti": "1801", "nenycahya": "1801", "kadirjailani": "1801", "lukmanhadiansyah": "1801", "niken": "1802", "arifki": "1802", "sunakyah-pppk": "1802", "rahmadfebrian-pppk": "1802", "solihin-pppk": "1802", "wahyusanjaya-pppk": "1802", "muhnurfauzi-pppk": "1802", "dhimasdestian-pppk": "1802", "supriyanto2": "1802", "ambo.upek": "1802", "ahmadfauzi": "1802", "irwan5": "1802", "erizal": "1802", "dwiastuti": "1802", "rita.fidella": "1802", "nansi": "1802", "mmalik": "1802", "lisawati": "1802", "sulistyohadi": "1802", "firmansyah4": "1802", "ahmad.ova": "1802", "rengganis": "1802", "aan.ardiansyah": "1802", "ihsandi.awal": "1802", "gindo.nainggolan": "1802", "intan.silaban": "1802", "wahyu.prastowo": "1802", "ardelia.raras": "1802", "imam.sujono": "1802", "suci.utami": "1802", "fransiskafara": "1802", "slamet.suroto": "1802", "lulut.ariyadi": "1802", "yarup": "1802", "imron3": "1802", "ar.maulana": "1803", "rosadi.zein": "1803", "ferry-pppk": "1803", "yudisusanto-pppk": "1803", "pudjiono": "1803", "ramadani": "1803", "mudjono": "1803", "kartini.nani": "1803", "nastra": "1803", "supard": "1803", "jusman": "1803", "yopi.androva": "1803", "joni.sampurno": "1803", "triatmoko_dedi": "1803", "nyomz_nhb": "1803", "winda.ws": "1803", "fridajubil": "1803", "riva.hestaria": "1303", "indri.puspitasari": "1803", "yogagumbira": "1803", "devipratiwi": "1803", "rarakarina": "1803", "erisa.ni": "1803", "febrianadj": "1803", "ade.rilyani": "1803", "nadiyah.robbaniyah": "1803", "farda.zayana": "1803", "wasilahnura": "1803", "dizapotenza": "1803", "radithyapurwanto": "1803", "zainal.haris": "1803", "ferry": "1803", "zaenal.suryono": "1803", "asri.k": "1803", "zulkifli": "1804", "akhino.pranata": "1804", "saifudi-pppk": "1804", "safri-pppk": "1804", "haston.handono": "1804", "hermanto-pppk": "1804", "retno.prihandiah": "1804", "asita": "1804", "agus.suroso": "1804", "sarino": "1804", "suwarto2": "1804", "sri.guntoro": "1804", "puput.priyanto": "1804", "tri.wahyuni": "1804", "maulana.asprala": "1804", "indra3": "1804", "ariyanto2": "1804", "fmustaqim": "1804", "sugiyanto2": "1804", "ika.novianti": "1804", "nurhayati5": "1804", "r.inayah": "1804", "diah.septia": "1804", "zazaperwira": "1804", "may.silviana": "1804", "nur.megantoro": "1804", "mustika.putri": "1804", "dinaanggraena": "1804", "johan.darmawan": "1804", "natanardi": "1804", "rusli.rais": "1804", "juliadi": "1804", "imanullah": "1804", "trianto2": "1804", "andi.yusman": "1804", "santoso.edy": "1804", "ika.nurfadillah": "1804", "kunt": "1805", "arif.eko": "1805", "ekowardiyanto-pppk": "1805", "febbialqausar-pppk": "1805", "normaseptri-pppk": "1805", "arief.novriansyah": "1800", "turyono": "1805", "warsito": "1805", "lakoni.husin": "1805", "suryani3": "1805", "dwi.es": "1805", "parman": "1805", "mujikuat": "1805", "mesagus.at": "1805", "cahyo.novi": "1805", "erry.roma": "1872", "clara_tridiana": "1805", "ari.arnantyo": "1805", "haris.sugara": "1805", "yunita.susila": "1805", "dr.ranggawuni": "1805", "bang": "1805", "sucimelati": "1805", "hetty.rahayu": "1805", "bima.ghafara": "1805", "pr.yurida": "1871", "tiasusanti-pppk": "1805", "dechiyp": "1805", "rayhan.fahd": "1805", "ahmad.febri": "1805", "nungki.yunikasari": "1805", "probowati.cahyani": "1805", "ihza.mahendra": "1805", "riskaamalia": "1805", "alfinapiana": "3171", "istuindah": "1805", "naufal.faishal": "1805", "darel.sutrawhana": "1805", "aguswana.saputra": "1805", "rahman2": "1805", "ardi.yansyah": "1805", "devie.ts": "1806", "jemali-pppk": "1806", "martadinata-pppk": "1806", "yudairijaka-pppk": "1806", "okkytaufik-pppk": "1806", "rismawati-pppk": "1806", "sujito": "1806", "arya.jaya": "1806", "siswanto": "1806", "irawan.adi": "1806", "romli.afandi": "1806", "andries": "1806", "gusmalia": "1806", "amri.darwin": "1806", "charrido": "1806", "ismail.yusuf": "1806", "ripan.zadi": "1806", "hana.fitia": "1806", "ika.septiana": "1806", "siectio": "1806", "vivi.handayanti": "1806", "hanik.devianingrum": "1806", "dita.kartika": "1806", "devinovanti": "1806", "langlangpurwa": "1806", "rizquna.nurul": "1806", "renaldisyarief": "1806", "agustini": "1806", "ruder.yosepha": "1806", "radius.as": "1806", "jua": "1807", "munir.novrianto": "1807", "dadangsupri-pppk": "1807", "renisugiarsih-pppk": "1807", "herifitriyan-pppk": "1807", "sinta.zahra": "1807", "ludi.indra": "1807", "lusi.oktari": "1807", "sita.sari": "1807", "inah.angelia": "1807", "agungharry-pppk": "1807", "aldi.rizqul": "1807", "citra.tantri": "1803", "weli.selianta": "1807", "viky.wijaya": "1807", "fadheelwisnu": "1807", "delviracindy": "1807", "azelea.juliastita": "1807", "iqbal.maulana": "1807", "fajar.berlian": "1807", "riskadian": "1807", "risangayusiwi": "1807", "lailatus.syifa": "1807", "erzalesmana": "1807", "gunawan4": "1807", "supadan": "1807", "sulistianto": "1807", "ujangfatoni": "1807", "yudi.purwanto": "1807", "muh.ansori": "1807", "arismunandar": "1807", "drisnaf": "1808", "yunida.rachmawati": "1808", "andicandra-pppk": "1808", "suryatama-pppk": "1808", "santoriz-pppk": "1808", "mayaarisa-pppk": "1808", "sitiq": "1808", "defika": "1808", "yuliadi": "1808", "astryati": "1808", "lenna.nalurita": "1808", "wpratiko": "1808", "purwanto4": "1808", "john.fs": "1808", "iin.aryani": "1808", "rizqi.bagaskoro": "1808", "dellakape": "1808", "ediristanto-pppk": "1808", "dwi.hendro": "1808", "woro.ayu": "1808", "ahmadmutawally": "1808", "nurul.afifah": "1808", "adit.anggit": "1808", "jantika.ayu": "1808", "wiwik.dwi": "1808", "josephgabriel": "1808", "faradilla.anastasya": "1808", "fidya.alhayu": "1808", "aisyah.azizah": "1808", "rahma.fajri": "1808", "susanto5": "1808", "gunawan_catur": "1809", "wayans": "1809", "priyanto-pppk": "1809", "yondriz-pppk": "1809", "supriyatin-pppk": "1809", "defkisuherman-pppk": "1809", "sukisno2": "1809", "nugro.asmoro": "1809", "riyanti2": "1809", "andriazi": "1809", "abdulkadir": "1809", "mat.darustan": "1809", "amri.kusuma": "1809", "narang.maya": "1809", "venri.sitohang": "1809", "lia_gst": "1809", "ganes.aw": "1809", "arlienhp": "1809", "rizqa.fithriani": "1809", "ana.destriana": "1809", "pipit.susilo": "1809", "dinnypravita": "1809", "henida.widyatama": "1809", "tri.mayasari": "1809", "wahyu.kautsar": "1809", "dira.annisa": "1809", "aisyah.salsabila": "1809", "putra.yoga": "1809", "aguspras-pppk": "1809", "guruh.dewa": "1809", "maulidiasopa": "1809", "johan.irawan": "1809", "dicky.suharto": "1809", "siti.masayu": "1809", "novi.ismail": "1809", "eko.purnomo": "1810", "ambriyanto": "1810", "suprayitno-pppk": "1810", "priyoariyanto-pppk": "1810", "diah.hp": "1810", "singgih.adiwijaya": "1810", "fitri.nurjanah": "1810", "eklesia.valentia": "1810", "hariyanto-pppk": "1810", "lisaerlina-pppk": "1810", "suratman-pppk": "1810", "andi.stiawan": "1810", "bahri.syamsul": "1810", "muh.zaenuri": "1810", "dewiyuliana": "1810", "arump": "1810", "budi.surachman": "1810", "fitriyah": "1810", "nisalasi": "1810", "sresty": "1810", "rikiafrianto-pppk": "1810", "annisa.mardiyah": "1810", "fanisa": "1810", "sela.anisada": "1810", "esa.anindika": "1810", "miftahul.husna": "1810", "dinialfitrizahra": "1810", "ayusetianingsih": "1810", "ahmadrifjayansyah": "1810", "agustin.nafta": "1810", "erwansyah": "1810", "tri.bs": "1810", "saifu.rohmatullah": "1810", "fazani": "1810", "sunarto3": "1811", "dapriyawan": "1811", "indragunawan-pppk": "1811", "damayanti-pppk": "1811", "prastyo": "1811", "hamzah.saifudin": "1811", "imron.rosyadi": "1811", "herny.wahyuni": "1811", "aroki.yudha": "1811", "sriutami": "1800", "rizkamaulana-pppk": "1811", "syahidul": "1811", "eka.pratiwi": "1811", "rnarulita": "1811", "arifatul.aurora": "1811", "muiz.fahmi": "1811", "aisyah.fahma": "1811", "rizki.adriansah": "1811", "dipta.adani": "1811", "mega.fenny": "1811", "akwilla.bahkti": "1811", "auliya.saufi": "1811", "elva.kristiani": "1811", "maulaazka.f": "1811", "fahmi.sahal": "1811", "sartika.siregar": "1812", "giovanifebrian": "1812", "zainudd-pppk": "1812", "hermansyah-pppk": "1812", "noni.fitriani": "1812", "nuralfiah-pppk": "1812", "hendrop": "1812", "priasetya": "1812", "erwan": "1812", "ebi.heriyanto": "1812", "merisa.widyasari": "1812", "khalida.hanum": "1812", "anaufal": "1812", "abizar.alghifari": "1812", "martin.yuliani": "1812", "lissa.wardana": "1812", "ayu.nova": "1812", "laraayu": "1812", "putri.tareka": "1812", "qorinul.huda": "1812", "alharis.faiz": "1812", "nurul.azizah": "1812", "zulfaning.tyas": "1812", "sanjaya.saputra": "1812", "ervina": "1813", "purwanda": "1813", "istiqlal": "1813", "tuhir": "1813", "hendrit": "1813", "pinki.reynaldo": "1813", "evan": "1813", "meiru.rezki": "1813", "elpa.heryanti": "1813", "darmansyah": "1813", "hadys": "1871", "gun.nugraha": "1871", "sulianto-pppk": "1871", "ekorahmat-pppk": "1871", "yulianradian-pppk": "1871", "wasilawati": "1871", "dian_wurya": "1871", "santi.aritonang": "1871", "darul": "1871", "indrak": "1871", "ican": "1871", "sasma": "1871", "erwan.jafrilda": "1871", "edi.kurniawan": "1871", "risdianto": "1871", "merthap": "1871", "evie": "1871", "erikasanti": "1871", "baguspriosambodo": "1871", "kaisar.samudra": "1871", "erika.hs": "1871", "virgowinatha": "1871", "andika.nb": "1805", "aprilia": "1871", "abdi.utama": "1871", "anneoktaviaandriyani": "1871", "desli": "1871", "sari.pratiwi": "1871", "anggi.budi": "1871", "anita.desmarini": "1871", "vicky.lukito": "1871", "rafiqo.ardi": "1871", "belinda.putri": "1871", "habnihamara": "1871", "viona.rahma": "1871", "dini.arianindy": "1871", "akhmad.riadi": "1871", "fahroni.agustarita": "1871", "alberto.maradona": "1871", "arum": "1872", "ade_fitriansyah": "1872", "agussusilo-pppk": "1872", "billychristy-pppk": "1872", "erfankurnia-pppk": "1872", "titissulis-pppk": "1872", "arum.adiza": "1872", "eko.guswanto": "1872", "hendarwanto": "1872", "ariyanto3": "1872", "yosep": "1872", "farid.indrajaya": "1872", "febriana": "1872", "novi.etrisia": "1872", "arter": "1872", "okfrisdasakti": "1872", "delvi.rp": "1872", "rahmawatin": "1872", "ambarningrum": "1872", "noverlina": "1872", "putudewi": "1872", "erma.fitriana": "1872", "fikri.pazanudin": "1872", "chintia.arisandi": "1872", "isnaeni.nur": "1872", "austin.jr": "1872", "fitra.saputra": "1872", "isna.syafira": "1800", "ahmad.janizar": "1872"};
+
+// ── TARGET DATA ───────────────────────────────────────────
+const TARGET_DATA = [
+  {id:"LAMPUNG BARAT",nama:"Lampung Barat",target:26934,base_11_maret:28127},
+  {id:"TANGGAMUS",nama:"Tanggamus",target:55836,base_11_maret:44337},
+  {id:"LAMPUNG SELATAN",nama:"Lampung Selatan",target:91766,base_11_maret:86855},
+  {id:"LAMPUNG TIMUR",nama:"Lampung Timur",target:122148,base_11_maret:82222},
+  {id:"LAMPUNG TENGAH",nama:"Lampung Tengah",target:126365,base_11_maret:101134},
+  {id:"LAMPUNG UTARA",nama:"Lampung Utara",target:60666,base_11_maret:53358},
+  {id:"WAY KANAN",nama:"Way Kanan",target:40258,base_11_maret:35736},
+  {id:"TULANG BAWANG",nama:"Tulang Bawang",target:37413,base_11_maret:39465},
+  {id:"PESAWARAN",nama:"Pesawaran",target:45527,base_11_maret:49386},
+  {id:"PRINGSEWU",nama:"Pringsewu",target:44567,base_11_maret:48353},
+  {id:"MESUJI",nama:"Mesuji",target:18236,base_11_maret:20729},
+  {id:"TULANG BAWANG BARAT",nama:"Tulang Bawang Barat",target:23332,base_11_maret:24676},
+  {id:"PESISIR BARAT",nama:"Pesisir Barat",target:11925,base_11_maret:13420},
+  {id:"BANDAR LAMPUNG",nama:"Bandar Lampung",target:130401,base_11_maret:101472},
+  {id:"METRO",nama:"Metro",target:26242,base_11_maret:29336}
+];
+
+// ── STATE ─────────────────────────────────────────────────
+const PAGE_SIZE = 25;
+let allUsers     = [];   // data user mentah dari Supabase (sudah rekap)
+let allKab       = [];   // data kab mentah dari Supabase (sudah rekap)
+let filteredUsers = [];
+let currentPage  = 1;
+let activeTab    = 'user';
+let filterDate   = '';
+let totalGrand   = 0;
+let todayGrand   = 0;
+
+// ── HELPER SUPABASE FETCH ─────────────────────────────────
+async function sbFetch(path) {
+  const res = await fetch(`$https://tttnvyovzxizsbzenoxd.supabase.co/rest/v1/${path}`, { headers: SB_HEADERS });
+  if (!res.ok) throw new Error(`Supabase error ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+// ── QUERY UTAMA KE SUPABASE ───────────────────────────────
+async function loadData() {
+  // Bangun filter tanggal jika ada
+  const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
+
+  // Query paralel: rekap user, rekap kabupaten, total hari ini
+  const today = new Date().toISOString().slice(0,10);
+
+  const [rawUser, rawKab, rawToday, rawTotal] = await Promise.all([
+    // Rekap per user — ambil semua kolom yang dibutuhkan
+    sbFetch(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=username`),
+    // Rekap per kabupaten
+    sbFetch(`hasil_usaha?select=kabupaten_kota${dateFilter}&order=kabupaten_kota`),
+    // Hitung hari ini
+    sbFetch(`hasil_usaha?select=id&created_at=gte.${today}T00:00:00&created_at=lt.${today}T23:59:59`),
+    // Total keseluruhan (tanpa filter tanggal, untuk rekap target)
+    sbFetch(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00`)
+  ]);
+
+  // Pivot user
+  const userMap = {};
+  rawUser.forEach(r => {
+    const u = r.username || 'unknown';
+    const k = r.kabupaten_kota || 'Tidak Diketahui';
+    if (!userMap[u]) userMap[u] = { username:u, total:0, kabupaten:{}, satker: SATKER_MAP[u]||'0000' };
+    userMap[u].total++;
+    userMap[u].kabupaten[k] = (userMap[u].kabupaten[k]||0) + 1;
+  });
+  allUsers = Object.values(userMap).sort((a,b) => b.total - a.total);
+
+  // Pivot kabupaten + hitung harian dari rawUser
+  const kabMap = {};
+  rawUser.forEach(r => {
+    const k = r.kabupaten_kota || 'Tidak Diketahui';
+    if (!kabMap[k]) kabMap[k] = { nama:k, total:0, harian:{} };
+    kabMap[k].total++;
+  });
+  // Hitung harian dari rawKab (hanya nama kab, tapi kita sudah punya dari rawUser)
+  allKab = Object.values(kabMap).sort((a,b) => b.total - a.total);
+
+  totalGrand = rawUser.length;
+  todayGrand = rawToday.length;
+
+  // Hitung rekap target (dari data sejak 12 Maret)
+  const tambahan = {};
+  rawTotal.forEach(r => {
+    const k = (r.kabupaten_kota||'').toUpperCase().replace('KOTA ','').replace('TULANGBAWANG','TULANG BAWANG');
+    tambahan[k] = (tambahan[k]||0) + 1;
+  });
+  window._tambahanSejak12 = tambahan;
+
+  return true;
+}
+
+// ── LOAD HARIAN (butuh created_at per baris utk sparkline) ─
+async function loadHarian() {
+  const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
+  const rawAll = await sbFetch(`hasil_usaha?select=kabupaten_kota,created_at${dateFilter}&order=created_at`);
+  
+  // Reset harian
+  allKab.forEach(k => { k.harian = {}; });
+  const kabIdx = {};
+  allKab.forEach(k => { kabIdx[k.nama] = k; });
+
+  rawAll.forEach(r => {
+    const kn = r.kabupaten_kota || 'Tidak Diketahui';
+    const tgl = (r.created_at||'').substring(0,10);
+    if (kabIdx[kn] && tgl) {
+      kabIdx[kn].harian[tgl] = (kabIdx[kn].harian[tgl]||0) + 1;
+    }
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await loadData();
+    await loadHarian();
+    document.getElementById('loading').style.display = 'none';
+    
+    // Set tanggal awal filter ke tanggal terlama di data
+    const dateInput = document.getElementById('filter-date');
+    if (!dateInput.value && allKab.length) {
+      // Ambil tanggal terlama
+      const earliest = await sbFetch(`hasil_usaha?select=created_at&order=created_at.asc&limit=1`);
+      if (earliest[0]) dateInput.value = earliest[0].created_at.substring(0,10);
+    }
+
+    populateSatkerFilter();
+    updateUI();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = `<div style="color:var(--red);padding:20px">Gagal memuat data: ${e.message}<br><small>Pastikan tabel hasil_usaha sudah ada di Supabase.</small></div>`;
+    console.error(e);
+  }
+});
+
+// ── APPLY FILTER TANGGAL ──────────────────────────────────
+async function applyDateFilter() {
+  filterDate = document.getElementById('filter-date').value;
+  document.getElementById('loading').style.display = 'block';
+  document.querySelectorAll('.panel').forEach(p => p.style.opacity = '0.4');
+  try {
+    await loadData();
+    await loadHarian();
+    document.getElementById('user-search').value = '';
+    populateSatkerFilter();
+    updateUI();
+  } catch(e) { console.error(e); }
+  document.getElementById('loading').style.display = 'none';
+  document.querySelectorAll('.panel').forEach(p => p.style.opacity = '1');
+}
+
+// ── UPDATE UI ─────────────────────────────────────────────
+function updateUI() {
+  document.getElementById('stat-total').textContent = totalGrand.toLocaleString('id-ID');
+  document.getElementById('stat-user').textContent  = allUsers.length;
+  document.getElementById('stat-today').textContent = todayGrand.toLocaleString('id-ID');
+  document.getElementById('hdr-updated').textContent = 'Live · ' + new Date().toLocaleTimeString('id-ID');
+  document.getElementById('cnt-kab').textContent    = allKab.length;
+  document.getElementById('cnt-user').textContent   = allUsers.length;
+  document.getElementById('kab-count').textContent  = allKab.length + ' wilayah';
+
+  renderKabupaten();
+  renderRekapTarget();
+  filteredUsers = [...allUsers];
+  renderUsersPage(1);
+}
+
+// ── TAB SWITCH ────────────────────────────────────────────
+function switchTab(tab, btn) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+// ── REKAP TARGET ──────────────────────────────────────────
+function renderRekapTarget() {
+  const tbody = document.getElementById('rekap-tbody');
+  tbody.innerHTML = '';
+  let totalTarget = 0, totalRealisasi = 0;
+  const tambahan = window._tambahanSejak12 || {};
+
+  let rekapData = TARGET_DATA.map(item => {
+    const normId = item.id.replace('TULANGBAWANG','TULANG BAWANG');
+    const tam = tambahan[normId] || 0;
+    const realisasi = item.base_11_maret + tam;
+    const sisa = item.target - realisasi;
+    const pct = (realisasi / item.target) * 100;
+    totalTarget += item.target;
+    totalRealisasi += realisasi;
+    return { ...item, realisasi, sisa, pct };
+  });
+  rekapData.sort((a,b) => b.pct - a.pct);
+
+  rekapData.forEach((row, idx) => {
+    const ok = row.sisa <= 0;
+    const sisaHtml = ok
+      ? `<span style="color:var(--green);font-weight:700;">+${Math.abs(row.sisa).toLocaleString('id-ID')} (Lebih)</span>`
+      : `<span style="color:var(--red);font-weight:700;">-${row.sisa.toLocaleString('id-ID')}</span>`;
+    const barColor = ok ? 'linear-gradient(90deg,var(--green-light),var(--green))' : 'linear-gradient(90deg,var(--orange-light),var(--orange))';
+    const pctD = Math.min(row.pct, 100);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td style="font-weight:600;color:var(--gray-900)">${row.nama}</td>
+      <td style="font-family:'DM Mono',monospace">${row.target.toLocaleString('id-ID')}</td>
+      <td style="font-family:'DM Mono',monospace;font-weight:700;color:var(--gray-900)">${row.realisasi.toLocaleString('id-ID')}</td>
+      <td><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${pctD}%;background:${barColor}"></div></div>
+        <span class="mini-pct" style="${ok?'color:var(--green);font-weight:700;':''}">${row.pct.toFixed(1)}%</span></div></td>
+      <td style="font-family:'DM Mono',monospace">${sisaHtml}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const totalSisa = totalTarget - totalRealisasi;
+  const totalPct  = (totalRealisasi/totalTarget)*100;
+  const okT = totalSisa <= 0;
+  const trT = document.createElement('tr');
+  trT.style.background = 'var(--gray-50)';
+  trT.innerHTML = `
+    <td colspan="2" style="font-weight:800;text-align:right;color:var(--gray-900)">TOTAL PROVINSI LAMPUNG</td>
+    <td style="font-family:'DM Mono',monospace;font-weight:800">${totalTarget.toLocaleString('id-ID')}</td>
+    <td style="font-family:'DM Mono',monospace;font-weight:800;color:var(--gray-900)">${totalRealisasi.toLocaleString('id-ID')}</td>
+    <td><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${Math.min(totalPct,100)}%;background:${okT?'linear-gradient(90deg,var(--green-light),var(--green))':'linear-gradient(90deg,var(--orange-light),var(--orange))'}"></div></div>
+      <span class="mini-pct" style="font-weight:800;color:var(--gray-900)">${totalPct.toFixed(1)}%</span></div></td>
+    <td style="font-family:'DM Mono',monospace">${okT?`<span style="color:var(--green);font-weight:800;">+${Math.abs(totalSisa).toLocaleString('id-ID')} (Lebih)</span>`:`<span style="color:var(--red);font-weight:800;">-${totalSisa.toLocaleString('id-ID')}</span>`}</td>`;
+  tbody.appendChild(trT);
+}
+
+// ── KABUPATEN ─────────────────────────────────────────────
+function renderKabupaten() {
+  const grid = document.getElementById('kab-grid');
+  grid.innerHTML = '';
+  if (!allKab.length) {
+    grid.innerHTML = '<div style="color:var(--gray-400);padding:20px">Tidak ada data.</div>';
+    return;
+  }
+  const maxVal = allKab[0].total;
+  const cards = allKab.map((kab, i) => {
+    const pct = ((kab.total/totalGrand)*100).toFixed(1);
+    const card = document.createElement('div');
+    card.className = 'kab-card';
+    card.innerHTML = `
+      <div class="kab-card-top"><div class="kab-name">${kab.nama}</div><div class="kab-rank">#${i+1}</div></div>
+      <div class="kab-total">${kab.total.toLocaleString('id-ID')}</div>
+      <div class="kab-lbl">usaha terinput</div>
+      <div class="spark-placeholder" style="height:44px;background:var(--gray-100);border-radius:6px;margin-bottom:14px;"></div>
+      <div class="kab-bar-wrap">
+        <div class="kab-bar-bg"><div class="kab-bar-fill" style="width:${(kab.total/maxVal*100).toFixed(1)}%"></div></div>
+        <div class="kab-bar-pct">${pct}% dari total provinsi</div>
+      </div>`;
+    grid.appendChild(card);
+    return { card, harian: kab.harian };
+  });
+  let idx = 0;
+  function injectNext() {
+    if (idx >= cards.length) return;
+    const { card, harian } = cards[idx++];
+    const ph = card.querySelector('.spark-placeholder');
+    if (ph) ph.outerHTML = buildSparkline(harian);
+    requestAnimationFrame(injectNext);
+  }
+  requestAnimationFrame(injectNext);
+}
+
+function buildSparkline(harian) {
+  const entries = Object.entries(harian).sort((a,b)=>a[0].localeCompare(b[0]));
+  if (!entries.length) return '<div style="height:44px"></div>';
+  const vals = entries.map(e=>e[1]);
+  const maxV = Math.max(...vals,1);
+  const W=280,H=44,pad=2;
+  const pts = vals.map((v,i)=>{
+    const x = pad+(i/(vals.length-1||1))*(W-pad*2);
+    const y = H-pad-(v/maxV)*(H-pad*2);
+    return `${x},${y}`;
+  }).join(' ');
+  const area = `${pad},${H} `+pts+` ${W-pad},${H}`;
+  const gid = 'sg'+Math.random().toString(36).slice(2);
+  return `<svg class="sparkline" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F97316" stop-opacity=".25"/>
+      <stop offset="100%" stop-color="#F97316" stop-opacity="0"/>
+    </linearGradient></defs>
+    <polygon points="${area}" fill="url(#${gid})"/>
+    <polyline points="${pts}" fill="none" stroke="#F97316" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// ── USERS ─────────────────────────────────────────────────
+function populateSatkerFilter() {
+  const sel = document.getElementById('satker-filter');
+  const codes = [...new Set(allUsers.map(u=>u.satker))].sort();
+  sel.innerHTML = '<option value="">Semua Satker</option>';
+  codes.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = 'Satker '+c;
+    sel.appendChild(o);
+  });
+}
+
+function filterUsers() {
+  const q = document.getElementById('user-search').value.toLowerCase().trim();
+  const sv = document.getElementById('satker-filter').value;
+  filteredUsers = allUsers.filter(u => {
+    const matchTxt = !q || u.username.toLowerCase().includes(q) || u.satker.includes(q);
+    const matchSk  = !sv || u.satker === sv;
+    return matchTxt && matchSk;
+  });
+  document.getElementById('user-count').textContent = filteredUsers.length+' petugas';
+  renderUsersPage(1);
+}
+
+function renderUsersPage(page) {
+  currentPage = page;
+  const total = filteredUsers.length;
+  const pages = Math.ceil(total/PAGE_SIZE)||1;
+  const start = (page-1)*PAGE_SIZE;
+  const slice = filteredUsers.slice(start, start+PAGE_SIZE);
+  const maxVal = allUsers[0]?.total||1;
+
+  document.getElementById('user-count').textContent = filteredUsers.length+' petugas';
+  const tbody = document.getElementById('user-tbody');
+  tbody.innerHTML = '';
+
+  if (!slice.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px">Tidak ada petugas ditemukan.</td></tr>';
+    document.getElementById('page-info').textContent = 'Menampilkan 0 petugas';
+    document.getElementById('page-btns').innerHTML = '';
+    return;
+  }
+
+  slice.forEach((u,idx) => {
+    const rank   = start+idx+1;
+    const pct    = ((u.total/totalGrand)*100).toFixed(2);
+    const barPct = ((u.total/maxVal)*100).toFixed(1);
+    const kabTags = Object.entries(u.kabupaten).slice(0,3)
+      .map(([k,v])=>`<span class="kab-tag">${k.split(' ').slice(0,2).join(' ')} (${v})</span>`).join('');
+    const skClass = u.satker==='0000' ? 'satker-cell unknown' : 'satker-cell';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="rank-cell ${rank<=3?'rank-top':''}">${rank<=3?'🏆':''} ${rank}</td>
+      <td><span class="${skClass}">${u.satker}</span></td>
+      <td class="user-name">${u.username}</td>
+      <td class="total-cell">${u.total.toLocaleString('id-ID')}</td>
+      <td><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${barPct}%"></div></div>
+        <span class="mini-pct">${pct}%</span></div></td>
+      <td><div class="kab-tags">${kabTags}</div></td>`;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('page-info').textContent =
+    `Menampilkan ${start+1}–${Math.min(start+PAGE_SIZE,total)} dari ${total} petugas`;
+
+  const btnWrap = document.getElementById('page-btns');
+  btnWrap.innerHTML = '';
+  const addBtn = (lbl,p,dis) => {
+    const b = document.createElement('button');
+    b.className='page-btn'+(p===page?' active':'');
+    b.textContent=lbl; b.disabled=dis;
+    b.onclick=()=>renderUsersPage(p);
+    btnWrap.appendChild(b);
+  };
+  addBtn('‹',page-1,page===1);
+  getPageRange(page,pages).forEach(p=>{
+    if(p==='…'){ const s=document.createElement('span');s.textContent='…';s.style.cssText='padding:0 4px;color:var(--gray-400);font-size:13px;';btnWrap.appendChild(s); }
+    else addBtn(p,p,false);
+  });
+  addBtn('›',page+1,page===pages);
+}
+
+function getPageRange(cur,total) {
+  if(total<=7) return Array.from({length:total},(_,i)=>i+1);
+  if(cur<=4) return [1,2,3,4,5,'…',total];
+  if(cur>=total-3) return [1,'…',total-4,total-3,total-2,total-1,total];
+  return [1,'…',cur-1,cur,cur+1,'…',total];
+}
+
+// ── DOWNLOAD EXCEL ────────────────────────────────────────
+function downloadExcel() {
+  if(!filteredUsers.length){ alert('Tidak ada data untuk diunduh.'); return; }
+  const rows = filteredUsers.map((u,idx)=>{
+    const pct = ((u.total/totalGrand)*100).toFixed(2);
+    const kabList = Object.entries(u.kabupaten).sort((a,b)=>b[1]-a[1])
+      .map(([k,v])=>`${k} (${v})`).join('; ');
+    return { 'No':idx+1,'Kode Satker':u.satker,'Username':u.username,'Total Usaha':u.total,'Kontribusi (%)':parseFloat(pct),'Kabupaten/Kota':kabList };
+  });
+  rows.push({'No':'','Kode Satker':'','Username':'TOTAL',
+    'Total Usaha':filteredUsers.reduce((s,u)=>s+u.total,0),'Kontribusi (%)':100,'Kabupaten/Kota':''});
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:5},{wch:14},{wch:28},{wch:14},{wch:16},{wch:60}];
+  const wb2 = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb2, ws, 'Capaian Petugas');
+  const fd  = document.getElementById('filter-date').value||'semua';
+  const sv  = document.getElementById('satker-filter').value||'semua';
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb2, `capaian_petugas_satker${sv}_mulai${fd}_${stamp}.xlsx`);
+}
+</script>
 </body>
 </html>
