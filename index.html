@@ -228,7 +228,6 @@
 </head>
 <body>
 
-<!-- LOADING OVERLAY (fixed, di luar semua konten) -->
 <div id="loading">
   <div class="ld-logo">
     <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" style="fill:none;stroke:white;stroke-width:1.5"/></svg>
@@ -266,7 +265,7 @@
     <p class="hero-sub">Pantau progress pengumpulan data usaha seluruh Kabupaten/Kota di Provinsi Lampung secara real-time.</p>
     <div class="hero-stats">
       <div class="hstat"><div class="hstat-val" id="stat-total">—</div><div class="hstat-lbl">Total Usaha Terinput</div></div>
-      <div class="hstat"><div class="hstat-val" id="stat-kab">15</div><div class="hstat-lbl">Kabupaten/Kota</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-kab">—</div><div class="hstat-lbl">Kabupaten/Kota</div></div>
       <div class="hstat"><div class="hstat-val" id="stat-user">—</div><div class="hstat-lbl">Petugas Aktif</div></div>
       <div class="hstat"><div class="hstat-val" id="stat-today">—</div><div class="hstat-lbl" id="lbl-today">Input Hari Ini</div></div>
     </div>
@@ -300,7 +299,6 @@
 
 <div class="main">
 
-  <!-- TAB PETUGAS -->
   <div class="panel active" id="panel-user">
     <div class="section-header">
       <div class="section-title">Capaian per Petugas <small id="user-count"></small></div>
@@ -332,7 +330,6 @@
     </div>
   </div>
 
-  <!-- TAB KABUPATEN -->
   <div class="panel" id="panel-kab">
     <div class="section-header">
       <div class="section-title">Capaian per Kabupaten / Kota <small id="kab-count"></small></div>
@@ -340,7 +337,6 @@
     <div class="kab-grid" id="kab-grid"></div>
   </div>
 
-  <!-- TAB REKAP -->
   <div class="panel" id="panel-rekap">
     <div class="section-header">
       <div class="section-title">Rekapitulasi Target vs Realisasi <small>(Akumulasi Real-Time)</small></div>
@@ -599,6 +595,8 @@ function updateUI() {
   document.getElementById('stat-total').textContent = totalGrand.toLocaleString('id-ID');
   document.getElementById('stat-user').textContent  = allUsers.length;
   document.getElementById('stat-today').textContent = todayGrand.toLocaleString('id-ID');
+  document.getElementById('stat-kab').textContent   = allKab.length; // BARIS FIX BUG
+  
   // Label dinamis sesuai filter
   const todayLabel = document.getElementById('lbl-today');
   if (todayLabel) todayLabel.textContent = filterDate ? `Input ${filterDate}` : 'Input Hari Ini';
