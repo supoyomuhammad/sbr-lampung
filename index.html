@@ -456,8 +456,8 @@ async function loadData() {
   const [rawUser, rawToday, rawTotal] = await Promise.all([
     // Rekap per user & kabupaten (ikut filter tanggal)
     sbFetchAll(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=username`),
-    // Hitung input sesuai countDate (00:00 – 23:59 lokal)
-    sbFetch(`hasil_usaha?select=id&created_at=gte.${countDate}T00:00:00&created_at=lte.${countDate}T23:59:59`),
+    // Hitung input sesuai countDate (00:00 – 23:59 lokal) - DIPERBAIKI MENGGUNAKAN sbFetchAll
+    sbFetchAll(`hasil_usaha?select=id&created_at=gte.${countDate}T00:00:00&created_at=lte.${countDate}T23:59:59`),
     // Total sejak 12 Maret untuk rekap target (tidak terpengaruh filter)
     sbFetchAll(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00`)
   ]);
