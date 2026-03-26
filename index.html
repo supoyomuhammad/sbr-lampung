@@ -399,7 +399,10 @@ let todayGrand   = 0;
 
 // ── HELPER SUPABASE FETCH (dengan pagination otomatis) ────
 async function sbFetch(path) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: SB_HEADERS });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { 
+    headers: SB_HEADERS,
+    cache: 'no-store' // FIX 1: Anti-Cache
+  });
   if (!res.ok) throw new Error(`Supabase error ${res.status}: ${await res.text()}`);
   return res.json();
 }
@@ -420,7 +423,12 @@ async function sbFetchAll(basePath, chunkSize = 1000) {
       "Range": `${offset}-${offset + chunkSize - 1}`
     };
     const url = `${SUPABASE_URL}/rest/v1/${endpoint}${qs ? '?' + qs : ''}`;
-    const res = await fetch(url, { headers: rangeHeader });
+    
+    // FIX 1: Anti-Cache untuk pagination
+    const res = await fetch(url, { 
+      headers: rangeHeader,
+      cache: 'no-store' 
+    });
     
     if (!res.ok) throw new Error(`Supabase error ${res.status}: ${await res.text()}`);
     
@@ -450,16 +458,13 @@ async function loadData() {
     timeZone: 'Asia/Jakarta', year:'numeric', month:'2-digit', day:'2-digit'
   }).format(new Date());
 
-  // Jika filter tanggal aktif → "input tanggal tsb", kalau tidak → "input hari ini WIB"
   const countDate  = filterDate || todayWIB;
 
+  // FIX 2: Menambahkan "&order=id.asc" pada SEMUA URL agar tidak ada data dobel/terlewat.
   const [rawUser, rawToday, rawTotal] = await Promise.all([
-    // Rekap per user & kabupaten (ikut filter tanggal)
-    sbFetchAll(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=username`),
-    // Hitung input sesuai countDate (00:00 – 23:59 lokal) - DIPERBAIKI MENGGUNAKAN sbFetchAll
-    sbFetchAll(`hasil_usaha?select=id&created_at=gte.${countDate}T00:00:00&created_at=lte.${countDate}T23:59:59`),
-    // Total sejak 12 Maret untuk rekap target (tidak terpengaruh filter)
-    sbFetchAll(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00`)
+    sbFetchAll(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=id.asc`),
+    sbFetchAll(`hasil_usaha?select=id&created_at=gte.${countDate}T00:00:00&created_at=lte.${countDate}T23:59:59&order=id.asc`),
+    sbFetchAll(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00&order=id.asc`)
   ]);
 
   // Pivot user
@@ -505,7 +510,8 @@ async function loadData() {
 // ── LOAD HARIAN (butuh created_at per baris utk sparkline) ─
 async function loadHarian() {
   const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
-  const rawAll = await sbFetchAll(`hasil_usaha?select=kabupaten_kota,created_at${dateFilter}&order=created_at`);
+  // FIX: Tambahkan order by created_at.asc untuk menjaga konsistensi pagination
+  const rawAll = await sbFetchAll(`hasil_usaha?select=kabupaten_kota,created_at${dateFilter}&order=created_at.asc`);
   
   // Reset harian
   allKab.forEach(k => { k.harian = {}; });
@@ -595,7 +601,7 @@ function updateUI() {
   document.getElementById('stat-total').textContent = totalGrand.toLocaleString('id-ID');
   document.getElementById('stat-user').textContent  = allUsers.length;
   document.getElementById('stat-today').textContent = todayGrand.toLocaleString('id-ID');
-  document.getElementById('stat-kab').textContent   = allKab.length; // BARIS FIX BUG
+  document.getElementById('stat-kab').textContent   = allKab.length; 
   
   // Label dinamis sesuai filter
   const todayLabel = document.getElementById('lbl-today');
