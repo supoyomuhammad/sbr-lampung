@@ -57,6 +57,25 @@
     .tab-btn .cnt{background:var(--gray-100);color:var(--gray-600);font-size:11px;padding:1px 7px;border-radius:99px;font-family:'DM Mono',monospace}
     .tab-btn.active .cnt{background:var(--orange-pale);color:var(--orange-dark)}
 
+    /* DATE RANGE FILTER */
+    .date-range-wrap{display:flex;align-items:center;gap:8px;padding:12px 0;flex-shrink:0}
+    .date-range-wrap label{font-size:13px;font-weight:600;color:var(--gray-600);white-space:nowrap}
+    .date-range-wrap input[type="date"]{
+      padding:7px 12px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);
+      outline:none;font-family:inherit;color:var(--gray-800);font-size:13px;
+      transition:border .2s;background:var(--white);width:150px;
+    }
+    .date-range-wrap input[type="date"]:focus{border-color:var(--orange)}
+    .date-range-wrap .sep{color:var(--gray-400);font-size:13px;font-weight:500}
+    .btn-apply-filter{
+      display:flex;align-items:center;gap:6px;
+      background:var(--orange);color:white;border:none;border-radius:var(--radius-sm);
+      padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;
+      transition:all .2s;font-family:inherit;white-space:nowrap;
+    }
+    .btn-apply-filter:hover{background:var(--orange-dark);box-shadow:0 4px 12px rgba(249,115,22,.3)}
+    .btn-apply-filter svg{width:13px;height:13px}
+
     /* MAIN */
     .main{max-width:1280px;margin:0 auto;padding:32px 24px 60px}
     .panel{display:none}.panel.active{display:block}
@@ -124,6 +143,100 @@
     .page-btn.active{background:var(--orange);border-color:var(--orange);color:white}
     .page-btn:disabled{opacity:.4;cursor:not-allowed}
 
+    /* ── REKAP HARIAN ────────────────────────────────── */
+    .harian-info-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);
+      padding:16px 20px;margin-bottom:20px;box-shadow:var(--shadow-sm);
+      flex-wrap:wrap;gap:12px;
+    }
+    .harian-info-bar .range-label{
+      font-size:14px;font-weight:700;color:var(--gray-900);
+      display:flex;align-items:center;gap:8px;
+    }
+    .harian-info-bar .range-badge{
+      background:var(--orange-pale);color:var(--orange-dark);
+      font-size:12px;font-weight:700;font-family:'DM Mono',monospace;
+      padding:4px 10px;border-radius:6px;border:1px solid var(--orange-light);
+    }
+    .harian-meta{display:flex;gap:20px;flex-wrap:wrap}
+    .harian-meta-item{display:flex;flex-direction:column;align-items:flex-end}
+    .harian-meta-item .val{font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)}
+    .harian-meta-item .lbl{font-size:11px;color:var(--gray-400);font-weight:500}
+
+    /* Tabel rekap harian — sticky kolom pertama + header tanggal sticky */
+    .harian-table-wrap{
+      background:var(--white);border:1px solid var(--gray-200);
+      border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);
+    }
+    .harian-table-inner{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .harian-table{width:100%;border-collapse:collapse;min-width:500px}
+    .harian-table thead tr{background:var(--gray-900)}
+    .harian-table th{
+      padding:10px 14px;text-align:center;
+      font-size:11px;font-weight:700;color:rgba(255,255,255,.6);
+      text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;
+      border-right:1px solid rgba(255,255,255,.06);
+    }
+    .harian-table th:first-child{
+      text-align:left;color:rgba(255,255,255,.8);min-width:190px;
+      position:sticky;left:0;z-index:3;background:var(--gray-900);
+      box-shadow:2px 0 6px rgba(0,0,0,.18);
+    }
+    .harian-table th.date-col{color:var(--orange-light)}
+    .harian-table th.total-col{color:#fff;font-size:12px}
+    .harian-table td{
+      padding:10px 14px;font-size:13px;
+      border-bottom:1px solid var(--gray-100);
+      border-right:1px solid var(--gray-100);
+      text-align:center;
+      font-family:'DM Mono',monospace;color:var(--gray-600);
+    }
+    .harian-table td:first-child{
+      text-align:left;font-family:'Plus Jakarta Sans',sans-serif;
+      font-weight:700;color:var(--gray-900);font-size:13px;
+      background:var(--white);
+      position:sticky;left:0;z-index:2;
+      box-shadow:2px 0 6px rgba(0,0,0,.07);
+    }
+    .harian-table tbody tr:hover td{background:var(--orange-pale)}
+    .harian-table tbody tr:hover td:first-child{background:var(--orange-pale)}
+    .harian-table td.zero{color:var(--gray-200)}
+    .harian-table td.has-val{color:var(--gray-800);font-weight:600}
+    .harian-table td.high-val{color:var(--orange-dark);font-weight:700}
+    .harian-table td.total-val{
+      font-weight:800;color:var(--gray-900);font-size:14px;
+      background:var(--orange-pale);border-right:none;
+    }
+    .harian-table tfoot tr td{
+      background:var(--gray-900);color:rgba(255,255,255,.6);
+      font-weight:700;font-size:12px;border-color:rgba(255,255,255,.06);
+    }
+    .harian-table tfoot tr td:first-child{
+      color:rgba(255,255,255,.9);text-align:left;font-family:'Plus Jakarta Sans',sans-serif;
+      position:sticky;left:0;z-index:2;background:var(--gray-900);
+      box-shadow:2px 0 6px rgba(0,0,0,.18);
+    }
+    .harian-table tfoot tr td.day-total{color:var(--orange-light);font-size:13px}
+    .harian-table tfoot tr td.grand-total-cell{
+      color:#fff;font-size:15px;background:var(--orange);
+    }
+
+    /* Chip tanggal di section header harian */
+    .date-chip{
+      display:inline-flex;align-items:center;gap:6px;
+      background:var(--orange-pale);border:1px solid var(--orange-light);
+      color:var(--orange-dark);font-size:12px;font-weight:700;
+      padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;
+    }
+
+    /* Heat bar inside date cells */
+    .heat-cell{position:relative}
+    .heat-bar{
+      position:absolute;bottom:0;left:0;right:0;height:3px;
+      border-radius:0;opacity:.7;
+    }
+
     /* LOADING OVERLAY */
     #loading{
       position:fixed;inset:0;z-index:9999;
@@ -131,7 +244,6 @@
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       gap:0;
     }
-    /* Orbs background */
     #loading::before,#loading::after{
       content:'';position:absolute;border-radius:50%;pointer-events:none;
     }
@@ -146,8 +258,6 @@
       bottom:-60px;left:-60px;animation:orbFloat 8s ease-in-out infinite reverse;
     }
     @keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-20px)}}
-
-    /* Logo bounce */
     .ld-logo{
       width:64px;height:64px;background:var(--orange);border-radius:18px;
       display:flex;align-items:center;justify-content:center;
@@ -162,8 +272,6 @@
       50%{box-shadow:0 0 0 18px rgba(249,115,22,0);transform:scale(1.05)}
       100%{box-shadow:0 0 0 0 rgba(249,115,22,0);transform:scale(1)}
     }
-
-    /* Progress bar */
     .ld-bar-wrap{
       width:220px;height:3px;background:rgba(255,255,255,.1);
       border-radius:99px;overflow:hidden;margin-bottom:20px;
@@ -181,8 +289,6 @@
       50%{background-position:0% 0;transform:translateX(150%)}
       100%{background-position:100% 0;transform:translateX(250%)}
     }
-
-    /* Counter text */
     .ld-count{
       font-family:'DM Mono',monospace;font-size:22px;font-weight:500;
       color:var(--orange);letter-spacing:.05em;
@@ -194,12 +300,8 @@
       text-transform:uppercase;letter-spacing:.12em;
       position:relative;z-index:1;
     }
-
-    /* Dots */
     .ld-dots{display:flex;gap:7px;margin-top:28px;position:relative;z-index:1;}
-    .ld-dot{
-      width:6px;height:6px;border-radius:50%;background:rgba(249,115,22,.3);
-    }
+    .ld-dot{width:6px;height:6px;border-radius:50%;background:rgba(249,115,22,.3);}
     .ld-dot:nth-child(1){animation:dotPop 1.4s .0s ease-in-out infinite}
     .ld-dot:nth-child(2){animation:dotPop 1.4s .2s ease-in-out infinite}
     .ld-dot:nth-child(3){animation:dotPop 1.4s .4s ease-in-out infinite}
@@ -207,22 +309,22 @@
       0%,100%{background:rgba(249,115,22,.3);transform:scale(1)}
       50%{background:var(--orange);transform:scale(1.5)}
     }
-    @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* SKELETON shimmer */
     .skeleton{background:linear-gradient(90deg,var(--gray-100) 25%,var(--gray-200) 50%,var(--gray-100) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:14px}
     @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-    /* RESPONSIVE */
     @media(max-width:640px){
       .hero{padding:40px 16px 28px}.main{padding:24px 16px 40px}
       .kab-grid{grid-template-columns:1fr}
-      .tabs-header{padding:0 16px;flex-direction:column;align-items:flex-start;gap:12px}
+      .tabs-header{padding:0 16px;flex-direction:column;align-items:flex-start;gap:8px}
       .tabs{width:100%;padding-bottom:4px}
+      .date-range-wrap{flex-wrap:wrap;width:100%}
+      .date-range-wrap input[type="date"]{width:calc(50% - 20px)}
       .section-actions{width:100%}
       .search-box{width:100%}.search-box input[type="text"]{width:100%}
       .satker-filter{width:100%}.btn-download{width:100%;justify-content:center}
       #panel-user th:nth-child(6),#panel-user td:nth-child(6){display:none}
+      .harian-meta{justify-content:flex-start}
     }
   </style>
 </head>
@@ -287,18 +389,32 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Rekap Target
       </button>
+      <!-- TAB BARU: REKAP HARIAN -->
+      <button class="tab-btn" onclick="switchTab('harian',this)" id="tab-harian">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Rekap Harian
+        <span class="cnt" id="cnt-harian" style="background:var(--orange-pale);color:var(--orange-dark);">Baru</span>
+      </button>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:13px;font-weight:600;color:var(--gray-600);white-space:nowrap;">Mulai:</span>
-      <input type="date" id="filter-date" onchange="applyDateFilter()"
-        style="padding:7px 12px;width:150px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);outline:none;font-family:inherit;color:var(--gray-800);"
-        title="Filter tanggal (Tab Petugas & Kabupaten)"/>
+
+    <!-- FILTER RANGE TANGGAL (menggantikan filter lama) -->
+    <div class="date-range-wrap">
+      <label>Mulai:</label>
+      <input type="date" id="filter-date-start" title="Tanggal mulai"/>
+      <span class="sep">–</span>
+      <label>Sampai:</label>
+      <input type="date" id="filter-date-end" title="Tanggal akhir"/>
+      <button class="btn-apply-filter" onclick="applyDateFilter()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Terapkan
+      </button>
     </div>
   </div>
 </div>
 
 <div class="main">
 
+  <!-- TAB PETUGAS -->
   <div class="panel active" id="panel-user">
     <div class="section-header">
       <div class="section-title">Capaian per Petugas <small id="user-count"></small></div>
@@ -330,6 +446,7 @@
     </div>
   </div>
 
+  <!-- TAB KABUPATEN -->
   <div class="panel" id="panel-kab">
     <div class="section-header">
       <div class="section-title">Capaian per Kabupaten / Kota <small id="kab-count"></small></div>
@@ -337,6 +454,7 @@
     <div class="kab-grid" id="kab-grid"></div>
   </div>
 
+  <!-- TAB REKAP TARGET -->
   <div class="panel" id="panel-rekap">
     <div class="section-header">
       <div class="section-title">Rekapitulasi Target vs Realisasi <small>(Akumulasi Real-Time)</small></div>
@@ -350,14 +468,63 @@
       </div>
     </div>
   </div>
-</div>
+
+  <!-- ══════════ TAB REKAP HARIAN (BARU) ══════════ -->
+  <div class="panel" id="panel-harian">
+    <div class="section-header">
+      <div class="section-title">
+        Rekap Harian per Kabupaten/Kota
+        <small id="harian-range-label"></small>
+      </div>
+      <div class="section-actions">
+        <button class="btn-download" onclick="downloadExcelHarian()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Unduh Excel
+        </button>
+      </div>
+    </div>
+
+    <!-- Info bar ringkasan -->
+    <div class="harian-info-bar" id="harian-info-bar">
+      <div class="range-label">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Periode: <span class="range-badge" id="harian-period-badge">—</span></span>
+      </div>
+      <div class="harian-meta">
+        <div class="harian-meta-item">
+          <div class="val" id="harian-total-val">—</div>
+          <div class="lbl">Total Input Periode Ini</div>
+        </div>
+        <div class="harian-meta-item">
+          <div class="val" id="harian-hari-val">—</div>
+          <div class="lbl">Hari Aktif Input</div>
+        </div>
+        <div class="harian-meta-item">
+          <div class="val" id="harian-avg-val">—</div>
+          <div class="lbl">Rata-rata / Hari</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabel breakdown harian -->
+    <div class="harian-table-wrap">
+      <div class="harian-table-inner">
+        <table class="harian-table" id="harian-table">
+          <thead id="harian-thead"></thead>
+          <tbody id="harian-tbody"></tbody>
+          <tfoot id="harian-tfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ── KONFIGURASI SUPABASE ──────────────────────────────────
 const SUPABASE_URL = "https://tttnvyovzxizsbzenoxd.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0dG52eW92enhpenNiemVub3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODczNzcsImV4cCI6MjA4OTc2MzM3N30.g2MbRT4yTilyM3j6t3ANK0ADZ5Mmxg3Y9ylyJigK-Hk";
-
 const SB_HEADERS = {
   "apikey": SUPABASE_KEY,
   "Authorization": `Bearer ${SUPABASE_KEY}`,
@@ -388,82 +555,92 @@ const TARGET_DATA = [
 
 // ── STATE ─────────────────────────────────────────────────
 const PAGE_SIZE = 25;
-let allUsers     = [];   // data user mentah dari Supabase (sudah rekap)
-let allKab       = [];   // data kab mentah dari Supabase (sudah rekap)
+let allUsers     = [];
+let allKab       = [];
 let filteredUsers = [];
 let currentPage  = 1;
 let activeTab    = 'user';
-let filterDate   = '';
+let filterDateStart = '';
+let filterDateEnd   = '';
 let totalGrand   = 0;
 let todayGrand   = 0;
 
-// ── HELPER SUPABASE FETCH (dengan pagination otomatis) ────
+// Data rekap harian (kabupaten x tanggal)
+let harianData   = {}; // { 'KABUPATEN': { 'YYYY-MM-DD': count } }
+let harianDates  = []; // sorted date strings dalam range
+
+// ── HELPER SUPABASE FETCH ─────────────────────────────────
 async function sbFetch(path) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { 
-    headers: SB_HEADERS,
-    cache: 'no-store' // FIX 1: Anti-Cache
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: SB_HEADERS, cache: 'no-store'
   });
   if (!res.ok) throw new Error(`Supabase error ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
-// Ambil SEMUA data dengan pagination (bypass limit 1000)
 async function sbFetchAll(basePath, chunkSize = 1000) {
   let allData = [];
   let offset  = 0;
-  // Pisahkan path dari query string agar bisa append range
-  const [endpoint, qs] = basePath.includes('?') 
-    ? basePath.split('?') 
+  const [endpoint, qs] = basePath.includes('?')
+    ? basePath.split('?')
     : [basePath, ''];
-  
   while (true) {
-    const rangeHeader = {
-      ...SB_HEADERS,
-      "Range-Unit": "items",
-      "Range": `${offset}-${offset + chunkSize - 1}`
-    };
-    const url = `${SUPABASE_URL}/rest/v1/${endpoint}${qs ? '?' + qs : ''}`;
-    
-    // FIX 1: Anti-Cache untuk pagination
-    const res = await fetch(url, { 
-      headers: rangeHeader,
-      cache: 'no-store' 
-    });
-    
+    const rangeHeader = { ...SB_HEADERS, "Range-Unit":"items", "Range":`${offset}-${offset+chunkSize-1}` };
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}${qs?'?'+qs:''}`;
+    const res = await fetch(url, { headers: rangeHeader, cache: 'no-store' });
     if (!res.ok) throw new Error(`Supabase error ${res.status}: ${await res.text()}`);
-    
     const chunk = await res.json();
     if (!chunk || chunk.length === 0) break;
-    
     allData = allData.concat(chunk);
-    
-    // Kalau chunk < chunkSize berarti sudah halaman terakhir
     if (chunk.length < chunkSize) break;
-    
     offset += chunkSize;
-    // Update counter animasi loading
     const ldCount = document.getElementById('ld-count');
     if (ldCount) ldCount.textContent = allData.length.toLocaleString('id-ID');
   }
   return allData;
 }
 
-// ── QUERY UTAMA KE SUPABASE ───────────────────────────────
-async function loadData() {
-  // Filter tanggal (untuk tab petugas & kabupaten)
-  const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
-
-  // "Hari ini" dalam WIB — pakai Intl agar akurat tidak peduli lokasi server
-  const todayWIB   = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Jakarta', year:'numeric', month:'2-digit', day:'2-digit'
+// ── DATE HELPERS ──────────────────────────────────────────
+function todayWIB() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone:'Asia/Jakarta', year:'numeric', month:'2-digit', day:'2-digit'
   }).format(new Date());
+}
 
-  const countDate  = filterDate || todayWIB;
+// Format YYYY-MM-DD → DD MMM (id)
+function fmtDateShort(iso) {
+  const [y,m,d] = iso.split('-');
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]}`;
+}
 
-  // FIX 2: Menambahkan "&order=id.asc" pada SEMUA URL agar tidak ada data dobel/terlewat.
+// Enumerate semua tanggal dalam range
+function enumerateDates(start, end) {
+  const dates = [];
+  const cur = new Date(start + 'T00:00:00');
+  const fin = new Date(end   + 'T00:00:00');
+  while (cur <= fin) {
+    dates.push(cur.toISOString().substring(0,10));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+}
+
+// ── QUERY UTAMA ───────────────────────────────────────────
+async function loadData() {
+  const ds = filterDateStart;
+  const de = filterDateEnd;
+  const dateFilter = ds
+    ? `&created_at=gte.${ds}T00:00:00${de ? `&created_at=lte.${de}T23:59:59` : ''}`
+    : '';
+
+  const todayStr  = todayWIB();
+  const countDate = ds || todayStr;
+  const countEnd  = de || todayStr;
+
   const [rawUser, rawToday, rawTotal] = await Promise.all([
     sbFetchAll(`hasil_usaha?select=username,kabupaten_kota${dateFilter}&order=id.asc`),
-    sbFetchAll(`hasil_usaha?select=id&created_at=gte.${countDate}T00:00:00&created_at=lte.${countDate}T23:59:59&order=id.asc`),
+    sbFetchAll(`hasil_usaha?select=id&created_at=gte.${countDate}T00:00:00&created_at=lte.${countEnd}T23:59:59&order=id.asc`),
     sbFetchAll(`hasil_usaha?select=kabupaten_kota&created_at=gte.2026-03-12T00:00:00&order=id.asc`)
   ]);
 
@@ -478,7 +655,7 @@ async function loadData() {
   });
   allUsers = Object.values(userMap).sort((a,b) => b.total - a.total);
 
-  // Pivot kabupaten
+  // Pivot kab
   const kabMap = {};
   rawUser.forEach(r => {
     const k = r.kabupaten_kota || 'Tidak Diketahui';
@@ -490,13 +667,15 @@ async function loadData() {
   totalGrand = rawUser.length;
   todayGrand = rawToday.length;
 
-  // Label dinamis "Input Hari Ini" atau "Input tgl XX"
+  // Label dinamis
   const lblToday = document.getElementById('lbl-today');
   if (lblToday) {
-    lblToday.textContent = filterDate ? `Input ${filterDate}` : 'Input Hari Ini';
+    if (ds && de && ds !== de) lblToday.textContent = `Input ${fmtDateShort(ds)}–${fmtDateShort(de)}`;
+    else if (ds) lblToday.textContent = `Input ${ds}`;
+    else lblToday.textContent = 'Input Hari Ini';
   }
 
-  // Hitung rekap target (sejak 12 Maret)
+  // Rekap target (sejak 12 Maret)
   const tambahan = {};
   rawTotal.forEach(r => {
     const k = (r.kabupaten_kota||'').toUpperCase().replace('KOTA ','').replace('TULANGBAWANG','TULANG BAWANG');
@@ -507,81 +686,118 @@ async function loadData() {
   return true;
 }
 
-// ── LOAD HARIAN (butuh created_at per baris utk sparkline) ─
+// ── LOAD HARIAN ───────────────────────────────────────────
 async function loadHarian() {
-  const dateFilter = filterDate ? `&created_at=gte.${filterDate}T00:00:00` : '';
-  // FIX: Tambahkan order by created_at.asc untuk menjaga konsistensi pagination
+  const ds = filterDateStart;
+  const de = filterDateEnd;
+  const dateFilter = ds
+    ? `&created_at=gte.${ds}T00:00:00${de ? `&created_at=lte.${de}T23:59:59` : ''}`
+    : '';
+
   const rawAll = await sbFetchAll(`hasil_usaha?select=kabupaten_kota,created_at${dateFilter}&order=created_at.asc`);
-  
-  // Reset harian
+
+  // Reset harian di allKab
   allKab.forEach(k => { k.harian = {}; });
   const kabIdx = {};
   allKab.forEach(k => { kabIdx[k.nama] = k; });
 
+  // Bangun harianData (untuk rekap harian tab)
+  harianData = {};
   let latestTs = '';
+
   rawAll.forEach(r => {
-    const kn = r.kabupaten_kota || 'Tidak Diketahui';
+    const kn  = r.kabupaten_kota || 'Tidak Diketahui';
     const tgl = (r.created_at||'').substring(0,10);
-    if (kabIdx[kn] && tgl) {
-      kabIdx[kn].harian[tgl] = (kabIdx[kn].harian[tgl]||0) + 1;
+    if (tgl) {
+      // Untuk sparkline
+      if (kabIdx[kn]) kabIdx[kn].harian[tgl] = (kabIdx[kn].harian[tgl]||0)+1;
+      // Untuk rekap harian
+      if (!harianData[kn]) harianData[kn] = {};
+      harianData[kn][tgl] = (harianData[kn][tgl]||0)+1;
     }
-    // Track tanggal terbaru
     if (r.created_at && r.created_at > latestTs) latestTs = r.created_at;
   });
 
-  // Format tanggal update terakhir: DD/MM/YYYY HH:MM
+  // Kumpulkan semua tanggal unik dalam range data
+  const allDates = new Set();
+  Object.values(harianData).forEach(obj => Object.keys(obj).forEach(d => allDates.add(d)));
+  harianDates = [...allDates].sort();
+
+  // Kalau filter range set, enumerate semua tanggal dalam range (meski 0)
+  if (ds && de) {
+    const rangeEnum = enumerateDates(ds, de);
+    rangeEnum.forEach(d => allDates.add(d));
+    harianDates = [...allDates].sort();
+  }
+
+  // Timestamp terakhir
   if (latestTs.length >= 16) {
     const d = latestTs.substring(0,10).split('-');
     const t = latestTs.substring(11,16);
-    window._latestCreatedAt = d[2] + '/' + d[1] + '/' + d[0] + ' ' + t;
+    window._latestCreatedAt = d[2]+'/'+d[1]+'/'+d[0]+' '+t;
   } else {
-    // Fallback: ambil langsung 1 baris terbaru dari Supabase
     try {
       const latest = await sbFetch(`hasil_usaha?select=created_at&order=created_at.desc&limit=1`);
       if (latest[0]?.created_at) {
         const ts = latest[0].created_at;
-        const d = ts.substring(0,10).split('-');
-        const t = ts.substring(11,16);
-        window._latestCreatedAt = d[2] + '/' + d[1] + '/' + d[0] + ' ' + t;
+        const d  = ts.substring(0,10).split('-');
+        const t  = ts.substring(11,16);
+        window._latestCreatedAt = d[2]+'/'+d[1]+'/'+d[0]+' '+t;
       }
-    } catch(e) { /* silent fail */ }
+    } catch(e) {}
   }
 }
 
 // ── INIT ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    // Set default: 3 hari ke belakang dari hari ini (untuk contoh 25–27 Mar)
+    const today = todayWIB();
+    document.getElementById('filter-date-end').value = today;
+
     await loadData();
     await loadHarian();
+
+    // Set tanggal mulai ke tanggal terlama
+    const earliest = await sbFetch(`hasil_usaha?select=created_at&order=created_at.asc&limit=1`);
+    if (earliest[0]) {
+      const eDate = earliest[0].created_at.substring(0,10);
+      document.getElementById('filter-date-start').value = eDate;
+      filterDateStart = eDate;
+    }
+    // Re-load harian setelah set tanggal awal
+    await loadHarian();
+
     const ldEl = document.getElementById('loading');
     ldEl.style.transition = 'opacity .5s ease';
     ldEl.style.opacity = '0';
     setTimeout(() => { ldEl.style.display = 'none'; ldEl.style.opacity = '1'; }, 500);
-    
-    // Set tanggal awal filter ke tanggal terlama di data
-    const dateInput = document.getElementById('filter-date');
-    if (!dateInput.value && allKab.length) {
-      // Ambil tanggal terlama
-      const earliest = await sbFetch(`hasil_usaha?select=created_at&order=created_at.asc&limit=1`);
-      if (earliest[0]) dateInput.value = earliest[0].created_at.substring(0,10);
-    }
 
     populateSatkerFilter();
     updateUI();
   } catch(e) {
-    document.getElementById('loading').innerHTML = `<div style="color:var(--red);padding:20px">Gagal memuat data: ${e.message}<br><small>Pastikan tabel hasil_usaha sudah ada di Supabase.</small></div>`;
+    document.getElementById('loading').innerHTML = `<div style="color:var(--red);padding:20px">Gagal memuat data: ${e.message}</div>`;
     console.error(e);
   }
 });
 
-// ── APPLY FILTER TANGGAL ──────────────────────────────────
+// ── APPLY FILTER ──────────────────────────────────────────
 async function applyDateFilter() {
-  filterDate = document.getElementById('filter-date').value;
+  filterDateStart = document.getElementById('filter-date-start').value;
+  filterDateEnd   = document.getElementById('filter-date-end').value;
+
+  // Validasi
+  if (filterDateStart && filterDateEnd && filterDateStart > filterDateEnd) {
+    alert('Tanggal "Mulai" tidak boleh lebih besar dari "Sampai".');
+    return;
+  }
+
   const ldEl = document.getElementById('loading');
-  ldEl.style.display = 'flex';
+  ldEl.style.display = 'flex'; ldEl.style.opacity = '1';
   const ldCnt = document.getElementById('ld-count');
   if (ldCnt) ldCnt.textContent = '—';
   document.querySelectorAll('.panel').forEach(p => p.style.opacity = '0.4');
+
   try {
     await loadData();
     await loadHarian();
@@ -589,34 +805,30 @@ async function applyDateFilter() {
     populateSatkerFilter();
     updateUI();
   } catch(e) { console.error(e); }
-  const ldEl2 = document.getElementById('loading');
-  ldEl2.style.transition = 'opacity .3s ease';
-  ldEl2.style.opacity = '0';
-  setTimeout(() => { ldEl2.style.display = 'none'; ldEl2.style.opacity = '1'; }, 300);
+
+  ldEl.style.transition = 'opacity .3s ease';
+  ldEl.style.opacity = '0';
+  setTimeout(() => { ldEl.style.display = 'none'; ldEl.style.opacity = '1'; }, 300);
   document.querySelectorAll('.panel').forEach(p => p.style.opacity = '1');
 }
 
 // ── UPDATE UI ─────────────────────────────────────────────
 function updateUI() {
-  document.getElementById('stat-total').textContent = totalGrand.toLocaleString('id-ID');
-  document.getElementById('stat-user').textContent  = allUsers.length;
-  document.getElementById('stat-today').textContent = todayGrand.toLocaleString('id-ID');
-  document.getElementById('stat-kab').textContent   = allKab.length; 
-  
-  // Label dinamis sesuai filter
-  const todayLabel = document.getElementById('lbl-today');
-  if (todayLabel) todayLabel.textContent = filterDate ? `Input ${filterDate}` : 'Input Hari Ini';
-  // Tampilkan tanggal update terakhir dari data (di-set oleh loadHarian)
+  document.getElementById('stat-total').textContent  = totalGrand.toLocaleString('id-ID');
+  document.getElementById('stat-user').textContent   = allUsers.length;
+  document.getElementById('stat-today').textContent  = todayGrand.toLocaleString('id-ID');
+  document.getElementById('stat-kab').textContent    = allKab.length;
+  document.getElementById('cnt-kab').textContent     = allKab.length;
+  document.getElementById('cnt-user').textContent    = allUsers.length;
+  document.getElementById('kab-count').textContent   = allKab.length + ' wilayah';
+
+  // Timestamp
   const latestDate = window._latestCreatedAt || '';
-  document.getElementById('hdr-updated').textContent = latestDate
-    ? 'Update: ' + latestDate
-    : 'Memuat…';
-  document.getElementById('cnt-kab').textContent    = allKab.length;
-  document.getElementById('cnt-user').textContent   = allUsers.length;
-  document.getElementById('kab-count').textContent  = allKab.length + ' wilayah';
+  document.getElementById('hdr-updated').textContent = latestDate ? 'Update: '+latestDate : 'Memuat…';
 
   renderKabupaten();
   renderRekapTarget();
+  renderRekapHarian();
   filteredUsers = [...allUsers];
   renderUsersPage(1);
 }
@@ -627,7 +839,7 @@ function switchTab(tab, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
 }
 
 // ── REKAP TARGET ──────────────────────────────────────────
@@ -638,24 +850,24 @@ function renderRekapTarget() {
   const tambahan = window._tambahanSejak12 || {};
 
   let rekapData = TARGET_DATA.map(item => {
-    const normId = item.id.replace('TULANGBAWANG','TULANG BAWANG');
-    const tam = tambahan[normId] || 0;
-    const realisasi = item.base_11_maret + tam;
-    const sisa = item.target - realisasi;
-    const pct = (realisasi / item.target) * 100;
-    totalTarget += item.target;
-    totalRealisasi += realisasi;
-    return { ...item, realisasi, sisa, pct };
+    const normId  = item.id.replace('TULANGBAWANG','TULANG BAWANG');
+    const tam     = tambahan[normId] || 0;
+    const real    = item.base_11_maret + tam;
+    const sisa    = item.target - real;
+    const pct     = (real/item.target)*100;
+    totalTarget  += item.target;
+    totalRealisasi += real;
+    return {...item, realisasi:real, sisa, pct};
   });
   rekapData.sort((a,b) => b.pct - a.pct);
 
-  rekapData.forEach((row, idx) => {
+  rekapData.forEach((row,idx) => {
     const ok = row.sisa <= 0;
     const sisaHtml = ok
       ? `<span style="color:var(--green);font-weight:700;">+${Math.abs(row.sisa).toLocaleString('id-ID')} (Lebih)</span>`
       : `<span style="color:var(--red);font-weight:700;">-${row.sisa.toLocaleString('id-ID')}</span>`;
     const barColor = ok ? 'linear-gradient(90deg,var(--green-light),var(--green))' : 'linear-gradient(90deg,var(--orange-light),var(--orange))';
-    const pctD = Math.min(row.pct, 100);
+    const pctD = Math.min(row.pct,100);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${idx+1}</td>
@@ -664,7 +876,7 @@ function renderRekapTarget() {
       <td style="font-family:'DM Mono',monospace;font-weight:700;color:var(--gray-900)">${row.realisasi.toLocaleString('id-ID')}</td>
       <td><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${pctD}%;background:${barColor}"></div></div>
         <span class="mini-pct" style="${ok?'color:var(--green);font-weight:700;':''}">${row.pct.toFixed(1)}%</span></div></td>
-      <td style="font-family:'DM Mono',monospace">${sisaHtml}</td>`;
+      <td>${sisaHtml}</td>`;
     tbody.appendChild(tr);
   });
 
@@ -679,21 +891,165 @@ function renderRekapTarget() {
     <td style="font-family:'DM Mono',monospace;font-weight:800;color:var(--gray-900)">${totalRealisasi.toLocaleString('id-ID')}</td>
     <td><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${Math.min(totalPct,100)}%;background:${okT?'linear-gradient(90deg,var(--green-light),var(--green))':'linear-gradient(90deg,var(--orange-light),var(--orange))'}"></div></div>
       <span class="mini-pct" style="font-weight:800;color:var(--gray-900)">${totalPct.toFixed(1)}%</span></div></td>
-    <td style="font-family:'DM Mono',monospace">${okT?`<span style="color:var(--green);font-weight:800;">+${Math.abs(totalSisa).toLocaleString('id-ID')} (Lebih)</span>`:`<span style="color:var(--red);font-weight:800;">-${totalSisa.toLocaleString('id-ID')}</span>`}</td>`;
+    <td>${okT?`<span style="color:var(--green);font-weight:800;">+${Math.abs(totalSisa).toLocaleString('id-ID')} (Lebih)</span>`:`<span style="color:var(--red);font-weight:800;">-${totalSisa.toLocaleString('id-ID')}</span>`}</td>`;
   tbody.appendChild(trT);
+}
+
+// ── REKAP HARIAN (BARU) ───────────────────────────────────
+function renderRekapHarian() {
+  const thead  = document.getElementById('harian-thead');
+  const tbody  = document.getElementById('harian-tbody');
+  const tfoot  = document.getElementById('harian-tfoot');
+  const badge  = document.getElementById('harian-period-badge');
+  const rangeLabel = document.getElementById('harian-range-label');
+
+  // Update badge periode
+  const ds = filterDateStart;
+  const de = filterDateEnd;
+  let periodText = '—';
+  if (ds && de && ds !== de) {
+    periodText = `${fmtDateShort(ds)} – ${fmtDateShort(de)}`;
+    rangeLabel.textContent = `${harianDates.length} hari`;
+  } else if (ds) {
+    periodText = fmtDateShort(ds);
+    rangeLabel.textContent = '';
+  } else {
+    periodText = 'Semua data';
+    rangeLabel.textContent = `${harianDates.length} hari`;
+  }
+  badge.textContent = periodText;
+
+  // Hitung ringkasan
+  let grandTotal = 0;
+  const dayTotals = {};
+  harianDates.forEach(d => { dayTotals[d] = 0; });
+
+  const kabNames = Object.keys(harianData).sort((a,b) => {
+    const ta = Object.values(harianData[a]).reduce((s,v)=>s+v,0);
+    const tb = Object.values(harianData[b]).reduce((s,v)=>s+v,0);
+    return tb - ta;
+  });
+
+  kabNames.forEach(kn => {
+    harianDates.forEach(d => {
+      const v = harianData[kn][d] || 0;
+      dayTotals[d] = (dayTotals[d]||0) + v;
+      grandTotal += v;
+    });
+  });
+
+  const hariAktif = harianDates.filter(d => (dayTotals[d]||0) > 0).length;
+  const avgPerHari = hariAktif > 0 ? Math.round(grandTotal / hariAktif) : 0;
+
+  document.getElementById('harian-total-val').textContent = grandTotal.toLocaleString('id-ID');
+  document.getElementById('harian-hari-val').textContent  = hariAktif;
+  document.getElementById('harian-avg-val').textContent   = avgPerHari.toLocaleString('id-ID');
+
+  // Max value untuk heat coloring
+  const allCellVals = [];
+  kabNames.forEach(kn => harianDates.forEach(d => {
+    const v = harianData[kn][d]||0;
+    if (v > 0) allCellVals.push(v);
+  }));
+  const maxCell = allCellVals.length ? Math.max(...allCellVals) : 1;
+
+  // ── THEAD ──
+  thead.innerHTML = '';
+  const trH = document.createElement('tr');
+  trH.innerHTML = `<th>Kabupaten / Kota</th>`;
+  harianDates.forEach(d => {
+    trH.innerHTML += `<th class="date-col">${fmtDateShort(d)}<br><span style="font-size:9px;opacity:.5;font-family:'DM Mono',monospace">${d.substring(5)}</span></th>`;
+  });
+  trH.innerHTML += `<th class="total-col">Total</th>`;
+  thead.appendChild(trH);
+
+  // ── TBODY ──
+  tbody.innerHTML = '';
+  if (!kabNames.length) {
+    tbody.innerHTML = `<tr><td colspan="${harianDates.length+2}" style="text-align:center;padding:24px;color:var(--gray-400)">Tidak ada data untuk range ini.</td></tr>`;
+    tfoot.innerHTML = '';
+    return;
+  }
+
+  kabNames.forEach(kn => {
+    const rowTotal = Object.values(harianData[kn]).reduce((s,v)=>s+v,0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${kn}</td>`;
+    harianDates.forEach(d => {
+      const v   = harianData[kn][d] || 0;
+      const pct = v > 0 ? (v/maxCell)*100 : 0;
+      let cls = 'heat-cell ';
+      if (v === 0)          cls += 'zero';
+      else if (v >= maxCell*0.7) cls += 'high-val';
+      else                  cls += 'has-val';
+
+      const heatColor = v > 0
+        ? `style="background:linear-gradient(90deg,rgba(249,115,22,.12),rgba(249,115,22,${(pct/100*0.25).toFixed(2)}))"` : '';
+
+      tr.innerHTML += `<td class="${cls}" ${heatColor}>${v > 0 ? v.toLocaleString('id-ID') : '–'}</td>`;
+    });
+    tr.innerHTML += `<td class="total-val">${rowTotal.toLocaleString('id-ID')}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // ── TFOOT ──
+  tfoot.innerHTML = '';
+  const trF = document.createElement('tr');
+  trF.innerHTML = `<td>Total / Hari</td>`;
+  harianDates.forEach(d => {
+    const v = dayTotals[d] || 0;
+    trF.innerHTML += `<td class="day-total">${v > 0 ? v.toLocaleString('id-ID') : '–'}</td>`;
+  });
+  trF.innerHTML += `<td class="grand-total-cell">${grandTotal.toLocaleString('id-ID')}</td>`;
+  tfoot.appendChild(trF);
+}
+
+// ── DOWNLOAD EXCEL REKAP HARIAN ───────────────────────────
+function downloadExcelHarian() {
+  if (!harianDates.length || !Object.keys(harianData).length) {
+    alert('Tidak ada data harian untuk diunduh.'); return;
+  }
+  const kabNames = Object.keys(harianData).sort((a,b)=>{
+    const ta = Object.values(harianData[a]).reduce((s,v)=>s+v,0);
+    const tb = Object.values(harianData[b]).reduce((s,v)=>s+v,0);
+    return tb-ta;
+  });
+
+  const rows = kabNames.map(kn => {
+    const row = { 'Kabupaten/Kota': kn };
+    harianDates.forEach(d => { row[fmtDateShort(d)+' ('+d+')'] = harianData[kn][d]||0; });
+    row['Total'] = Object.values(harianData[kn]).reduce((s,v)=>s+v,0);
+    return row;
+  });
+
+  // Baris total
+  const rowTotal = { 'Kabupaten/Kota': 'TOTAL' };
+  const dayTotals = {};
+  harianDates.forEach(d => { dayTotals[d]=0; });
+  kabNames.forEach(kn => harianDates.forEach(d => { dayTotals[d]=(dayTotals[d]||0)+(harianData[kn][d]||0); }));
+  harianDates.forEach(d => { rowTotal[fmtDateShort(d)+' ('+d+')'] = dayTotals[d]; });
+  rowTotal['Total'] = Object.values(dayTotals).reduce((s,v)=>s+v,0);
+  rows.push(rowTotal);
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:24},...harianDates.map(()=>({wch:14})),{wch:12}];
+  const wb2 = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb2, ws, 'Rekap Harian');
+  const ds = filterDateStart||'semua';
+  const de = filterDateEnd||'semua';
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb2, `rekap_harian_kab_${ds}_sd_${de}_${stamp}.xlsx`);
 }
 
 // ── KABUPATEN ─────────────────────────────────────────────
 function renderKabupaten() {
   const grid = document.getElementById('kab-grid');
   grid.innerHTML = '';
-  if (!allKab.length) {
-    grid.innerHTML = '<div style="color:var(--gray-400);padding:20px">Tidak ada data.</div>';
-    return;
-  }
+  if (!allKab.length) { grid.innerHTML = '<div style="color:var(--gray-400);padding:20px">Tidak ada data.</div>'; return; }
   const maxVal = allKab[0].total;
-  const cards = allKab.map((kab, i) => {
-    const pct = ((kab.total/totalGrand)*100).toFixed(1);
+  const cards  = allKab.map((kab,i) => {
+    const pct  = ((kab.total/totalGrand)*100).toFixed(1);
     const card = document.createElement('div');
     card.className = 'kab-card';
     card.innerHTML = `
@@ -725,7 +1081,7 @@ function buildSparkline(harian) {
   const vals = entries.map(e=>e[1]);
   const maxV = Math.max(...vals,1);
   const W=280,H=44,pad=2;
-  const pts = vals.map((v,i)=>{
+  const pts = vals.map((v,i) => {
     const x = pad+(i/(vals.length-1||1))*(W-pad*2);
     const y = H-pad-(v/maxV)*(H-pad*2);
     return `${x},${y}`;
@@ -744,7 +1100,7 @@ function buildSparkline(harian) {
 
 // ── USERS ─────────────────────────────────────────────────
 function populateSatkerFilter() {
-  const sel = document.getElementById('satker-filter');
+  const sel   = document.getElementById('satker-filter');
   const codes = [...new Set(allUsers.map(u=>u.satker))].sort();
   sel.innerHTML = '<option value="">Semua Satker</option>';
   codes.forEach(c => {
@@ -755,7 +1111,7 @@ function populateSatkerFilter() {
 }
 
 function filterUsers() {
-  const q = document.getElementById('user-search').value.toLowerCase().trim();
+  const q  = document.getElementById('user-search').value.toLowerCase().trim();
   const sv = document.getElementById('satker-filter').value;
   filteredUsers = allUsers.filter(u => {
     const matchTxt = !q || u.username.toLowerCase().includes(q) || u.satker.includes(q);
@@ -818,7 +1174,7 @@ function renderUsersPage(page) {
   };
   addBtn('‹',page-1,page===1);
   getPageRange(page,pages).forEach(p=>{
-    if(p==='…'){ const s=document.createElement('span');s.textContent='…';s.style.cssText='padding:0 4px;color:var(--gray-400);font-size:13px;';btnWrap.appendChild(s); }
+    if(p==='…'){const s=document.createElement('span');s.textContent='…';s.style.cssText='padding:0 4px;color:var(--gray-400);font-size:13px;';btnWrap.appendChild(s);}
     else addBtn(p,p,false);
   });
   addBtn('›',page+1,page===pages);
@@ -826,32 +1182,33 @@ function renderUsersPage(page) {
 
 function getPageRange(cur,total) {
   if(total<=7) return Array.from({length:total},(_,i)=>i+1);
-  if(cur<=4) return [1,2,3,4,5,'…',total];
+  if(cur<=4)   return [1,2,3,4,5,'…',total];
   if(cur>=total-3) return [1,'…',total-4,total-3,total-2,total-1,total];
   return [1,'…',cur-1,cur,cur+1,'…',total];
 }
 
-// ── DOWNLOAD EXCEL ────────────────────────────────────────
+// ── DOWNLOAD EXCEL PETUGAS ────────────────────────────────
 function downloadExcel() {
   if(!filteredUsers.length){ alert('Tidak ada data untuk diunduh.'); return; }
-  const rows = filteredUsers.map((u,idx)=>{
-    const pct = ((u.total/totalGrand)*100).toFixed(2);
+  const rows = filteredUsers.map((u,idx) => {
+    const pct     = ((u.total/totalGrand)*100).toFixed(2);
     const kabList = Object.entries(u.kabupaten).sort((a,b)=>b[1]-a[1])
       .map(([k,v])=>`${k} (${v})`).join('; ');
-    return { 'No':idx+1,'Kode Satker':u.satker,'Username':u.username,'Total Usaha':u.total,'Kontribusi (%)':parseFloat(pct),'Kabupaten/Kota':kabList };
+    return {'No':idx+1,'Kode Satker':u.satker,'Username':u.username,'Total Usaha':u.total,'Kontribusi (%)':parseFloat(pct),'Kabupaten/Kota':kabList};
   });
   rows.push({'No':'','Kode Satker':'','Username':'TOTAL',
     'Total Usaha':filteredUsers.reduce((s,u)=>s+u.total,0),'Kontribusi (%)':100,'Kabupaten/Kota':''});
 
-  const ws = XLSX.utils.json_to_sheet(rows);
+  const ws  = XLSX.utils.json_to_sheet(rows);
   ws['!cols']=[{wch:5},{wch:14},{wch:28},{wch:14},{wch:16},{wch:60}];
   const wb2 = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb2, ws, 'Capaian Petugas');
-  const fd  = document.getElementById('filter-date').value||'semua';
+  const ds  = filterDateStart||'semua';
+  const de  = filterDateEnd||'semua';
   const sv  = document.getElementById('satker-filter').value||'semua';
   const now = new Date();
   const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-  XLSX.writeFile(wb2, `capaian_petugas_satker${sv}_mulai${fd}_${stamp}.xlsx`);
+  XLSX.writeFile(wb2, `capaian_petugas_satker${sv}_${ds}_sd_${de}_${stamp}.xlsx`);
 }
 </script>
 </body>
