@@ -335,8 +335,8 @@
     <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" style="fill:none;stroke:white;stroke-width:1.5"/></svg>
   </div>
   <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
-  <div class="ld-count" id="ld-count">Data Sinkronisasi</div>
-  <div class="ld-label">memproses dari server...</div>
+  <div class="ld-count" id="ld-count">—</div>
+  <div class="ld-label">baris data dimuat</div>
   <div class="ld-dots">
     <div class="ld-dot"></div>
     <div class="ld-dot"></div>
@@ -389,6 +389,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Rekap Target
       </button>
+      <!-- TAB BARU: REKAP HARIAN -->
       <button class="tab-btn" onclick="switchTab('harian',this)" id="tab-harian">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Rekap Harian
@@ -396,6 +397,7 @@
       </button>
     </div>
 
+    <!-- FILTER RANGE TANGGAL (menggantikan filter lama) -->
     <div class="date-range-wrap">
       <label>Mulai:</label>
       <input type="date" id="filter-date-start" title="Tanggal mulai"/>
@@ -460,7 +462,11 @@
     <div class="table-wrap">
       <div class="table-inner">
         <table>
+<<<<<<< HEAD
+          <thead><tr><th>#</th><th>Kabupaten/Kota</th><th>SE2016</th><th>Target 10%SE</th><th>Realisasi (Kumulatif)</th><th>Persentase Capaian</th><th>Kekurangan / Sisa</th></tr></thead>
+=======
           <thead><tr><th>#</th><th>Kabupaten/Kota</th><th>Target 10%SE</th><th>Realisasi (Kumulatif)</th><th>Persentase Capaian</th><th>Kekurangan / Sisa</th></tr></thead>
+>>>>>>> a47220911fbe544ec1e6c86d8620672d9ece55df
           <tbody id="rekap-tbody"></tbody>
         </table>
       </div>
@@ -534,21 +540,21 @@ const SATKER_MAP = {"ahmadriswan": "1800", "ajid.hajiji": "1800", "atikh": "1800
 
 // ── TARGET DATA ───────────────────────────────────────────
 const TARGET_DATA = [
-  {id:"LAMPUNG BARAT",nama:"Lampung Barat",target:26934,base_11_maret:28127},
-  {id:"TANGGAMUS",nama:"Tanggamus",target:55836,base_11_maret:44339},
-  {id:"LAMPUNG SELATAN",nama:"Lampung Selatan",target:91766,base_11_maret:86863},
-  {id:"LAMPUNG TIMUR",nama:"Lampung Timur",target:122148,base_11_maret:82223},
-  {id:"LAMPUNG TENGAH",nama:"Lampung Tengah",target:126365,base_11_maret:111109},
-  {id:"LAMPUNG UTARA",nama:"Lampung Utara",target:60666,base_11_maret:53358},
-  {id:"WAY KANAN",nama:"Way Kanan",target:40258,base_11_maret:35739},
-  {id:"TULANG BAWANG",nama:"Tulang Bawang",target:37413,base_11_maret:39466},
-  {id:"PESAWARAN",nama:"Pesawaran",target:45527,base_11_maret:49307},
-  {id:"PRINGSEWU",nama:"Pringsewu",target:44567,base_11_maret:48348},
-  {id:"MESUJI",nama:"Mesuji",target:18236,base_11_maret:20732},
-  {id:"TULANG BAWANG BARAT",nama:"Tulang Bawang Barat",target:23332,base_11_maret:24676},
-  {id:"PESISIR BARAT",nama:"Pesisir Barat",target:11925,base_11_maret:13420},
-  {id:"BANDAR LAMPUNG",nama:"Bandar Lampung",target:130401,base_11_maret:101439},
-  {id:"METRO",nama:"Metro",target:26242,base_11_maret:28865}
+  {id:"LAMPUNG BARAT",      nama:"Lampung Barat",       se2016:24485,  target:26934,  base_11_maret:28127},
+  {id:"TANGGAMUS",          nama:"Tanggamus",            se2016:50760,  target:55836,  base_11_maret:44339},
+  {id:"LAMPUNG SELATAN",    nama:"Lampung Selatan",      se2016:83424,  target:91766,  base_11_maret:86863},
+  {id:"LAMPUNG TIMUR",      nama:"Lampung Timur",        se2016:111044, target:122148, base_11_maret:82223},
+  {id:"LAMPUNG TENGAH",     nama:"Lampung Tengah",       se2016:114877, target:126365, base_11_maret:111109},
+  {id:"LAMPUNG UTARA",      nama:"Lampung Utara",        se2016:55151,  target:60666,  base_11_maret:53358},
+  {id:"WAY KANAN",          nama:"Way Kanan",            se2016:36598,  target:40258,  base_11_maret:35739},
+  {id:"TULANG BAWANG",      nama:"Tulang Bawang",        se2016:34012,  target:37413,  base_11_maret:39466},
+  {id:"PESAWARAN",          nama:"Pesawaran",            se2016:41388,  target:45527,  base_11_maret:49307},
+  {id:"PRINGSEWU",          nama:"Pringsewu",            se2016:40515,  target:44567,  base_11_maret:48348},
+  {id:"MESUJI",             nama:"Mesuji",               se2016:16578,  target:18236,  base_11_maret:20732},
+  {id:"TULANG BAWANG BARAT",nama:"Tulang Bawang Barat", se2016:21211,  target:23332,  base_11_maret:24676},
+  {id:"PESISIR BARAT",      nama:"Pesisir Barat",        se2016:10841,  target:11925,  base_11_maret:13420},
+  {id:"BANDAR LAMPUNG",     nama:"Bandar Lampung",       se2016:118546, target:130401, base_11_maret:101439},
+  {id:"METRO",              nama:"Metro",                se2016:23856,  target:26242,  base_11_maret:28865}
 ];
 
 // ── STATE ─────────────────────────────────────────────────
@@ -592,6 +598,8 @@ async function sbFetchAll(basePath, chunkSize = 1000) {
     allData = allData.concat(chunk);
     if (chunk.length < chunkSize) break;
     offset += chunkSize;
+    const ldCount = document.getElementById('ld-count');
+    if (ldCount) ldCount.textContent = allData.length.toLocaleString('id-ID');
   }
   return allData;
 }
@@ -622,96 +630,112 @@ function enumerateDates(start, end) {
   return dates;
 }
 
-// ── QUERY OPTIMIZED (MENGGUNAKAN VIEW SUPABASE) ───────────
-async function loadDataOptimized() {
+// ── SINGLE OPTIMIZED FETCH — semua dihitung dari 1 query ──
+// Sebelumnya: 4 query besar × 81.000 baris = sangat lambat
+// Sekarang  : 1 query besar + 1 query ringan (1 baris timestamp)
+async function loadData() {
   const ds = filterDateStart;
   const de = filterDateEnd;
   const todayStr = todayWIB();
 
-  // Tarik data dari view (jauh lebih cepat dan kecil ukurannya)
-  const [dataTarget, dataHarian, dataPetugas, latestData] = await Promise.all([
-    sbFetchAll(`view_target_12maret`),
-    sbFetchAll(`view_rekap_harian`),
-    sbFetchAll(`view_rekap_petugas`),
-    sbFetch(`hasil_usaha?select=created_at&order=created_at.desc&limit=1`) // Cari waktu update terakhir
-  ]);
+  // Query ringan: ambil timestamp terbaru (hanya 1 baris)
+  const latestPromise = sbFetch(`hasil_usaha?select=created_at&order=created_at.desc&limit=1`);
 
-  // Set waktu update terakhir
-  if (latestData[0] && latestData[0].created_at) {
-    const d = latestData[0].created_at.substring(0,10).split('-');
-    const t = latestData[0].created_at.substring(11,16);
-    window._latestCreatedAt = `${d[2]}/${d[1]}/${d[0]} ${t}`;
-  }
+  // SATU fetch besar sejak 12 Maret — berisi semua kolom yang dibutuhkan semua tab
+  // Filter range diterapkan di sisi JS, bukan di query, agar Rekap Target tetap akumulatif
+  const rawMain = await sbFetchAll(
+    `hasil_usaha?select=username,kabupaten_kota,created_at&created_at=gte.2026-03-12T00:00:00&order=created_at.asc`
+  );
 
-  // 1. Olah Target (Statis sejak 12 Maret)
-  const tambahan = {};
-  dataTarget.forEach(r => {
-    const kabNorm = (r.kab_norm || '').replace('TULANGBAWANG', 'TULANG BAWANG');
-    tambahan[kabNorm] = r.tambahan_total;
-  });
-  window._tambahanSejak12 = tambahan;
+  // Batas filter range tampilan (tab Petugas, Kab, Rekap Harian)
+  const dispStart = ds ? ds + 'T00:00:00' : null;
+  const dispEnd   = de ? de + 'T23:59:59' : null;
+  const todayStart = (ds || todayStr) + 'T00:00:00';
+  const todayEnd   = (de || todayStr) + 'T23:59:59';
 
-  // 2. Olah Data Harian & Kab
-  const kabMap = {};
-  harianData = {};
-  totalGrand = 0;
-  todayGrand = 0;
-  const allDates = new Set();
+  // Satu pass — hitung semua sekaligus
+  const userMap     = {};
+  const kabMap      = {};
+  const tambahanMap = {};
+  harianData        = {};
+  let   grandTotal  = 0;
+  let   todayCount  = 0;
+  let   latestTs    = '';
 
-  dataHarian.forEach(r => {
-    const tgl = r.tgl;
-    const kn = r.kabupaten_kota || 'Tidak Diketahui';
-    const count = parseInt(r.total) || 0;
+  rawMain.forEach(r => {
+    const u   = r.username       || 'unknown';
+    const kn  = r.kabupaten_kota || 'Tidak Diketahui';
+    const ts  = r.created_at     || '';
+    const tgl = ts.substring(0, 10);
 
-    // Filter by Date (in memory karena view merekap semua data per hari)
-    const inRange = (!ds || tgl >= ds) && (!de || tgl <= de);
+    // Rekap Target: seluruh data sejak 12 Maret, TANPA filter range
+    const knNorm = kn.toUpperCase().replace('KOTA ','').replace('TULANGBAWANG','TULANG BAWANG');
+    tambahanMap[knNorm] = (tambahanMap[knNorm] || 0) + 1;
+
+    // Timestamp terbaru
+    if (ts > latestTs) latestTs = ts;
+
+    // Cek apakah masuk filter range tampilan
+    const inRange = (!dispStart || ts >= dispStart) && (!dispEnd || ts <= dispEnd);
     if (!inRange) return;
 
-    allDates.add(tgl);
-    totalGrand += count;
-    if (tgl === todayStr) todayGrand += count;
+    grandTotal++;
+    if (ts >= todayStart && ts <= todayEnd) todayCount++;
 
-    if (!kabMap[kn]) kabMap[kn] = { nama: kn, total: 0, harian: {} };
-    kabMap[kn].total += count;
-    kabMap[kn].harian[tgl] = count;
+    // Pivot petugas
+    if (!userMap[u]) userMap[u] = { username:u, total:0, kabupaten:{}, satker: SATKER_MAP[u]||'0000' };
+    userMap[u].total++;
+    userMap[u].kabupaten[kn] = (userMap[u].kabupaten[kn] || 0) + 1;
 
+    // Pivot kabupaten
+    if (!kabMap[kn]) kabMap[kn] = { nama:kn, total:0, harian:{} };
+    kabMap[kn].total++;
+    kabMap[kn].harian[tgl] = (kabMap[kn].harian[tgl] || 0) + 1;
+
+    // Rekap harian
     if (!harianData[kn]) harianData[kn] = {};
-    harianData[kn][tgl] = count;
+    harianData[kn][tgl] = (harianData[kn][tgl] || 0) + 1;
   });
 
-  allKab = Object.values(kabMap).sort((a,b) => b.total - a.total);
+  // Susun state
+  allUsers   = Object.values(userMap).sort((a,b) => b.total - a.total);
+  allKab     = Object.values(kabMap).sort((a,b) => b.total - a.total);
+  totalGrand = grandTotal;
+  todayGrand = todayCount;
+  window._tambahanSejak12 = tambahanMap;
 
-  // Jika range dipilih, pastikan tanggal yg kosong ikut muncul
-  if (ds && de) {
-    enumerateDates(ds, de).forEach(d => allDates.add(d));
-  }
+  // harianDates: kolom tanggal untuk Rekap Harian
+  const allDates = new Set();
+  Object.values(harianData).forEach(obj => Object.keys(obj).forEach(d => allDates.add(d)));
+  if (ds && de) enumerateDates(ds, de).forEach(d => allDates.add(d));
   harianDates = [...allDates].sort();
 
-  // 3. Olah Data Petugas
-  const userMap = {};
-  dataPetugas.forEach(r => {
-    const tgl = r.tgl;
-    const u = r.username || 'unknown';
-    const k = r.kabupaten_kota || 'Tidak Diketahui';
-    const count = parseInt(r.total) || 0;
+  // Timestamp update terakhir
+  if (latestTs.length >= 16) {
+    const d = latestTs.substring(0,10).split('-');
+    const t = latestTs.substring(11,16);
+    window._latestCreatedAt = `${d[2]}/${d[1]}/${d[0]} ${t}`;
+  } else {
+    try {
+      const latest = await latestPromise;
+      if (latest[0]?.created_at) {
+        const ts = latest[0].created_at;
+        const d  = ts.substring(0,10).split('-');
+        const t  = ts.substring(11,16);
+        window._latestCreatedAt = `${d[2]}/${d[1]}/${d[0]} ${t}`;
+      }
+    } catch(e) {}
+  }
 
-    const inRange = (!ds || tgl >= ds) && (!de || tgl <= de);
-    if (!inRange) return;
-
-    if (!userMap[u]) userMap[u] = { username: u, total: 0, kabupaten: {}, satker: SATKER_MAP[u]||'0000' };
-    userMap[u].total += count;
-    userMap[u].kabupaten[k] = (userMap[u].kabupaten[k] || 0) + count;
-  });
-
-  allUsers = Object.values(userMap).sort((a,b) => b.total - a.total);
-
-  // Update Label Hari Ini
+  // Label dinamis hero stats
   const lblToday = document.getElementById('lbl-today');
   if (lblToday) {
     if (ds && de && ds !== de) lblToday.textContent = `Input ${fmtDateShort(ds)}–${fmtDateShort(de)}`;
-    else if (ds) lblToday.textContent = `Input ${ds}`;
-    else lblToday.textContent = 'Input Hari Ini';
+    else if (ds)               lblToday.textContent = `Input ${ds}`;
+    else                       lblToday.textContent = 'Input Hari Ini';
   }
+
+  return true;
 }
 
 // ── INIT ──────────────────────────────────────────────────
@@ -721,15 +745,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('filter-date-end').value = today;
     filterDateEnd = today;
 
-    // Ambil tanggal terlama langsung dari view_rekap_harian agar sangat ringan
-    const earliest = await sbFetch(`view_rekap_harian?select=tgl&order=tgl.asc&limit=1`);
-    if (earliest[0] && earliest[0].tgl) {
-      document.getElementById('filter-date-start').value = earliest[0].tgl;
-      filterDateStart = earliest[0].tgl;
+    // Ambil tanggal terlama dulu (ringan, 1 baris) sebelum fetch besar
+    const earliest = await sbFetch(`hasil_usaha?select=created_at&order=created_at.asc&limit=1`);
+    if (earliest[0]) {
+      const eDate = earliest[0].created_at.substring(0,10);
+      document.getElementById('filter-date-start').value = eDate;
+      filterDateStart = eDate;
     }
 
-    // Panggil fungsi optimasi
-    await loadDataOptimized();
+    // Satu fetch besar — semua kalkulasi selesai dalam satu pass
+    await loadData();
 
     const ldEl = document.getElementById('loading');
     ldEl.style.transition = 'opacity .5s ease';
@@ -757,11 +782,12 @@ async function applyDateFilter() {
 
   const ldEl = document.getElementById('loading');
   ldEl.style.display = 'flex'; ldEl.style.opacity = '1';
+  const ldCnt = document.getElementById('ld-count');
+  if (ldCnt) ldCnt.textContent = '—';
   document.querySelectorAll('.panel').forEach(p => p.style.opacity = '0.4');
 
   try {
-    // Memanggil fungsi optimasi
-    await loadDataOptimized();
+    await loadData();  // satu fetch, semua kalkulasi selesai dalam satu pass
     document.getElementById('user-search').value = '';
     populateSatkerFilter();
     updateUI();
@@ -810,14 +836,17 @@ function renderRekapTarget() {
   let totalTarget = 0, totalRealisasi = 0;
   const tambahan = window._tambahanSejak12 || {};
 
+  let totalSE2016 = 0;
   let rekapData = TARGET_DATA.map(item => {
     const normId  = item.id.replace('TULANGBAWANG','TULANG BAWANG');
     const tam     = tambahan[normId] || 0;
     const real    = item.base_11_maret + tam;
     const sisa    = item.target - real;
-    const pct     = (real/item.target)*100;
+    // Persentase capaian = realisasi / SE2016 × 100
+    const pct     = (real / item.se2016) * 100;
     totalTarget  += item.target;
     totalRealisasi += real;
+    totalSE2016  += item.se2016;
     return {...item, realisasi:real, sisa, pct};
   });
   rekapData.sort((a,b) => b.pct - a.pct);
@@ -828,26 +857,29 @@ function renderRekapTarget() {
       ? `<span style="color:var(--green);font-weight:700;">+${Math.abs(row.sisa).toLocaleString('id-ID')} (Lebih)</span>`
       : `<span style="color:var(--red);font-weight:700;">-${row.sisa.toLocaleString('id-ID')}</span>`;
     const barColor = ok ? 'linear-gradient(90deg,var(--green-light),var(--green))' : 'linear-gradient(90deg,var(--orange-light),var(--orange))';
-    const pctD = Math.min(row.pct,100);
+    const pctD = Math.min(row.pct, 120); // cap bar di 120% agar tidak overflow
+    const pctColor = row.pct >= 100 ? 'color:var(--green);font-weight:700;' : '';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${idx+1}</td>
       <td style="font-weight:600;color:var(--gray-900)">${row.nama}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--gray-600)">${row.se2016.toLocaleString('id-ID')}</td>
       <td style="font-family:'DM Mono',monospace">${row.target.toLocaleString('id-ID')}</td>
       <td style="font-family:'DM Mono',monospace;font-weight:700;color:var(--gray-900)">${row.realisasi.toLocaleString('id-ID')}</td>
-      <td><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${pctD}%;background:${barColor}"></div></div>
-        <span class="mini-pct" style="${ok?'color:var(--green);font-weight:700;':''}">${row.pct.toFixed(1)}%</span></div></td>
+      <td><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${Math.min(pctD,100)}%;background:${barColor}"></div></div>
+        <span class="mini-pct" style="${pctColor}">${row.pct.toFixed(1)}%</span></div></td>
       <td>${sisaHtml}</td>`;
     tbody.appendChild(tr);
   });
 
   const totalSisa = totalTarget - totalRealisasi;
-  const totalPct  = (totalRealisasi/totalTarget)*100;
+  const totalPct  = (totalRealisasi / totalSE2016) * 100;  // pakai SE2016 untuk total juga
   const okT = totalSisa <= 0;
   const trT = document.createElement('tr');
   trT.style.background = 'var(--gray-50)';
   trT.innerHTML = `
     <td colspan="2" style="font-weight:800;text-align:right;color:var(--gray-900)">TOTAL PROVINSI LAMPUNG</td>
+    <td style="font-family:'DM Mono',monospace;font-weight:800;color:var(--gray-600)">${totalSE2016.toLocaleString('id-ID')}</td>
     <td style="font-family:'DM Mono',monospace;font-weight:800">${totalTarget.toLocaleString('id-ID')}</td>
     <td style="font-family:'DM Mono',monospace;font-weight:800;color:var(--gray-900)">${totalRealisasi.toLocaleString('id-ID')}</td>
     <td><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${Math.min(totalPct,100)}%;background:${okT?'linear-gradient(90deg,var(--green-light),var(--green))':'linear-gradient(90deg,var(--orange-light),var(--orange))'}"></div></div>
