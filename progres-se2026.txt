@@ -1,5 +1,5 @@
 WITH params AS (
-    SELECT CAST('2026-07-15' AS DATE) AS tgl_mulai,
+    SELECT CAST('2026-07-19' AS DATE) AS tgl_mulai,
            CAST('2026-07-28' AS DATE) AS tgl_akhir
 ),
 first_event AS (
