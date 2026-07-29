@@ -1,0 +1,64 @@
+WITH params AS (
+    SELECT CAST('2026-07-28' AS DATE) AS tgl
+    -- Filter 'kab' dihapus
+),
+first_event AS (
+    SELECT h.assignment_id_timestamp, h.user_id, h.status_alias,
+           h.level_2_full_code,
+           CAST(DATE_ADD(h.date_created, INTERVAL 7 HOUR) AS DATE) AS tgl_wib,
+           ROW_NUMBER() OVER (
+               PARTITION BY h.assignment_id_timestamp,
+                            CASE WHEN h.status_alias = 'SUBMITTED BY Pencacah' THEN 'SUBMIT'
+                                 ELSE 'REVIEW' END
+               ORDER BY h.date_created ASC, h.user_id ASC
+           ) AS rn
+    FROM tgr_fd68e454.base_table_assignment_history h
+    CROSS JOIN params p
+    WHERE h.status_alias IN ('SUBMITTED BY Pencacah',
+                             'APPROVED BY Pengawas',
+                             'REJECTED BY Pengawas')
+    -- Filter h.level_2_full_code = p.kab dihapus
+),
+aktivitas AS (
+    SELECT e.level_2_full_code, e.user_id,
+           SUM(CASE WHEN e.status_alias = 'SUBMITTED BY Pencacah'
+                     AND e.tgl_wib =  p.tgl THEN 1 ELSE 0 END) AS progres_pcl_hari_ini,
+           SUM(CASE WHEN e.status_alias = 'SUBMITTED BY Pencacah'
+                     AND e.tgl_wib <= p.tgl THEN 1 ELSE 0 END) AS progres_pcl_kum,
+           SUM(CASE WHEN e.status_alias IN ('APPROVED BY Pengawas','REJECTED BY Pengawas')
+                     AND e.tgl_wib =  p.tgl THEN 1 ELSE 0 END) AS progres_pml_hari_ini,
+           SUM(CASE WHEN e.status_alias IN ('APPROVED BY Pengawas','REJECTED BY Pengawas')
+                     AND e.tgl_wib <= p.tgl THEN 1 ELSE 0 END) AS progres_pml_kum,
+           SUM(CASE WHEN e.status_alias = 'APPROVED BY Pengawas'
+                     AND e.tgl_wib <= p.tgl THEN 1 ELSE 0 END) AS approve_kum,
+           SUM(CASE WHEN e.status_alias = 'REJECTED BY Pengawas'
+                     AND e.tgl_wib <= p.tgl THEN 1 ELSE 0 END) AS reject_kum
+    FROM first_event e
+    CROSS JOIN params p
+    WHERE e.rn = 1 AND e.tgl_wib <= p.tgl
+    GROUP BY e.level_2_full_code, e.user_id
+),
+base_data AS (
+    SELECT aa.level_2_full_code AS kode_kab,
+           aa.user_id,
+           ua.email,
+           CASE WHEN ua.email IS NULL THEN 'TIDAK ADA DI ALOKASI'
+                ELSE 'OK' END AS status_alokasi,
+           aa.progres_pcl_hari_ini,
+           aa.progres_pml_hari_ini,
+           aa.progres_pcl_kum,
+           aa.progres_pml_kum,
+           aa.approve_kum,
+           aa.reject_kum,
+           CASE WHEN aa.progres_pcl_kum > 0 AND aa.progres_pml_kum > 0 THEN 'PPL & PML (rangkap)'
+                WHEN aa.progres_pcl_kum > 0                            THEN 'PPL (Pencacah)'
+                WHEN aa.progres_pml_kum > 0                            THEN 'PML (Pengawas)'
+                ELSE 'Lainnya' END AS peran
+    FROM aktivitas aa
+    LEFT JOIN (SELECT user_id, MAX(email) AS email
+               FROM tgr_fd68e454.base_table_user_allocation_new
+               GROUP BY user_id) ua
+      ON aa.user_id = ua.user_id
+)
+SELECT COUNT(1) AS jml_petugas
+FROM base_data;
