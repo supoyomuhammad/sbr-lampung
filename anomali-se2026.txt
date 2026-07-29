@@ -1,73 +1,50 @@
-WITH base_data AS (
-    SELECT 
-        n.level_2_full_code AS kode_kab,
-        n.level_2_name      AS kabupaten,
-        n.level_3_full_code AS kode_kec,
-        n.level_3_name      AS kecamatan,
-        n.level_4_full_code AS kode_desa,
-        n.level_4_name      AS desa,
-        n.level_5_full_code AS kode_sls,
-        n.level_5_name      AS sls,
-        n.level_6_full_code AS kode_subsls,
-        n.level_6_name      AS subsls,
-        n.nama_usaha,
-        CASE 
-            WHEN (n.jenis_kawasan_label LIKE '%KEK%' OR n.jenis_kawasan_label LIKE '%Industri%' OR n.jenis_kawasan_label LIKE '%Kawasan Ekonomi%') THEN 'Kawasan KEK/KI'
-            WHEN (n.skala_usaha IN ('UB', 'UM') AND n.keberadaan_usaha_label LIKE '%Tutup%') THEN 'UB/UM Tutup'
-            WHEN (n.jaringan_label LIKE '%Unit Penunjang%' OR n.jaringan_value = '6') THEN 'Unit Penunjang'
-            WHEN n.badan_usaha_label LIKE '%Koperasi%' THEN 'Badan Hukum Koperasi'
-            ELSE 'Multikriteria'
-        END AS kategori_pengecekan,
-        ua.email AS email_petugas
-    FROM tgr_fd68e454.se2026_nested n
-    LEFT JOIN tgr_fd68e454.base_table_assignment a 
-           ON a.assignment_id = n.assignment_id
-    LEFT JOIN (
-        SELECT user_id, MAX(email) AS email 
-        FROM tgr_fd68e454.base_table_user_allocation_new 
-        GROUP BY user_id
-    ) ua ON ua.user_id = a.current_user_id
-    WHERE 
-        (n.jenis_kawasan_label LIKE '%KEK%' OR n.jenis_kawasan_label LIKE '%Industri%' OR n.jenis_kawasan_label LIKE '%Kawasan Ekonomi%')
-        OR (n.badan_usaha_label LIKE '%Koperasi%')
-        OR (n.jaringan_label LIKE '%Unit Penunjang%' OR n.jaringan_value = '6')
-        OR (n.skala_usaha IN ('UB', 'UM') AND n.keberadaan_usaha_label LIKE '%Tutup%')
-)
-
--- Menjabarkan seluruh kolom di SELECT terluar (Tidak memakai aa.*)
 SELECT 
-    aa.row_num,
-    aa.kode_kab,
-    aa.kabupaten,
-    aa.kode_kec,
-    aa.kecamatan,
-    aa.kode_desa,
-    aa.desa,
-    aa.kode_sls,
-    aa.sls,
-    aa.kode_subsls,
-    aa.subsls,
-    aa.nama_usaha,
-    aa.kategori_pengecekan,
-    aa.email_petugas
-FROM (
-    -- Menjabarkan seluruh kolom di SELECT dalam (Tidak memakai *)
-    SELECT 
-        ROW_NUMBER() OVER (ORDER BY kode_kab, kode_kec, kode_desa, kode_sls, nama_usaha) AS row_num,
-        kode_kab,
-        kabupaten,
-        kode_kec,
-        kecamatan,
-        kode_desa,
-        desa,
-        kode_sls,
-        sls,
-        kode_subsls,
-        subsls,
-        nama_usaha,
-        kategori_pengecekan,
-        email_petugas
-    FROM base_data
-) aa
--- Ganti angka 1 AND 1000 ini untuk tarikan selanjutnya (misal: 1001 AND 2000)
-WHERE aa.row_num BETWEEN 1 AND 1000;
+    n.level_2_full_code AS kode_kab,
+    n.level_2_name      AS kabupaten,
+    n.level_3_full_code AS kode_kec,
+    n.level_3_name      AS kecamatan,
+    n.level_4_full_code AS kode_desa,
+    n.level_4_name      AS desa,
+    n.level_5_full_code AS kode_sls,
+    n.level_5_name      AS sls,
+    n.level_6_full_code AS kode_subsls,
+    n.level_6_name      AS subsls,
+    n.nama_usaha,
+    
+    -- Kolom Penanda Kategori Anomali
+    CASE 
+        WHEN (n.jenis_kawasan_label LIKE '%KEK%' OR n.jenis_kawasan_label LIKE '%Industri%' OR n.jenis_kawasan_label LIKE '%Kawasan Ekonomi%') THEN 'Kawasan KEK/KI'
+        WHEN (n.skala_usaha IN ('UB', 'UM') AND n.keberadaan_usaha_label LIKE '%Tutup%') THEN 'UB/UM Tutup'
+        WHEN (n.jaringan_label LIKE '%Unit Penunjang%' OR n.jaringan_value = '6') THEN 'Unit Penunjang'
+        WHEN n.badan_usaha_label LIKE '%Koperasi%' THEN 'Badan Hukum Koperasi'
+        ELSE 'Multikriteria'
+    END AS kategori_pengecekan,
+    
+    ua.email AS email_petugas
+
+FROM tgr_fd68e454.se2026_nested n
+LEFT JOIN tgr_fd68e454.base_table_assignment a 
+       ON a.assignment_id = n.assignment_id
+LEFT JOIN (
+    SELECT user_id, MAX(email) AS email 
+    FROM tgr_fd68e454.base_table_user_allocation_new 
+    GROUP BY user_id
+) ua ON ua.user_id = a.current_user_id
+
+WHERE 
+    (n.jenis_kawasan_label LIKE '%KEK%' OR n.jenis_kawasan_label LIKE '%Industri%' OR n.jenis_kawasan_label LIKE '%Kawasan Ekonomi%')
+    OR (n.badan_usaha_label LIKE '%Koperasi%')
+    OR (n.jaringan_label LIKE '%Unit Penunjang%' OR n.jaringan_value = '6')
+    OR (n.skala_usaha IN ('UB', 'UM') AND n.keberadaan_usaha_label LIKE '%Tutup%')
+
+ORDER BY 
+    n.level_2_full_code, 
+    n.level_3_full_code, 
+    n.level_4_full_code, 
+    n.level_5_full_code, 
+    n.level_6_full_code,
+    n.nama_usaha
+
+-- PENGATURAN TARIKAN DATA --
+LIMIT 1000 
+OFFSET 0;
