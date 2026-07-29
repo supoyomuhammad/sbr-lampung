@@ -1,6 +1,6 @@
 WITH params AS (
-    SELECT CAST('2026-07-19' AS DATE) AS tgl_mulai,
-           CAST('2026-07-28' AS DATE) AS tgl_akhir
+    SELECT CAST('2026-07-14' AS DATE) AS tgl_mulai,
+           CAST('2026-07-18' AS DATE) AS tgl_akhir
 ),
 first_event AS (
     SELECT h.assignment_id_timestamp, h.user_id, h.status_alias, h.level_2_full_code,
