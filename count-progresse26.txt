@@ -8,7 +8,7 @@ first_event AS (
            ROW_NUMBER() OVER (
                PARTITION BY h.assignment_id_timestamp,
                             CASE WHEN h.status_alias = 'SUBMITTED BY Pencacah' THEN 'SUBMIT'
-                                 ELSE 'REVIEW' END
+                                 ELSE 'REVIEW' END 
                ORDER BY h.date_created ASC, h.user_id ASC
            ) AS rn
     FROM tgr_fd68e454.base_table_assignment_history h
