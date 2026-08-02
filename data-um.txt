@@ -7,6 +7,10 @@ SELECT
     n.level_4_name      AS desa,
     n.level_5_full_code AS kode_sls,
     n.level_5_name      AS sls,
+    
+    -- Menambahkan ID SBR
+    n.idsbr,
+    
     n.nama_usaha,
     n.pengusaha         AS nama_pemilik,
     
