@@ -1,0 +1,3 @@
+SELECT COUNT(1) AS total_usaha_UM
+FROM tgr_fd68e454.se2026_nested
+WHERE skala_usaha = 'UM';
