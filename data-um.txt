@@ -1,0 +1,48 @@
+SELECT 
+    n.level_2_full_code AS kode_kab,
+    n.level_2_name      AS kabupaten,
+    n.level_3_full_code AS kode_kec,
+    n.level_3_name      AS kecamatan,
+    n.level_4_full_code AS kode_desa,
+    n.level_4_name      AS desa,
+    n.level_5_full_code AS kode_sls,
+    n.level_5_name      AS sls,
+    n.nama_usaha,
+    n.pengusaha         AS nama_pemilik,
+    
+    -- Kolom baru untuk melihat skala dan status keberadaan usaha
+    n.skala_usaha,
+    n.keberadaan_usaha_label AS status_keberadaan,
+    
+    -- Status assignment di sistem
+    n.assignment_status_id,
+    n.assignment_status_alias,
+    
+    ua.email            AS email_petugas,
+    
+    -- Link kuesioner untuk crosscheck cepat
+    CONCAT('https://fasih-sm.bps.go.id/app/assignment/', a.survey_period_id, '/', n.assignment_id) AS link_kuesioner
+
+FROM tgr_fd68e454.se2026_nested n
+LEFT JOIN tgr_fd68e454.base_table_assignment a 
+       ON a.assignment_id = n.assignment_id
+LEFT JOIN (
+    SELECT user_id, MAX(email) AS email 
+    FROM tgr_fd68e454.base_table_user_allocation_new 
+    GROUP BY user_id
+) ua ON ua.user_id = a.current_user_id
+
+WHERE 
+    -- Memfilter hanya usaha dengan skala UM
+    n.skala_usaha = 'UM'
+
+ORDER BY 
+    n.level_2_full_code, 
+    n.level_3_full_code, 
+    n.level_4_full_code,
+    n.level_5_full_code,
+    n.nama_usaha
+
+-- PENGATURAN TARIKAN DATA --
+LIMIT 1000 
+OFFSET 0;
