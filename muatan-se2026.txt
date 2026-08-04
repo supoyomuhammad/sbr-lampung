@@ -1,0 +1,45 @@
+SELECT 
+    C.prov, 
+    C.kab, 
+    C.kec, 
+    C.desa, 
+    C.kode_sls, 
+    C.nama_sls, 
+    COUNT(*) AS Jumlah_tidak_ditemukan, 
+    SUM(CASE WHEN C.Keberadaan_SLS_Lain_Value = '1' THEN 1 ELSE 0 END) AS Jumlah_ditemukan_diSLS_lain, 
+    ROUND(100.0 * SUM(CASE WHEN C.Keberadaan_SLS_Lain_Value = '1' THEN 1 ELSE 0 END) / COUNT(*), 2) AS Persentase_ditemukan_diSLS_lain
+FROM (
+    SELECT 
+        A.prov, 
+        A.kab, 
+        A.kec, 
+        A.desa, 
+        A.kode_sls, 
+        A.nama_sls, 
+        A.no_kk, 
+        A.nama_kk, 
+        A.ada_keluarga_label, 
+        A.ada_keluarga_value, 
+        B.ada_keluarga_label AS Keberadaan_SLS_Lain, 
+        B.no_kk AS no_kk2, 
+        B.nama_kk AS nama_kk2, 
+        B.ada_keluarga_value AS Keberadaan_SLS_Lain_Value
+    FROM (
+        SELECT prov, kab, kec, desa, kode_sls, nama_sls, no_kk, nama_kk, ada_keluarga_label, ada_keluarga_value 
+        FROM tgr_fd68e454.root_table 
+        WHERE ada_keluarga_value = '0'
+    ) AS A 
+    LEFT JOIN (
+        SELECT prov, kab, kec, desa, kode_sls, nama_sls, no_kk, nama_kk, ada_keluarga_label, ada_keluarga_value 
+        FROM tgr_fd68e454.root_table 
+        WHERE ada_keluarga_value = '1'
+    ) AS B ON A.no_kk = B.no_kk
+) AS C
+GROUP BY 
+    C.prov, 
+    C.kab, 
+    C.kec, 
+    C.desa, 
+    C.kode_sls, 
+    C.nama_sls;
+Limit 1000 offset 0;
