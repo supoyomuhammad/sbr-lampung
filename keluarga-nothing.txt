@@ -7,7 +7,7 @@ SELECT
     A.nama_sls, 
     A.no_kk, 
     A.nama_kk,
-    A.nama_ak_lain
+    A.nama_ak_lain,
     A.ada_keluarga_label AS status_di_sls_awal,
     'Benar-benar Hilang (Tidak ada di SLS lain)' AS keterangan
     
