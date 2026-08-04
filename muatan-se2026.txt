@@ -41,5 +41,11 @@ GROUP BY
     C.kec, 
     C.desa, 
     C.kode_sls, 
-    C.nama_sls;
-Limit 1000 offset 0;
+    C.nama_sls
+ORDER BY 
+    C.prov, 
+    C.kab, 
+    C.kec, 
+    C.desa, 
+    C.kode_sls
+LIMIT 1000 OFFSET 0;
