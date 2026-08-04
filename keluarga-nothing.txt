@@ -7,12 +7,13 @@ SELECT
     A.nama_sls, 
     A.no_kk, 
     A.nama_kk,
+    A.nama_ak_lain
     A.ada_keluarga_label AS status_di_sls_awal,
     'Benar-benar Hilang (Tidak ada di SLS lain)' AS keterangan
     
 FROM (
     -- Tabel A: Filter kode kabupaten dimasukkan ke sini agar query lebih cepat
-    SELECT prov, kab, kec, desa, kode_sls, nama_sls, no_kk, nama_kk, ada_keluarga_label 
+    SELECT prov, kab, kec, desa, kode_sls, nama_sls, no_kk, nama_kk, nama_ak_lain,ada_keluarga_label 
     FROM tgr_fd68e454.root_table 
     WHERE ada_keluarga_value = "0" 
       AND level_2_full_code = '1872' -- GANTI DENGAN KODE KABUPATEN YANG INGIN ANDA TARIK
@@ -39,5 +40,4 @@ ORDER BY
     A.nama_kk
 
 -- PENGATURAN TARIKAN DATA --
-LIMIT 1000 
-OFFSET 0;
+LIMIT 1000 OFFSET 8000;
