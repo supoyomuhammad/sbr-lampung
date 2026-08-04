@@ -1,0 +1,36 @@
+SELECT COUNT(*) AS Total_Baris_Data
+FROM (
+    SELECT 
+        C.prov, 
+        C.kab, 
+        C.kec, 
+        C.desa, 
+        C.kode_sls, 
+        C.nama_sls
+    FROM (
+        SELECT 
+            A.prov, 
+            A.kab, 
+            A.kec, 
+            A.desa, 
+            A.kode_sls, 
+            A.nama_sls
+        FROM (
+            SELECT prov, kab, kec, desa, kode_sls, nama_sls, no_kk 
+            FROM tgr_fd68e454.root_table 
+            WHERE ada_keluarga_value = '0'
+        ) AS A 
+        LEFT JOIN (
+            SELECT no_kk 
+            FROM tgr_fd68e454.root_table 
+            WHERE ada_keluarga_value = '1'
+        ) AS B ON A.no_kk = B.no_kk
+    ) AS C
+    GROUP BY 
+        C.prov, 
+        C.kab, 
+        C.kec, 
+        C.desa, 
+        C.kode_sls, 
+        C.nama_sls
+) AS Hasil_Rekap;
