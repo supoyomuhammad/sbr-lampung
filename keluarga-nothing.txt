@@ -11,10 +11,11 @@ SELECT
     'Benar-benar Hilang (Tidak ada di SLS lain)' AS keterangan
     
 FROM (
-    -- Tabel A: Daftar keluarga yang berstatus "Tidak Ditemukan" di SLS target
+    -- Tabel A: Filter kode kabupaten dimasukkan ke sini agar query lebih cepat
     SELECT prov, kab, kec, desa, kode_sls, nama_sls, no_kk, nama_kk, ada_keluarga_label 
     FROM tgr_fd68e454.root_table 
-    WHERE ada_keluarga_value = "0"
+    WHERE ada_keluarga_value = "0" 
+      AND kab = '1871' -- GANTI DENGAN KODE KABUPATEN YANG INGIN ANDA TARIK
 ) AS A 
 
 LEFT JOIN (
@@ -26,8 +27,7 @@ LEFT JOIN (
 ON A.no_kk = B.no_kk
 
 WHERE 
-    -- Ini adalah kunci Anti-Join: 
-    -- Hanya ambil data dari Tabel A yang TIDAK MEMILIKI kecocokan di Tabel B
+    -- Kunci Anti-Join
     B.no_kk IS NULL
 
 ORDER BY 
