@@ -4,7 +4,7 @@ FROM (
     SELECT no_kk 
     FROM tgr_fd68e454.root_table 
     WHERE ada_keluarga_value = "0" 
-     -- AND kab = '1809' -- GANTI DENGAN KODE KABUPATEN YANG SAMA
+     AND kab = '1871' -- GANTI DENGAN KODE KABUPATEN YANG SAMA
 ) AS A 
 
 LEFT JOIN (
