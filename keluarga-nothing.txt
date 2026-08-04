@@ -16,7 +16,7 @@ FROM (
     SELECT prov, kab, kec, desa, kode_sls, nama_sls, no_kk, nama_kk, nama_ak_lain,ada_keluarga_label 
     FROM tgr_fd68e454.root_table 
     WHERE ada_keluarga_value = "0" 
-      AND level_2_full_code = '1872' -- GANTI DENGAN KODE KABUPATEN YANG INGIN ANDA TARIK
+      AND level_2_full_code = '1871' -- GANTI DENGAN KODE KABUPATEN YANG INGIN ANDA TARIK
 ) AS A 
 
 LEFT JOIN (
