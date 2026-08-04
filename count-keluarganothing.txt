@@ -1,14 +1,18 @@
 SELECT 
-    COUNT(A.no_kk) AS total_keluarga_benar_benar_hilang
+    COUNT(A.no_kk) AS total_keluarga_hilang
 FROM (
     SELECT no_kk 
     FROM tgr_fd68e454.root_table 
-    WHERE ada_keluarga_value = "0"
+    WHERE ada_keluarga_value = "0" 
+      AND kab = '1871' -- GANTI DENGAN KODE KABUPATEN YANG SAMA
 ) AS A 
+
 LEFT JOIN (
     SELECT no_kk 
     FROM tgr_fd68e454.root_table 
     WHERE ada_keluarga_value = "1"
 ) AS B 
 ON A.no_kk = B.no_kk
-WHERE B.no_kk IS NULL;
+
+WHERE 
+    B.no_kk IS NULL;
