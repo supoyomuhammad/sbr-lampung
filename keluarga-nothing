@@ -1,0 +1,43 @@
+SELECT 
+    A.prov, 
+    A.kab, 
+    A.kec, 
+    A.desa, 
+    A.kode_sls, 
+    A.nama_sls, 
+    A.no_kk, 
+    A.nama_kk,
+    A.ada_keluarga_label AS status_di_sls_awal,
+    'Benar-benar Hilang (Tidak ada di SLS lain)' AS keterangan
+    
+FROM (
+    -- Tabel A: Daftar keluarga yang berstatus "Tidak Ditemukan" di SLS target
+    SELECT prov, kab, kec, desa, kode_sls, nama_sls, no_kk, nama_kk, ada_keluarga_label 
+    FROM tgr_fd68e454.root_table 
+    WHERE ada_keluarga_value = "0"
+) AS A 
+
+LEFT JOIN (
+    -- Tabel B: Daftar keluarga yang berstatus "Ditemukan" di seluruh database
+    SELECT no_kk 
+    FROM tgr_fd68e454.root_table 
+    WHERE ada_keluarga_value = "1"
+) AS B 
+ON A.no_kk = B.no_kk
+
+WHERE 
+    -- Ini adalah kunci Anti-Join: 
+    -- Hanya ambil data dari Tabel A yang TIDAK MEMILIKI kecocokan di Tabel B
+    B.no_kk IS NULL
+
+ORDER BY 
+    A.prov, 
+    A.kab, 
+    A.kec, 
+    A.desa, 
+    A.kode_sls, 
+    A.nama_kk
+
+-- PENGATURAN TARIKAN DATA --
+LIMIT 1000 
+OFFSET 0;
