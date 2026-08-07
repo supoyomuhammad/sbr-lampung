@@ -1,0 +1,63 @@
+-- IDSBR Ganda: Usaha Non-Aktif vs Keluarga Ditemukan (SE-LAMPUNG)
+WITH usaha AS (                -- usaha SELAIN ditemukan
+    SELECT n.level_2_full_code, n.level_2_name,
+           n.level_3_name, n.level_4_name,
+           n.level_5_name, n.level_6_full_code, n.level_6_name,
+           n.idsbr, n.nama_usaha,
+           n.keberadaan_usaha_label, n.skala_usaha,
+           n.assignment_status_alias
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.idsbr IS NOT NULL
+      AND TRIM(n.idsbr) <> ''
+      AND n.keberadaan_usaha_value NOT IN ('1','2')     -- bukan Ditemukan & bukan Baru
+      AND n.keberadaan_usaha_value IS NOT NULL
+      AND TRIM(n.keberadaan_usaha_value) <> ''
+),
+keluarga AS (                  -- keluarga DITEMUKAN
+    SELECT r.idsbr_keluarga,
+           r.dtsen_nama_kk, r.nama_kk,
+           r.ada_keluarga_label, r.assignment_status_alias,
+           r.level_2_full_code AS kab_keluarga,
+           r.level_2_name      AS nama_kab_keluarga,
+           r.level_3_name      AS kec_keluarga,
+           r.level_4_name      AS desa_keluarga,
+           r.level_5_name      AS sls_keluarga,
+           r.level_6_full_code AS kode_subsls_keluarga,
+           r.level_6_name      AS subsls_keluarga
+    FROM tgr_fd68e454.root_table r
+    WHERE r.idsbr_keluarga IS NOT NULL
+      AND TRIM(r.idsbr_keluarga) <> ''
+      AND r.ada_keluarga_value = '1'                    -- Ditemukan
+)
+SELECT u.level_2_full_code AS kode_kab,
+       u.level_2_name      AS kabupaten,
+       u.level_3_name      AS kecamatan,
+       u.level_4_name      AS desa_kel,
+       u.level_5_name      AS sls,
+       u.level_6_full_code AS kode_sub_sls,
+       u.level_6_name      AS sub_sls,
+       u.idsbr,
+       u.nama_usaha,
+       u.keberadaan_usaha_label  AS keberadaan_usaha,
+       u.skala_usaha,
+       u.assignment_status_alias AS status_usaha,
+       k.dtsen_nama_kk           AS nama_krt,
+       k.nama_kk,
+       k.ada_keluarga_label      AS keberadaan_keluarga,
+       k.assignment_status_alias AS status_keluarga,
+       k.kab_keluarga,
+       k.nama_kab_keluarga,
+       k.kec_keluarga,
+       k.desa_keluarga,
+       k.sls_keluarga,
+       k.kode_subsls_keluarga,
+       k.subsls_keluarga,
+       CASE WHEN k.kab_keluarga <> u.level_2_full_code         THEN 'BEDA KABUPATEN'
+            WHEN k.kode_subsls_keluarga <> u.level_6_full_code THEN 'BEDA SUB-SLS'
+            ELSE 'Sama sub-SLS'
+       END AS status_lokasi
+FROM usaha u
+INNER JOIN keluarga k
+        ON k.idsbr_keluarga = u.idsbr
+ORDER BY u.level_2_full_code, u.level_6_full_code, u.idsbr
+LIMIT 1000 OFFSET 0;
