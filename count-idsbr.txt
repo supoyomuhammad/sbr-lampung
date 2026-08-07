@@ -1,0 +1,20 @@
+-- Total Kejadian IDSBR Ganda: Usaha Non-Aktif vs Keluarga Ditemukan
+WITH usaha AS (
+    SELECT n.idsbr
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.idsbr IS NOT NULL
+      AND TRIM(n.idsbr) <> ''
+      AND n.keberadaan_usaha_value NOT IN ('1','2')
+      AND n.keberadaan_usaha_value IS NOT NULL
+      AND TRIM(n.keberadaan_usaha_value) <> ''
+),
+keluarga AS (
+    SELECT r.idsbr_keluarga
+    FROM tgr_fd68e454.root_table r
+    WHERE r.idsbr_keluarga IS NOT NULL
+      AND TRIM(r.idsbr_keluarga) <> ''
+      AND r.ada_keluarga_value = '1'
+)
+SELECT COUNT(*) AS total_kejadian
+FROM usaha u
+INNER JOIN keluarga k ON k.idsbr_keluarga = u.idsbr;
