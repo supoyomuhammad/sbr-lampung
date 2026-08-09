@@ -37,6 +37,5 @@ ORDER BY
     A.desa, 
     A.kode_sls, 
     A.nama_kk
-
 -- PENGATURAN TARIKAN DATA --
 LIMIT 5000 OFFSET 0;
