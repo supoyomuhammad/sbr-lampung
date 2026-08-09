@@ -1,5 +1,4 @@
 SELECT 
-    A.prov, 
     A.kab, 
     A.kec, 
     A.desa, 
