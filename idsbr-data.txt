@@ -5,11 +5,13 @@ WITH usaha AS (                -- usaha SELAIN ditemukan
            n.level_5_name, n.level_6_full_code, n.level_6_name,
            n.idsbr, n.nama_usaha,
            n.keberadaan_usaha_label, n.skala_usaha,
-           n.assignment_status_alias
+           n.assignment_status_alias,
+           -- Menarik assignment_id untuk link FASIH
+           n.assignment_id 
     FROM tgr_fd68e454.se2026_nested n
     WHERE n.idsbr IS NOT NULL
       AND TRIM(n.idsbr) <> ''
-      AND n.keberadaan_usaha_value NOT IN ('1','2')     -- bukan Ditemukan & bukan Baru
+      AND n.keberadaan_usaha_value NOT IN ('1','2')      -- bukan Ditemukan & bukan Baru
       AND n.keberadaan_usaha_value IS NOT NULL
       AND TRIM(n.keberadaan_usaha_value) <> ''
 ),
@@ -23,7 +25,9 @@ keluarga AS (                  -- keluarga DITEMUKAN
            r.level_4_name      AS desa_keluarga,
            r.level_5_name      AS sls_keluarga,
            r.level_6_full_code AS kode_subsls_keluarga,
-           r.level_6_name      AS subsls_keluarga
+           r.level_6_name      AS subsls_keluarga,
+           -- Menarik assignment_id untuk link FASIH
+           r.assignment_id 
     FROM tgr_fd68e454.root_table r
     WHERE r.idsbr_keluarga IS NOT NULL
       AND TRIM(r.idsbr_keluarga) <> ''
@@ -41,7 +45,7 @@ SELECT u.level_2_full_code AS kode_kab,
        u.keberadaan_usaha_label  AS keberadaan_usaha,
        u.skala_usaha,
        u.assignment_status_alias AS status_usaha,
-       k.dtsen_nama_kk           AS nama_krt,
+       k.dtsen_nama_kk            AS nama_krt,
        k.nama_kk,
        k.ada_keluarga_label      AS keberadaan_keluarga,
        k.assignment_status_alias AS status_keluarga,
@@ -55,9 +59,21 @@ SELECT u.level_2_full_code AS kode_kab,
        CASE WHEN k.kab_keluarga <> u.level_2_full_code         THEN 'BEDA KABUPATEN'
             WHEN k.kode_subsls_keluarga <> u.level_6_full_code THEN 'BEDA SUB-SLS'
             ELSE 'Sama sub-SLS'
-       END AS status_lokasi
+       END AS status_lokasi,
+       
+       -- TAMBAHAN: Kolom Link FASIH untuk Usaha dan Keluarga
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/', a1.survey_period_id, '/', u.assignment_id) AS link_prelist_usaha,
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/', a2.survey_period_id, '/', k.assignment_id) AS link_prelist_keluarga
+
 FROM usaha u
 INNER JOIN keluarga k
         ON k.idsbr_keluarga = u.idsbr
+        
+-- TAMBAHAN: Join ke tabel base_table_assignment untuk mengambil id periode survei
+LEFT JOIN tgr_fd68e454.base_table_assignment a1 
+       ON a1.assignment_id = u.assignment_id
+LEFT JOIN tgr_fd68e454.base_table_assignment a2 
+       ON a2.assignment_id = k.assignment_id
+
 ORDER BY u.level_2_full_code, u.level_6_full_code, u.idsbr
 LIMIT 5000 OFFSET 0;
