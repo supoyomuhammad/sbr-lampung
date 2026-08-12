@@ -1,41 +1,55 @@
-SELECT 
-    A.kab, 
-    A.kec, 
-    A.desa, 
-    A.kode_sls, 
-    A.nama_sls, 
-    A.no_kk, 
-    A.nama_kk,
-    A.nama_ak_lain,
-    A.ada_keluarga_label AS status_di_sls_awal,
-    'Benar-benar Hilang (Tidak ada di SLS lain)' AS keterangan
-    
-FROM (
-    -- Tabel A: Filter kode kabupaten dimasukkan ke sini agar query lebih cepat
-    SELECT prov, kab, kec, desa, kode_sls, nama_sls, no_kk, nama_kk, nama_ak_lain,ada_keluarga_label 
-    FROM tgr_fd68e454.root_table 
-    WHERE ada_keluarga_value = "0" 
-      AND level_2_full_code = '1813' -- GANTI DENGAN KODE KABUPATEN YANG INGIN ANDA TARIK
-) AS A 
-
-LEFT JOIN (
-    -- Tabel B: Daftar keluarga yang berstatus "Ditemukan" di seluruh database
-    SELECT no_kk 
-    FROM tgr_fd68e454.root_table 
-    WHERE ada_keluarga_value = "1"
-) AS B 
-ON A.no_kk = B.no_kk
-
-WHERE 
-    -- Kunci Anti-Join
-    B.no_kk IS NULL
-
-ORDER BY 
-    A.prov, 
-    A.kab, 
-    A.kec, 
-    A.desa, 
-    A.kode_sls, 
-    A.nama_kk
--- PENGATURAN TARIKAN DATA --
-LIMIT 5000 OFFSET 0;
+-- Detail: KK Tidak Ditemukan dan Tidak Ada Padanannya di Mana Pun
+WITH aktif AS (
+    SELECT bta.assignment_id, bta.assignment_date_modified, bta.survey_period_id
+    FROM tgr_fd68e454.base_table_assignment bta
+    WHERE bta.is_active = 1
+),
+hilang AS (
+    SELECT r.assignment_id, a.survey_period_id,
+           r.prov, r.kab, r.kec, r.desa,
+           r.kode_sls, r.nama_sls,
+           TRIM(r.no_kk) AS no_kk,
+           r.nama_kk, r.dtsen_nama_kk,
+           r.nik_kk,
+           r.jumlah_ak,
+           r.ada_keluarga_label      AS status_keluarga,
+           r.assignment_status_alias AS status_dokumen,
+           r.mode
+    FROM tgr_fd68e454.root_table r
+    INNER JOIN aktif a
+            ON a.assignment_id = r.assignment_id
+           AND a.assignment_date_modified = r.assignment_date_modified
+    WHERE r.ada_keluarga_value = '0'
+      AND r.no_kk IS NOT NULL
+      AND LENGTH(TRIM(r.no_kk)) = 16
+      AND TRIM(r.no_kk) NOT LIKE '%99999999%'
+),
+ketemu AS (
+    SELECT r.assignment_id, TRIM(r.no_kk) AS no_kk, r.kode_sls
+    FROM tgr_fd68e454.root_table r
+    INNER JOIN aktif a
+            ON a.assignment_id = r.assignment_id
+           AND a.assignment_date_modified = r.assignment_date_modified
+    WHERE r.ada_keluarga_value IN ('1','2')
+      AND r.no_kk IS NOT NULL
+      AND LENGTH(TRIM(r.no_kk)) = 16
+      AND TRIM(r.no_kk) NOT LIKE '%99999999%'
+)
+SELECT h.kab, h.kec, h.desa, h.kode_sls, h.nama_sls,
+       h.no_kk,
+       h.nik_kk,
+       COALESCE(h.dtsen_nama_kk, h.nama_kk) AS nama_kepala_keluarga,
+       h.jumlah_ak       AS jml_art,
+       h.status_keluarga,
+       h.status_dokumen,
+       h.mode            AS moda,
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+              h.survey_period_id, '/', h.assignment_id) AS link_fasih
+FROM hilang h
+LEFT JOIN ketemu k
+       ON k.no_kk = h.no_kk
+      AND k.assignment_id <> h.assignment_id
+      AND k.kode_sls <> h.kode_sls
+WHERE k.assignment_id IS NULL          -- TIDAK ada padanan di mana pun
+ORDER BY h.kab, h.kode_sls, h.no_kk
+LIMIT 9000 OFFSET 0;
