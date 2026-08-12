@@ -1,18 +1,43 @@
-SELECT 
-    COUNT(A.no_kk) AS total_keluarga_hilang
+-- Total KK Tidak Ditemukan yang Tidak Ada Padanannya di Mana Pun
+WITH aktif AS (
+    SELECT bta.assignment_id, bta.assignment_date_modified
+    FROM tgr_fd68e454.base_table_assignment bta
+    WHERE bta.is_active = 1
+),
+hilang AS (
+    SELECT r.assignment_id,
+           r.kode_sls,
+           TRIM(r.no_kk) AS no_kk
+    FROM tgr_fd68e454.root_table r
+    INNER JOIN aktif a
+            ON a.assignment_id = r.assignment_id
+           AND a.assignment_date_modified = r.assignment_date_modified
+    WHERE r.ada_keluarga_value = '0'
+      AND r.no_kk IS NOT NULL
+      AND LENGTH(TRIM(r.no_kk)) = 16
+      AND TRIM(r.no_kk) NOT LIKE '%99999999%'
+),
+ketemu AS (
+    SELECT r.assignment_id,
+           TRIM(r.no_kk) AS no_kk,
+           r.kode_sls
+    FROM tgr_fd68e454.root_table r
+    INNER JOIN aktif a
+            ON a.assignment_id = r.assignment_id
+           AND a.assignment_date_modified = r.assignment_date_modified
+    WHERE r.ada_keluarga_value IN ('1','2')
+      AND r.no_kk IS NOT NULL
+      AND LENGTH(TRIM(r.no_kk)) = 16
+      AND TRIM(r.no_kk) NOT LIKE '%99999999%'
+)
+SELECT COUNT(*) AS total_tidak_ketemu_di_mana_pun
 FROM (
-    SELECT no_kk 
-    FROM tgr_fd68e454.root_table 
-    WHERE ada_keluarga_value = "0" 
-    
-) AS A 
-
-LEFT JOIN (
-    SELECT no_kk 
-    FROM tgr_fd68e454.root_table 
-    WHERE ada_keluarga_value = "1"
-) AS B 
-ON A.no_kk = B.no_kk
-
-WHERE 
-    B.no_kk IS NULL;
+    SELECT h.assignment_id
+    FROM hilang h
+    LEFT JOIN ketemu k
+           ON k.no_kk = h.no_kk
+          AND k.assignment_id <> h.assignment_id
+          AND k.kode_sls <> h.kode_sls
+    GROUP BY h.assignment_id
+    HAVING MAX(CASE WHEN k.assignment_id IS NOT NULL THEN 1 ELSE 0 END) = 0
+) x;
