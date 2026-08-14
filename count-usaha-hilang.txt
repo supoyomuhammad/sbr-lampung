@@ -1,0 +1,34 @@
+-- Total baris yang akan ditarik (dasar iterasi)
+WITH aktif AS (
+    SELECT assignment_id, assignment_date_modified
+    FROM tgr_fd68e454.base_table_assignment WHERE is_active = 1
+),
+hilang AS (
+    SELECT n.assignment_id,
+           TRIM(COALESCE(r.nik_prelist, r.nik)) AS nik
+    FROM tgr_fd68e454.se2026_nested n
+    INNER JOIN aktif a ON a.assignment_id = n.assignment_id
+                      AND a.assignment_date_modified = n.assignment_date_modified
+    LEFT JOIN tgr_fd68e454.root_table r
+           ON r.assignment_id = n.assignment_id
+          AND r.assignment_date_modified = n.assignment_date_modified
+    WHERE n.keberadaan_usaha_value IN ('00','0')
+      AND LENGTH(TRIM(COALESCE(r.nik_prelist, r.nik))) = 16
+      AND TRIM(COALESCE(r.nik_prelist, r.nik)) NOT LIKE '%99999999%'
+),
+art AS (
+    SELECT nik
+    FROM (
+        SELECT TRIM(d.nik_dtsen) AS nik,
+               ROW_NUMBER() OVER (PARTITION BY TRIM(d.nik_dtsen)
+                                  ORDER BY d.assignment_id) AS rn
+        FROM tgr_fd68e454.nested_dtsen d
+        INNER JOIN aktif a ON a.assignment_id = d.assignment_id
+                          AND a.assignment_date_modified = d.assignment_date_modified
+        WHERE LENGTH(TRIM(d.nik_dtsen)) = 16
+          AND TRIM(d.nik_dtsen) NOT LIKE '%99999999%'
+    ) x WHERE rn = 1
+)
+SELECT COUNT(*) AS total_baris
+FROM hilang h
+INNER JOIN art t ON t.nik = h.nik;
