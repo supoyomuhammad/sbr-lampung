@@ -1,0 +1,18 @@
+WITH d AS (
+    SELECT n.jenis_usaha_value, n.kategori, n.produk_sendiri_value, n.peran_mbg_value,
+           COALESCE(n.biaya_produksi,    n.biaya_produksi_bln)    AS r26b,
+           COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln) AS r26f,
+           COALESCE(n.total_pendapatan,  n.total_pendapatan_bln)  AS r27c
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1','2')
+)
+SELECT COUNT(*) AS total_baris
+FROM d
+WHERE ( CAST(NULLIF(TRIM(d.jenis_usaha_value),'') AS SIGNED) < 6
+        AND UPPER(TRIM(COALESCE(d.kategori,''))) NOT IN ('B','C','D','E','F')
+        AND d.produk_sendiri_value = '2'
+        AND d.r26f > 0 AND d.r26b / d.r26f > 0.5 )
+   OR ( d.r27c IS NOT NULL AND d.r26f IS NOT NULL AND (d.r27c - d.r26f) < 0 )
+   OR ( d.peran_mbg_value = '1' AND d.r26f > 0
+        AND (d.r27c / d.r26f >= 1.25 OR d.r27c / d.r26f < 1) );
