@@ -1,0 +1,28 @@
+WITH params AS ( SELECT 10000000000 AS ambang_aset, 60000000 AS ambang_pendapatan )
+SELECT n.level_2_name AS kabupaten, n.level_3_name AS kecamatan,
+       n.level_4_name AS desa_kel, n.level_5_name AS sls,
+       n.level_6_name AS sub_sls, n.level_6_full_code AS id_sub_sls,
+       n.nama_usaha, n.assignment_id,
+       '5.Aset-Pekerja-Produksi' AS flag_anomali,
+       n.idsbr, n.skala_usaha, n.kategori, n.kbli_akhir, n.tahun_operasi,
+       n.tk_laki       AS r24a1_laki,
+       n.tk_pr         AS r24b1_perempuan,
+       n.total_tk_jk   AS r24c1_total,
+       n.tk_dibayar    AS r24a2_dibayar,
+       n.total_tk_bayar AS r24c2_total_bayar,
+       n.aset_usaha_thn AS r28a_aset_tanah,
+       n.aset_lain_thn  AS r28b_aset_lain,
+       n.total_aset_thn AS r28c_total_aset,
+       n.rentang_aset_thn_label AS r28c1_rentang,
+       COALESCE(n.total_pendapatan, n.total_pendapatan_bln) AS r27c_pendapatan,
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+              n.survey_period_id,'/',n.assignment_id) AS link_fasih
+FROM tgr_fd68e454.se2026_nested n
+CROSS JOIN params p
+WHERE n.assignment_status_id > 0
+  AND n.keberadaan_usaha_value IN ('1','2')
+  AND COALESCE(n.total_aset_thn, n.total_aset_bln, 0) > p.ambang_aset
+  AND COALESCE(n.total_tk_jk, n.total_tk_bayar) = 1
+  AND COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0) < p.ambang_pendapatan
+ORDER BY n.level_6_full_code, n.assignment_id
+LIMIT 1000 OFFSET 0;
