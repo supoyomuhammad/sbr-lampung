@@ -1,0 +1,7 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.se2026_nested n
+WHERE n.assignment_status_id > 0
+  AND n.keberadaan_usaha_value IN ('1','2')
+  AND n.badan_usaha_value = '13'
+  AND ( COALESCE(n.publik,0) > 0 OR COALESCE(n.non_publik,0) > 0
+     OR COALESCE(n.publik_didirikan,0) > 0 OR COALESCE(n.nonpublik_didirikan,0) > 0 );
