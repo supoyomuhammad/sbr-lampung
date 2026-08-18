@@ -25,4 +25,4 @@ WHERE n.assignment_status_id > 0
   AND COALESCE(n.total_tk_jk, n.total_tk_bayar) = 1
   AND COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0) < p.ambang_pendapatan
 ORDER BY n.level_6_full_code, n.assignment_id
-LIMIT 1000 OFFSET 0;
+LIMIT 9000 OFFSET 0;
