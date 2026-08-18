@@ -41,4 +41,4 @@ SELECT f.level_2_name AS kabupaten, f.level_3_name AS kecamatan,
 FROM f
 WHERE f.a6 + f.a7 + f.a8 > 0
 ORDER BY f.level_6_full_code, f.assignment_id
-LIMIT 1000 OFFSET 0;
+LIMIT 9000 OFFSET 0;
