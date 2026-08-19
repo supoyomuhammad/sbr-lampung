@@ -1,0 +1,74 @@
+-- Anomali Pendapatan Usaha (6 pola)
+WITH d AS (
+    SELECT n.assignment_id, n.survey_period_id,
+           n.level_2_name, n.level_3_name, n.level_4_name,
+           n.level_5_name, n.level_6_name, n.level_6_full_code,
+           n.nama_usaha, n.idsbr, n.skala_usaha, n.kategori, n.kbli_akhir,
+           n.tahun_operasi, n.total_tk_jk,
+           n.nilai_pendapatan     AS r27a,
+           n.pendapatan_lain      AS r27b,
+           n.total_pendapatan     AS r27c,
+           n.total_pengeluaran    AS r26f,
+           n.total_pendapatan_bln AS r31c,
+           n.total_pengeluaran_bln AS r30f
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1','2')
+),
+f AS (
+    SELECT d.assignment_id, d.survey_period_id,
+           d.level_2_name, d.level_3_name, d.level_4_name,
+           d.level_5_name, d.level_6_name, d.level_6_full_code,
+           d.nama_usaha, d.idsbr, d.skala_usaha, d.kategori, d.kbli_akhir,
+           d.tahun_operasi, d.total_tk_jk,
+           d.r27a, d.r27b, d.r27c, d.r26f, d.r31c, d.r30f,
+           COALESCE(d.r27c, d.r31c) AS pendapatan_terisi,
+           COALESCE(d.r26f, d.r30f) AS pengeluaran_terisi,
+           -- 1. pendapatan nol / kosong
+           CASE WHEN COALESCE(d.r27c, d.r31c) IS NULL
+                  OR COALESCE(d.r27c, d.r31c) = 0 THEN 1 ELSE 0 END AS p1,
+           -- 2. pendapatan >= 1 miliar tapi pekerja 1 orang
+           CASE WHEN COALESCE(d.r27c, d.r31c) >= 1000000000
+                 AND d.total_tk_jk = 1 THEN 1 ELSE 0 END AS p2,
+           -- 3. dugaan tahunan diisi angka bulanan
+           CASE WHEN CAST(NULLIF(TRIM(d.tahun_operasi),'') AS SIGNED) <= 2024
+                 AND d.r27c > 0 AND d.r26f > 0
+                 AND d.r27c / d.r26f BETWEEN 0.04 AND 0.16 THEN 1 ELSE 0 END AS p3,
+           -- 4. aritmatika salah: R27c <> R27a + R27b
+           CASE WHEN d.r27c IS NOT NULL AND d.r27a IS NOT NULL
+                 AND ABS(d.r27c - (COALESCE(d.r27a,0) + COALESCE(d.r27b,0))) > 1
+                THEN 1 ELSE 0 END AS p4,
+           -- 5. nilai ekstrem (dugaan kelebihan digit)
+           CASE WHEN COALESCE(d.r27c, d.r31c) >= 1000000000000 THEN 1 ELSE 0 END AS p5,
+           -- 6. pendapatan sama persis dengan pengeluaran (copy-paste)
+           CASE WHEN d.r27c IS NOT NULL AND d.r26f IS NOT NULL
+                 AND d.r27c = d.r26f AND d.r27c > 0 THEN 1 ELSE 0 END AS p6
+    FROM d
+)
+SELECT f.level_2_name AS kabupaten, f.level_3_name AS kecamatan,
+       f.level_4_name AS desa_kel, f.level_5_name AS sls,
+       f.level_6_name AS sub_sls, f.level_6_full_code AS id_sub_sls,
+       f.nama_usaha, f.assignment_id,
+       SUBSTR(CONCAT(
+          CASE WHEN f.p1=1 THEN ' | 1.Pendapatan Nol/Kosong'      ELSE '' END,
+          CASE WHEN f.p2=1 THEN ' | 2.Miliaran tapi 1 Pekerja'    ELSE '' END,
+          CASE WHEN f.p3=1 THEN ' | 3.Tahunan Diisi Bulanan'      ELSE '' END,
+          CASE WHEN f.p4=1 THEN ' | 4.R27c <> R27a+R27b'          ELSE '' END,
+          CASE WHEN f.p5=1 THEN ' | 5.Nilai Ekstrem (>1 Triliun)' ELSE '' END,
+          CASE WHEN f.p6=1 THEN ' | 6.Pendapatan = Pengeluaran'   ELSE '' END), 4) AS flag_anomali,
+       f.idsbr, f.skala_usaha, f.kategori, f.kbli_akhir,
+       f.tahun_operasi   AS r25_tahun_operasi,
+       f.total_tk_jk     AS r24c1_pekerja,
+       f.r27a, f.r27b, f.r27c,
+       f.r26f            AS r26f_pengeluaran_thn,
+       f.r31c            AS r31c_pendapatan_bln,
+       f.r30f            AS r30f_pengeluaran_bln,
+       CAST(f.r27c / NULLIF(f.r26f,0) AS DECIMAL(18,3)) AS rasio_pendapatan_pengeluaran,
+       CAST(f.r27c - (COALESCE(f.r27a,0)+COALESCE(f.r27b,0))
+            AS DECIMAL(18,2))                           AS selisih_aritmatika,
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+              f.survey_period_id,'/',f.assignment_id) AS link_fasih
+FROM f
+WHERE f.p1 + f.p2 + f.p3 + f.p4 + f.p5 + f.p6 > 0
+ORDER BY f.level_6_full_code, f.assignment_id
+LIMIT 9000 OFFSET 0;
