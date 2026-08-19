@@ -1,0 +1,28 @@
+WITH art AS (
+    SELECT assignment_id, COUNT(*) AS jml_art,
+           SUM(CASE WHEN keberadaan_dtsen_value IN ('1','5') THEN 1 ELSE 0 END) AS art_tinggal
+    FROM tgr_fd68e454.nested_dtsen
+    WHERE assignment_status_id > 0
+    GROUP BY assignment_id
+),
+dis AS (
+    SELECT assignment_id, COUNT(*) AS jml_art_var,
+           SUM(CASE WHEN dis_fisik_value='1' OR dis_mental_value='1'
+                      OR dis_intelek_value='1' OR dis_netra_value='1'
+                      OR dis_rungu_value='1' OR dis_wicara_value='1'
+                    THEN 1 ELSE 0 END) AS art_disabilitas
+    FROM tgr_fd68e454.nested_dtsen_var
+    WHERE assignment_status_id > 0
+    GROUP BY assignment_id
+)
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.root_table r
+LEFT JOIN art a ON a.assignment_id = r.assignment_id
+LEFT JOIN dis d ON d.assignment_id = r.assignment_id
+WHERE r.assignment_status_id > 0
+  AND r.ada_keluarga_value IN ('1','2')
+  AND ( ( a.jml_art > 1 AND d.jml_art_var > 0 AND d.art_disabilitas = d.jml_art_var )
+     OR ( a.art_tinggal > 0
+          AND ( CAST(r.luas_lantai AS DOUBLE)/a.art_tinggal < 3
+             OR CAST(r.luas_lantai AS DOUBLE)/a.art_tinggal > 200 ) )
+     OR ( a.art_tinggal > 10 ) );
