@@ -1,0 +1,79 @@
+WITH pend AS (
+    SELECT v.assignment_id,
+           SUM(COALESCE(v.nilai_pend_pekerjaan,0)
+             + COALESCE(v.pend_usaha,0)
+             + COALESCE(v.nilai_pend_lain,0)) AS total_pendapatan_art,
+           SUM(CASE WHEN TRIM(COALESCE(v.profesi_value,'')) NOT IN ('','000','999')
+                     AND CAST(NULLIF(TRIM(v.status_kerja_value),'') AS SIGNED) BETWEEN 1 AND 5
+                    THEN 1 ELSE 0 END) AS art_bekerja
+    FROM tgr_fd68e454.nested_dtsen_var v
+    WHERE v.assignment_status_id > 0
+    GROUP BY v.assignment_id
+),
+mtr AS (
+    SELECT m.assignment_id,
+           MIN(m.daya_terpasang_label) AS daya_label,
+           COUNT(*) AS jml_baris_meteran
+    FROM tgr_fd68e454.nested_meteran m
+    GROUP BY m.assignment_id
+),
+kel AS (
+    SELECT r.assignment_id, r.survey_period_id,
+           r.level_2_name, r.level_3_name, r.level_4_name,
+           r.level_5_name, r.level_6_name, r.level_6_full_code,
+           r.no_kk, r.nama_kk, r.dtsen_nama_kk,
+           r.pengeluaran_makanan_mingguan  AS r16a,
+           r.pengeluaran_non_makan_bulanan AS r16b,
+           r.pengeluaran_non_makan_tahunan AS r16c,
+           r.listrik_sebulan   AS r15a,
+           r.sumber_penerangan_value, r.sumber_penerangan_label,
+           r.jml_meteran       AS r14a,
+           r.jumlah_kulkas_new AS r17c,
+           r.jumlah_ac_new     AS r17d,
+           r.jumlah_laptop_new AS r17f
+    FROM tgr_fd68e454.root_table r
+    WHERE r.assignment_status_id > 0
+      AND r.ada_keluarga_value IN ('1','2')
+),
+f AS (
+    SELECT k.*, p.total_pendapatan_art, p.art_bekerja, m.daya_label,
+           COALESCE(k.r16a,0)/7*30 + COALESCE(k.r16b,0)
+             + COALESCE(k.r16c,0)/12 AS total_pengeluaran_kel
+    FROM kel k
+    LEFT JOIN pend p ON p.assignment_id = k.assignment_id
+    LEFT JOIN mtr  m ON m.assignment_id = k.assignment_id
+)
+SELECT f.level_2_name AS kabupaten, f.level_3_name AS kecamatan,
+       f.level_4_name AS desa_kel, f.level_5_name AS sls,
+       f.level_6_name AS sub_sls, f.level_6_full_code AS id_sub_sls,
+       COALESCE(f.dtsen_nama_kk, f.nama_kk) AS nama_kepala_keluarga,
+       f.assignment_id,
+       SUBSTR(CONCAT(
+          CASE WHEN f.art_bekerja > 1
+                AND (f.total_pendapatan_art - f.total_pengeluaran_kel) < 0
+               THEN ' | 5.Pendapatan Negatif' ELSE '' END,
+          CASE WHEN COALESCE(f.r17c,0) > 0 AND COALESCE(f.r17d,0) > 0
+                AND COALESCE(f.r17f,0) > 0
+                AND CAST(f.r15a AS DOUBLE) >= 1000
+                AND CAST(f.r15a AS DOUBLE) < 100000
+               THEN ' | 6.Listrik Rendah+Barang Mewah' ELSE '' END), 4) AS flag_anomali,
+       f.no_kk,
+       f.art_bekerja,
+       f.total_pendapatan_art      AS r18abc_pendapatan_art,
+       f.r16a, f.r16b, f.r16c,
+       CAST(f.total_pengeluaran_kel AS DECIMAL(18,2)) AS r16_pengeluaran_sebulan,
+       CAST(f.total_pendapatan_art - f.total_pengeluaran_kel AS DECIMAL(18,2)) AS selisih,
+       f.r15a                      AS r15a_listrik_sebulan,
+       f.sumber_penerangan_label   AS r13_penerangan,
+       f.r14a                      AS r14a_jml_meteran,
+       f.daya_label                AS r14b_daya,
+       f.r17c AS kulkas, f.r17d AS ac, f.r17f AS laptop,
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+              f.survey_period_id,'/',f.assignment_id) AS link_fasih
+FROM f
+WHERE ( f.art_bekerja > 1
+        AND (f.total_pendapatan_art - f.total_pengeluaran_kel) < 0 )
+   OR ( COALESCE(f.r17c,0) > 0 AND COALESCE(f.r17d,0) > 0 AND COALESCE(f.r17f,0) > 0
+        AND CAST(f.r15a AS DOUBLE) >= 1000 AND CAST(f.r15a AS DOUBLE) < 100000 )
+ORDER BY f.level_6_full_code, f.assignment_id
+LIMIT 9000 OFFSET 0;
