@@ -1,0 +1,4 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.base_table_assignment
+WHERE is_active = 1
+  AND assignment_status_alias IN ('OPEN','DRAFT');
