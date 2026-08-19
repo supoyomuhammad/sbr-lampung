@@ -1,0 +1,11 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.root_table r
+INNER JOIN tgr_fd68e454.nested_dtsen d
+        ON d.assignment_id = r.assignment_id
+       AND d.assignment_status_id > 0
+WHERE r.assignment_status_id > 0
+  AND r.ada_keluarga_value IN ('1','2')
+  AND ( ( d.hubungan_value IN ('1','2') AND d.status_kawin_value IN ('1','3','4') )
+     OR ( d.hubungan_value = '1'
+          AND CAST(NULLIF(TRIM(d.umur_ak),'') AS SIGNED) < 10
+          AND r.status_kepemilikan_value = '1' ) );
