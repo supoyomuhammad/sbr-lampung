@@ -1,0 +1,67 @@
+WITH art AS (
+    SELECT d.assignment_id,
+           COUNT(*) AS jml_art,
+           SUM(CASE WHEN d.keberadaan_dtsen_value IN ('1','5') THEN 1 ELSE 0 END) AS art_tinggal
+    FROM tgr_fd68e454.nested_dtsen d
+    WHERE d.assignment_status_id > 0
+    GROUP BY d.assignment_id
+),
+dis AS (
+    SELECT v.assignment_id,
+           COUNT(*) AS jml_art_var,
+           SUM(CASE WHEN v.dis_fisik_value='1' OR v.dis_mental_value='1'
+                      OR v.dis_intelek_value='1' OR v.dis_netra_value='1'
+                      OR v.dis_rungu_value='1' OR v.dis_wicara_value='1'
+                    THEN 1 ELSE 0 END) AS art_disabilitas
+    FROM tgr_fd68e454.nested_dtsen_var v
+    WHERE v.assignment_status_id > 0
+    GROUP BY v.assignment_id
+),
+kel AS (
+    SELECT r.assignment_id, r.survey_period_id,
+           r.level_2_name, r.level_3_name, r.level_4_name,
+           r.level_5_name, r.level_6_name, r.level_6_full_code,
+           r.no_kk, r.nama_kk, r.dtsen_nama_kk,
+           r.luas_lantai, r.jml_ak_tinggal, r.jumlah_ak,
+           r.jns_bangunan_label
+    FROM tgr_fd68e454.root_table r
+    WHERE r.assignment_status_id > 0
+      AND r.ada_keluarga_value IN ('1','2')
+)
+SELECT k.level_2_name AS kabupaten, k.level_3_name AS kecamatan,
+       k.level_4_name AS desa_kel, k.level_5_name AS sls,
+       k.level_6_name AS sub_sls, k.level_6_full_code AS id_sub_sls,
+       COALESCE(k.dtsen_nama_kk, k.nama_kk) AS nama_kepala_keluarga,
+       k.assignment_id,
+       SUBSTR(CONCAT(
+          CASE WHEN a.jml_art > 1 AND d.jml_art_var > 0
+                AND d.art_disabilitas = d.jml_art_var
+               THEN ' | 3.Semua ART Disabilitas' ELSE '' END,
+          CASE WHEN a.art_tinggal > 0
+                AND ( CAST(k.luas_lantai AS DOUBLE)/a.art_tinggal < 3
+                   OR CAST(k.luas_lantai AS DOUBLE)/a.art_tinggal > 200 )
+               THEN ' | 4.Luas Lantai Ekstrem' ELSE '' END,
+          CASE WHEN a.art_tinggal > 10
+               THEN ' | 7.Jumlah ART Ekstrem' ELSE '' END), 4) AS flag_anomali,
+       k.no_kk,
+       a.jml_art,
+       a.art_tinggal        AS art_tinggal_r9a_1dan5,
+       d.art_disabilitas,
+       k.luas_lantai        AS r5_luas_lantai,
+       CAST(CAST(k.luas_lantai AS DOUBLE) / NULLIF(a.art_tinggal,0)
+            AS DECIMAL(18,2))                      AS luas_per_kapita,
+       k.jml_ak_tinggal     AS r2a_jml_keluarga,
+       k.jumlah_ak          AS jml_ak_prelist,
+       k.jns_bangunan_label AS r1a_jenis_bangunan,
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+              k.survey_period_id,'/',k.assignment_id) AS link_fasih
+FROM kel k
+LEFT JOIN art a ON a.assignment_id = k.assignment_id
+LEFT JOIN dis d ON d.assignment_id = k.assignment_id
+WHERE ( a.jml_art > 1 AND d.jml_art_var > 0 AND d.art_disabilitas = d.jml_art_var )
+   OR ( a.art_tinggal > 0
+        AND ( CAST(k.luas_lantai AS DOUBLE)/a.art_tinggal < 3
+           OR CAST(k.luas_lantai AS DOUBLE)/a.art_tinggal > 200 ) )
+   OR ( a.art_tinggal > 10 )
+ORDER BY k.level_6_full_code, k.assignment_id
+LIMIT 9000 OFFSET 0;
