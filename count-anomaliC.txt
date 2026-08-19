@@ -1,0 +1,26 @@
+WITH pend AS (
+    SELECT assignment_id,
+           SUM(COALESCE(nilai_pend_pekerjaan,0) + COALESCE(pend_usaha,0)
+             + COALESCE(nilai_pend_lain,0)) AS total_pendapatan_art,
+           SUM(CASE WHEN TRIM(COALESCE(profesi_value,'')) NOT IN ('','000','999')
+                     AND CAST(NULLIF(TRIM(status_kerja_value),'') AS SIGNED) BETWEEN 1 AND 5
+                    THEN 1 ELSE 0 END) AS art_bekerja
+    FROM tgr_fd68e454.nested_dtsen_var
+    WHERE assignment_status_id > 0
+    GROUP BY assignment_id
+)
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.root_table r
+LEFT JOIN pend p ON p.assignment_id = r.assignment_id
+WHERE r.assignment_status_id > 0
+  AND r.ada_keluarga_value IN ('1','2')
+  AND ( ( p.art_bekerja > 1
+          AND ( p.total_pendapatan_art
+                - ( COALESCE(r.pengeluaran_makanan_mingguan,0)/7*30
+                  + COALESCE(r.pengeluaran_non_makan_bulanan,0)
+                  + COALESCE(r.pengeluaran_non_makan_tahunan,0)/12 ) ) < 0 )
+     OR ( COALESCE(r.jumlah_kulkas_new,0) > 0
+          AND COALESCE(r.jumlah_ac_new,0) > 0
+          AND COALESCE(r.jumlah_laptop_new,0) > 0
+          AND CAST(r.listrik_sebulan AS DOUBLE) >= 1000
+          AND CAST(r.listrik_sebulan AS DOUBLE) < 100000 ) );
