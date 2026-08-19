@@ -1,0 +1,50 @@
+WITH kel AS (
+    SELECT r.assignment_id, r.survey_period_id,
+           r.level_2_name, r.level_3_name, r.level_4_name,
+           r.level_5_name, r.level_6_name, r.level_6_full_code,
+           r.no_kk, r.nama_kk, r.dtsen_nama_kk,
+           r.status_kepemilikan_value, r.status_kepemilikan_label
+    FROM tgr_fd68e454.root_table r
+    WHERE r.assignment_status_id > 0
+      AND r.ada_keluarga_value IN ('1','2')
+),
+art AS (
+    SELECT d.assignment_id, d.no_urut_kk, d.nama_dtsen, d.nik_dtsen,
+           d.hubungan_value, d.hubungan_label,
+           d.status_kawin_value, d.status_kawin_label,
+           d.jk_dtsen_label, d.umur_ak
+    FROM tgr_fd68e454.nested_dtsen d
+    WHERE d.assignment_status_id > 0
+)
+SELECT k.level_2_name AS kabupaten, k.level_3_name AS kecamatan,
+       k.level_4_name AS desa_kel, k.level_5_name AS sls,
+       k.level_6_name AS sub_sls, k.level_6_full_code AS id_sub_sls,
+       COALESCE(k.dtsen_nama_kk, k.nama_kk) AS nama_kepala_keluarga,
+       k.assignment_id,
+       SUBSTR(CONCAT(
+          CASE WHEN a.hubungan_value IN ('1','2')
+                AND a.status_kawin_value IN ('1','3','4')
+               THEN ' | 1.Status Cerai/Belum Kawin' ELSE '' END,
+          CASE WHEN a.hubungan_value = '1'
+                AND CAST(NULLIF(TRIM(a.umur_ak),'') AS SIGNED) < 10
+                AND k.status_kepemilikan_value = '1'
+               THEN ' | 2.KK <10th Rumah Sendiri' ELSE '' END), 4) AS flag_anomali,
+       k.no_kk,
+       a.no_urut_kk        AS no_urut_art,
+       a.nama_dtsen        AS nama_art,
+       a.nik_dtsen         AS nik,
+       a.hubungan_label    AS r8_hubungan,
+       a.status_kawin_label AS r11_status_kawin,
+       a.jk_dtsen_label    AS r12_jenis_kelamin,
+       a.umur_ak           AS r13b_umur,
+       k.status_kepemilikan_label AS r3a_kepemilikan,
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+              k.survey_period_id,'/',k.assignment_id) AS link_fasih
+FROM kel k
+INNER JOIN art a ON a.assignment_id = k.assignment_id
+WHERE ( a.hubungan_value IN ('1','2') AND a.status_kawin_value IN ('1','3','4') )
+   OR ( a.hubungan_value = '1'
+        AND CAST(NULLIF(TRIM(a.umur_ak),'') AS SIGNED) < 10
+        AND k.status_kepemilikan_value = '1' )
+ORDER BY k.level_6_full_code, k.assignment_id, a.no_urut_kk
+LIMIT 9000 OFFSET 0;
