@@ -1,0 +1,5 @@
+SELECT COUNT(a.assignment_id) AS total_assignment_terbuka
+FROM tgr_fd68e454.base_table_assignment a
+WHERE a.is_active = 1
+  AND a.assignment_status_alias IN ('OPEN','DRAFT')
+  AND a.level_2_full_code = '1871';
