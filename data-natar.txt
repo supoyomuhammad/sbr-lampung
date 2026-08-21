@@ -1,0 +1,102 @@
+-- ============================================================================
+-- USAHA UB / UM / UMK — KECAMATAN NATAR (1803060)
+-- ============================================================================
+WITH asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name, a.level_3_name, a.level_4_name,
+           a.level_5_name, a.level_6_name, a.level_6_full_code,
+           a.assignment_status_alias, a.mode,
+           a.data1, a.data2, a.data4, a.data6,
+           -- a.latitude, a.longitude, a.current_user_fullname,
+           -- a.level_4_full_code, a.level_5_full_code, a.listing,
+           TRIM(CASE WHEN LOCATE('/', a.data6) > 0
+                     THEN LEFT(a.data6, LOCATE('/', a.data6) - 1)
+                     ELSE a.data6 END) AS skala_prelist
+    FROM tgr_fd68e454.base_table_assignment a
+    WHERE a.is_active = 1
+      AND a.level_3_full_code = '1803060'          -- >>> UBAH KECAMATAN DI SINI <
+      -- OPSI: AND a.level_2_full_code = '1803'    -- seluruh Lampung Selatan
+      -- OPSI: AND a.level_4_full_code = '1803060001'
+      -- OPSI: AND a.assignment_status_alias IN ('OPEN','DRAFT')
+),
+n AS (
+    SELECT assignment_id, assignment_date_modified,
+           nama_usaha, alamat_usaha, idsbr, nib, skala_usaha,
+           kbli_akhir, kategori, kategori_2025, keberadaan_usaha_label,
+           total_pendapatan, total_pendapatan_bln,
+           total_pengeluaran, total_pengeluaran_bln,
+           total_aset_thn, total_tk_jk, tk_laki, tk_pr, tahun_operasi,
+           badan_usaha_label, internet_label, lap_keuangan_label,
+           nik_pengusaha, pengusaha, lokasi_usaha_label, keberadaan_usaha_value
+    FROM (
+        SELECT n.assignment_id, n.assignment_date_modified,
+               n.nama_usaha, n.alamat_usaha, n.idsbr, n.nib, n.skala_usaha,
+               n.kbli_akhir, n.kategori, n.kategori_2025, n.keberadaan_usaha_label,
+               n.total_pendapatan, n.total_pendapatan_bln,
+               n.total_pengeluaran, n.total_pengeluaran_bln,
+               n.total_aset_thn, n.total_tk_jk, n.tk_laki, n.tk_pr, n.tahun_operasi,
+               n.badan_usaha_label, n.internet_label, n.lap_keuangan_label,
+               n.nik_pengusaha, n.pengusaha, n.lokasi_usaha_label,
+               n.keberadaan_usaha_value,
+               ROW_NUMBER() OVER (PARTITION BY n.assignment_id,
+                                               n.assignment_date_modified
+                                  ORDER BY n.index1) AS rn
+        FROM tgr_fd68e454.se2026_nested n
+        WHERE n.level_3_full_code = '1803060'      -- >>> SAMAKAN DENGAN ATAS <
+    ) x WHERE rn = 1
+)
+SELECT a.level_2_name      AS kabupaten,                                    -- 1
+       a.level_3_name      AS kecamatan,                                    -- 2
+       a.level_4_name      AS desa_kel,                                     -- 3
+       a.level_5_name      AS sls,                                          -- 4
+       a.level_6_name      AS sub_sls,                                      -- 5
+       a.level_6_full_code AS id_sub_sls,                                   -- 6
+       COALESCE(n.nama_usaha, a.data1)   AS nama_usaha,                     -- 7
+       COALESCE(n.alamat_usaha, a.data2) AS alamat,                         -- 8
+       COALESCE(n.idsbr, a.data4)        AS idsbr,                          -- 9
+       a.assignment_status_alias         AS status_assignment,              -- 10
+       COALESCE(n.keberadaan_usaha_label,'(belum didata)') AS keberadaan,   -- 11
+       a.mode                            AS moda,                           -- 12
+       a.data6                           AS skala_prelist,                  -- 13
+       n.skala_usaha                     AS skala_lapangan,                 -- 14
+       n.kategori,                                                          -- 15
+       n.kbli_akhir,                                                        -- 16
+       n.tahun_operasi,                                                     -- 17
+       n.total_tk_jk                     AS total_pekerja,                  -- 18
+       COALESCE(n.total_pendapatan, n.total_pendapatan_bln)   AS pendapatan,-- 19
+       COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln) AS pengeluaran,-- 20
+       CASE WHEN n.total_pendapatan IS NOT NULL THEN 'Tahunan (R26/R27)'
+            WHEN n.total_pendapatan_bln IS NOT NULL THEN 'Bulanan (R30/R31)'
+            ELSE '(kosong)' END          AS satuan_nilai,                   -- 21
+       n.badan_usaha_label,                                                 -- 22
+       n.nik_pengusaha                   AS nik,                            -- 23
+       a.assignment_id,                                                     -- 24
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+              a.survey_period_id, '/', a.assignment_id) AS link_fasih       -- 25
+       -- ==================== SARAN VARIABEL TAMBAHAN ====================
+       -- n.kategori_2025            -- deteksi perubahan klasifikasi KBLI 2025
+       -- n.nib                      -- legalitas usaha
+       -- n.pengusaha                -- nama penanggung jawab
+       -- n.tk_laki, n.tk_pr         -- komposisi pekerja menurut jenis kelamin
+       -- n.total_aset_thn           -- aset (untuk anomali #5)
+       -- n.internet_label           -- adopsi digital (anomali #6)
+       -- n.lap_keuangan_label       -- formalitas usaha (anomali #7)
+       -- n.lokasi_usaha_label       -- R13c: tempat usaha dijalankan
+       -- a.latitude, a.longitude    -- verifikasi lokasi / peta
+       -- a.current_user_fullname    -- pemegang assignment saat ini
+       -- n.total_pendapatan     AS pendapatan_thn   -- pisah tahunan
+       -- n.total_pendapatan_bln AS pendapatan_bln   -- pisah bulanan
+FROM asg a
+LEFT JOIN n
+       ON n.assignment_id = a.assignment_id
+      AND n.assignment_date_modified = a.assignment_date_modified
+WHERE UPPER(TRIM(COALESCE(n.skala_usaha, a.skala_prelist,''))) IN ('UB','UM','UMK')
+  -- ==================== OPSI FILTER TAMBAHAN ====================
+  -- AND UPPER(TRIM(COALESCE(n.skala_usaha, a.skala_prelist,''))) = 'UM'
+  -- AND n.keberadaan_usaha_value IN ('1','2')      -- hanya usaha aktif
+  -- AND n.keberadaan_usaha_value IN ('00','0')     -- hanya tidak ditemukan
+  -- AND UPPER(TRIM(COALESCE(n.kategori,''))) = 'G' -- kategori KBLI tertentu
+  -- AND n.assignment_id IS NULL                    -- hanya yang belum digarap
+  -- AND COALESCE(n.total_pendapatan, n.total_pendapatan_bln) IS NULL  -- pendapatan kosong
+ORDER BY a.level_6_full_code, a.assignment_id
+LIMIT 9000 OFFSET 0;
