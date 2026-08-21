@@ -1,0 +1,24 @@
+WITH asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified,
+           TRIM(CASE WHEN LOCATE('/', a.data6) > 0
+                     THEN LEFT(a.data6, LOCATE('/', a.data6) - 1)
+                     ELSE a.data6 END) AS skala_prelist
+    FROM tgr_fd68e454.base_table_assignment a
+    WHERE a.is_active = 1 AND a.level_3_full_code = '1803060'
+),
+n AS (
+    SELECT assignment_id, assignment_date_modified, skala_usaha
+    FROM (
+        SELECT n.assignment_id, n.assignment_date_modified, n.skala_usaha,
+               ROW_NUMBER() OVER (PARTITION BY n.assignment_id,
+                                               n.assignment_date_modified
+                                  ORDER BY n.index1) AS rn
+        FROM tgr_fd68e454.se2026_nested n
+        WHERE n.level_3_full_code = '1803060'
+    ) x WHERE rn = 1
+)
+SELECT COUNT(*) AS total_baris
+FROM asg a
+LEFT JOIN n ON n.assignment_id = a.assignment_id
+           AND n.assignment_date_modified = a.assignment_date_modified
+WHERE UPPER(TRIM(COALESCE(n.skala_usaha, a.skala_prelist,''))) IN ('UB','UM','UMK');
