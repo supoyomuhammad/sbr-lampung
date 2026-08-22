@@ -1,0 +1,25 @@
+WITH asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified,
+           TRIM(CASE WHEN LOCATE('/', a.data6) > 0
+                     THEN SUBSTRING(a.data6, LOCATE('/', a.data6) + 1)
+                     ELSE '' END) AS jenis_dr_data6
+    FROM tgr_fd68e454.base_table_assignment a
+    WHERE a.is_active = 1 AND a.level_2_full_code = '1871'
+),
+r AS (
+    SELECT assignment_id, assignment_date_modified, jenis_prelist
+    FROM (
+        SELECT r.assignment_id, r.assignment_date_modified, r.jenis_prelist,
+               ROW_NUMBER() OVER (PARTITION BY r.assignment_id,
+                                               r.assignment_date_modified
+                                  ORDER BY r.assignment_id) AS rn
+        FROM tgr_fd68e454.root_table r
+        WHERE r.level_2_full_code = '1871'
+    ) x WHERE rn = 1
+)
+SELECT COUNT(*) AS total_baris
+FROM asg a
+LEFT JOIN r ON r.assignment_id = a.assignment_id
+           AND r.assignment_date_modified = a.assignment_date_modified
+WHERE UPPER(COALESCE(NULLIF(TRIM(r.jenis_prelist),''), a.jenis_dr_data6)) <> 'KELUARGA'
+  AND TRIM(COALESCE(NULLIF(TRIM(r.jenis_prelist),''), a.jenis_dr_data6)) <> '';
