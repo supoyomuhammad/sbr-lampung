@@ -1,0 +1,96 @@
+-- ============================================================================
+-- DAFTAR ASSIGNMENT USAHA PER SUB-SLS (detail)
+-- Prelist usaha + tambahan lapangan yang benar-benar memuat usaha
+-- ============================================================================
+WITH asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name, a.level_3_name, a.level_4_name,
+           a.level_5_name, a.level_6_name, a.level_6_full_code,
+           a.assignment_status_alias AS status, a.mode,
+           a.data1, a.data2, a.data4, a.data6, a.code_identity,
+           TRIM(CASE WHEN LOCATE('/', a.data6) > 0
+                     THEN LEFT(a.data6, LOCATE('/', a.data6) - 1)
+                     ELSE a.data6 END) AS skala_prelist,
+           CASE WHEN UPPER(a.code_identity) LIKE '%DTSEN%' THEN 'KELUARGA'
+                WHEN TRIM(COALESCE(a.data6,'')) <> ''      THEN 'USAHA PRELIST'
+                ELSE 'TAMBAHAN LAPANGAN' END AS kelompok
+    FROM tgr_fd68e454.base_table_assignment a
+    WHERE a.is_active = 1
+      AND a.level_2_full_code = '1871'          -- >>> UBAH KABUPATEN <
+      -- OPSI: AND a.level_3_full_code = '1871010'
+      -- OPSI: AND a.level_6_full_code = '1871010005000200'
+),
+b AS (
+    SELECT assignment_id, assignment_date_modified,
+           kode_bang_value, kode_bang_label, is_new_value
+    FROM (
+        SELECT r.assignment_id, r.assignment_date_modified,
+               r.kode_bang_value, r.kode_bang_label, r.is_new_value,
+               ROW_NUMBER() OVER (PARTITION BY r.assignment_id,
+                                               r.assignment_date_modified
+                                  ORDER BY r.assignment_id) AS rn
+        FROM tgr_fd68e454.root_table r WHERE r.level_2_full_code = '1871'
+    ) x WHERE rn = 1
+),
+usa AS (
+    SELECT assignment_id, assignment_date_modified,
+           nama_usaha, alamat_usaha, idsbr, skala_usaha, kbli_akhir, kategori,
+           keberadaan_usaha_label, keberadaan_usaha_value, jml_usaha,
+           total_pendapatan, total_pendapatan_bln, total_tk_jk
+    FROM (
+        SELECT n.assignment_id, n.assignment_date_modified,
+               n.nama_usaha, n.alamat_usaha, n.idsbr, n.skala_usaha,
+               n.kbli_akhir, n.kategori, n.keberadaan_usaha_label,
+               n.keberadaan_usaha_value, n.total_pendapatan,
+               n.total_pendapatan_bln, n.total_tk_jk,
+               COUNT(*) OVER (PARTITION BY n.assignment_id,
+                                           n.assignment_date_modified) AS jml_usaha,
+               ROW_NUMBER() OVER (PARTITION BY n.assignment_id,
+                                               n.assignment_date_modified
+                                  ORDER BY n.index1) AS rn
+        FROM tgr_fd68e454.se2026_nested n
+        WHERE n.level_2_full_code = '1871'
+    ) x WHERE rn = 1
+)
+SELECT a.level_2_name      AS kabupaten,
+       a.level_3_name      AS kecamatan,
+       a.level_4_name      AS desa_kel,
+       a.level_5_name      AS sls,
+       a.level_6_name      AS sub_sls,
+       a.level_6_full_code AS id_sub_sls,
+       a.kelompok,
+       COALESCE(u.nama_usaha, a.data1)   AS nama_usaha,
+       COALESCE(u.alamat_usaha, a.data2) AS alamat,
+       COALESCE(u.idsbr, a.data4)        AS idsbr,
+       a.status                          AS status_assignment,
+       COALESCE(u.keberadaan_usaha_label,'(belum didata)') AS keberadaan,
+       b.kode_bang_label                 AS penggunaan_bangunan,
+       b.is_new_value                    AS penanda_tambahan,
+       a.data6                           AS skala_prelist,
+       u.skala_usaha                     AS skala_lapangan,
+       u.kategori,
+       u.kbli_akhir,
+       u.total_tk_jk                     AS total_pekerja,
+       COALESCE(u.total_pendapatan, u.total_pendapatan_bln) AS pendapatan,
+       COALESCE(u.jml_usaha, 0)          AS jml_usaha_dlm_assignment,
+       a.mode                            AS moda,
+       a.assignment_id,
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+              a.survey_period_id, '/', a.assignment_id) AS link_fasih
+FROM asg a
+LEFT JOIN b   ON b.assignment_id = a.assignment_id
+             AND b.assignment_date_modified = a.assignment_date_modified
+LEFT JOIN usa u ON u.assignment_id = a.assignment_id
+               AND u.assignment_date_modified = a.assignment_date_modified
+WHERE a.kelompok = 'USAHA PRELIST'
+   OR ( a.kelompok = 'TAMBAHAN LAPANGAN'
+        AND COALESCE(u.jml_usaha,0) > 0 )
+   -- OPSI: ikut sertakan tambahan lapangan yang masih OPEN/DRAFT
+   -- OR ( a.kelompok = 'TAMBAHAN LAPANGAN'
+   --      AND ( COALESCE(u.jml_usaha,0) > 0 OR a.status IN ('OPEN','DRAFT') ) )
+   -- ==================== OPSI FILTER LAIN ====================
+   -- AND a.status IN ('OPEN','DRAFT')
+   -- AND u.keberadaan_usaha_value IN ('00','0')
+   -- AND UPPER(TRIM(COALESCE(u.skala_usaha, a.skala_prelist,''))) IN ('UB','UM')
+ORDER BY a.level_6_full_code, a.kelompok, a.assignment_id
+LIMIT 9000 OFFSET 0;
