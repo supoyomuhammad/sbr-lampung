@@ -1,103 +1,102 @@
 -- ============================================================================
--- PRELIST USAHA (NON-KELUARGA) — KOTA BANDAR LAMPUNG 1871
--- Semua status: OPEN, DRAFT, SUBMITTED, APPROVED, dst.
+-- MONITORING PENYISIRAN BANGUNAN USAHA PER SUB-SLS + SKOR PERHATIAN
 -- ============================================================================
 WITH asg AS (
-    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+    SELECT a.assignment_id, a.assignment_date_modified,
            a.level_2_name, a.level_3_name, a.level_4_name,
            a.level_5_name, a.level_6_name, a.level_6_full_code,
-           a.assignment_status_alias, a.mode,
-           a.data1, a.data2, a.data4, a.data6,
-           -- a.latitude, a.longitude, a.current_user_fullname, a.listing,
-           TRIM(CASE WHEN LOCATE('/', a.data6) > 0
-                     THEN LEFT(a.data6, LOCATE('/', a.data6) - 1)
-                     ELSE a.data6 END) AS skala_prelist,
-           TRIM(CASE WHEN LOCATE('/', a.data6) > 0
-                     THEN SUBSTRING(a.data6, LOCATE('/', a.data6) + 1)
-                     ELSE '' END)      AS jenis_dr_data6
+           a.assignment_status_alias AS status,
+           CASE WHEN UPPER(a.code_identity) LIKE '%DTSEN%' THEN 'KELUARGA'
+                WHEN TRIM(COALESCE(a.data6,'')) <> ''      THEN 'PRELIST'
+                ELSE 'TAMBAHAN' END AS kelompok
     FROM tgr_fd68e454.base_table_assignment a
     WHERE a.is_active = 1
-      AND a.level_2_full_code = '1871'              -- >>> UBAH KABUPATEN <
-      -- OPSI: AND a.level_3_full_code = '1871010'
-      -- OPSI: AND a.assignment_status_alias IN ('OPEN','DRAFT')
+      --AND a.level_2_full_code = '1871'          -- >>> UBAH KABUPATEN <
 ),
-r AS (
-    SELECT assignment_id, assignment_date_modified, jenis_prelist,
-           nama_usaha_prelist, alamat_prelist, idsbr_all,
-           skala_usaha_prelist, ada_bang_usaha_label
+b AS (
+    SELECT assignment_id, assignment_date_modified, kode_bang_value
     FROM (
-        SELECT r.assignment_id, r.assignment_date_modified, r.jenis_prelist,
-               r.nama_usaha_prelist, r.alamat_prelist, r.idsbr_all,
-               r.skala_usaha_prelist, r.ada_bang_usaha_label,
+        SELECT r.assignment_id, r.assignment_date_modified, r.kode_bang_value,
                ROW_NUMBER() OVER (PARTITION BY r.assignment_id,
                                                r.assignment_date_modified
                                   ORDER BY r.assignment_id) AS rn
-        FROM tgr_fd68e454.root_table r
-        WHERE r.level_2_full_code = '1871'
+        FROM tgr_fd68e454.root_table r -- WHERE r.level_2_full_code = '1871'
     ) x WHERE rn = 1
 ),
-n AS (
-    SELECT assignment_id, assignment_date_modified,
-           nama_usaha, alamat_usaha, idsbr, skala_usaha, kbli_akhir,
-           kategori, keberadaan_usaha_label, keberadaan_usaha_value,
-           total_pendapatan, total_pendapatan_bln, total_tk_jk, tahun_operasi
-           -- , nib, kategori_2025, nik_pengusaha, pengusaha,
-           -- , total_pengeluaran, total_pengeluaran_bln, total_aset_thn,
-           -- , internet_label, lap_keuangan_label, badan_usaha_label
+usa AS (
+    SELECT assignment_id, assignment_date_modified, keb, jml_usaha
     FROM (
         SELECT n.assignment_id, n.assignment_date_modified,
-               n.nama_usaha, n.alamat_usaha, n.idsbr, n.skala_usaha, n.kbli_akhir,
-               n.kategori, n.keberadaan_usaha_label, n.keberadaan_usaha_value,
-               n.total_pendapatan, n.total_pendapatan_bln,
-               n.total_tk_jk, n.tahun_operasi,
+               n.keberadaan_usaha_value AS keb,
+               COUNT(*) OVER (PARTITION BY n.assignment_id,
+                                           n.assignment_date_modified) AS jml_usaha,
                ROW_NUMBER() OVER (PARTITION BY n.assignment_id,
                                                n.assignment_date_modified
                                   ORDER BY n.index1) AS rn
         FROM tgr_fd68e454.se2026_nested n
-        WHERE n.level_2_full_code = '1871'
+       -- WHERE n.level_2_full_code = '1871'
     ) x WHERE rn = 1
+),
+basis AS (
+    SELECT a.level_2_name AS kab, a.level_3_name AS kec, a.level_4_name AS desa,
+           a.level_5_name AS sls, a.level_6_name AS sub_sls,
+           a.level_6_full_code AS id_sub_sls,
+           a.kelompok, a.status, u.keb, u.assignment_id AS ada_usaha
+    FROM asg a
+    LEFT JOIN b   ON b.assignment_id = a.assignment_id
+                 AND b.assignment_date_modified = a.assignment_date_modified
+    LEFT JOIN usa u ON u.assignment_id = a.assignment_id
+                   AND u.assignment_date_modified = a.assignment_date_modified
+    WHERE a.kelompok = 'PRELIST'
+       OR ( a.kelompok = 'TAMBAHAN' AND COALESCE(u.jml_usaha,0) > 0 )
+    -- OPSI: hanya Bangunan Khusus Usaha
+    -- AND b.kode_bang_value = '1'
+),
+rekap AS (
+    SELECT s.kab, s.kec, s.desa, s.sls, s.sub_sls, s.id_sub_sls,
+           COUNT(*) AS total_usaha,
+           SUM(CASE WHEN s.kelompok = 'PRELIST'  THEN 1 ELSE 0 END) AS prelist,
+           SUM(CASE WHEN s.kelompok = 'TAMBAHAN' THEN 1 ELSE 0 END) AS tambahan,
+           SUM(CASE WHEN s.keb = '1'          THEN 1 ELSE 0 END) AS ditemukan,
+           SUM(CASE WHEN s.keb = '2'          THEN 1 ELSE 0 END) AS baru,
+           SUM(CASE WHEN s.keb IN ('00','0')  THEN 1 ELSE 0 END) AS tidak_ditemukan,
+           SUM(CASE WHEN s.keb = '3'          THEN 1 ELSE 0 END) AS tutup,
+           SUM(CASE WHEN s.ada_usaha IS NULL
+                     OR s.status IN ('OPEN','DRAFT') THEN 1 ELSE 0 END) AS belum_terdata
+    FROM basis s
+    GROUP BY s.kab, s.kec, s.desa, s.sls, s.sub_sls, s.id_sub_sls
 )
-SELECT a.level_2_name      AS kabupaten,
-       a.level_3_name      AS kecamatan,
-       a.level_4_name      AS desa_kel,
-       a.level_5_name      AS sls,
-       a.level_6_name      AS sub_sls,
-       a.level_6_full_code AS id_sub_sls,
-       COALESCE(n.nama_usaha, r.nama_usaha_prelist, a.data1)   AS nama_usaha,
-       COALESCE(n.alamat_usaha, r.alamat_prelist, a.data2)     AS alamat,
-       COALESCE(n.idsbr, r.idsbr_all, a.data4)                 AS idsbr,
-       a.assignment_status_alias  AS status_assignment,
-       COALESCE(n.keberadaan_usaha_label,'(belum didata)')     AS keberadaan_usaha,
-       r.ada_bang_usaha_label     AS keberadaan_bangunan,
-       a.mode                     AS moda,
-       COALESCE(NULLIF(TRIM(r.jenis_prelist),''), a.jenis_dr_data6) AS jenis_prelist,
-       COALESCE(NULLIF(TRIM(r.skala_usaha_prelist),''), a.skala_prelist) AS skala_prelist,
-       n.skala_usaha              AS skala_lapangan,
-       n.kategori,
-       n.kbli_akhir,
-       n.tahun_operasi,
-       n.total_tk_jk              AS total_pekerja,
-       COALESCE(n.total_pendapatan, n.total_pendapatan_bln)    AS pendapatan,
-       CASE WHEN n.total_pendapatan     IS NOT NULL THEN 'Tahunan (R26/R27)'
-            WHEN n.total_pendapatan_bln IS NOT NULL THEN 'Bulanan (R30/R31)'
-            ELSE '(kosong)' END    AS satuan_nilai,
-       a.assignment_id,
-       CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
-              a.survey_period_id, '/', a.assignment_id) AS link_fasih
-FROM asg a
-LEFT JOIN r ON r.assignment_id = a.assignment_id
-           AND r.assignment_date_modified = a.assignment_date_modified
-LEFT JOIN n ON n.assignment_id = a.assignment_id
-           AND n.assignment_date_modified = a.assignment_date_modified
-WHERE UPPER(COALESCE(NULLIF(TRIM(r.jenis_prelist),''), a.jenis_dr_data6)) <> 'KELUARGA'
-  AND TRIM(COALESCE(NULLIF(TRIM(r.jenis_prelist),''), a.jenis_dr_data6)) <> ''
-  -- ==================== OPSI FILTER TAMBAHAN ====================
-  -- AND UPPER(COALESCE(NULLIF(TRIM(r.jenis_prelist),''), a.jenis_dr_data6)) <> 'DUMMY'
-  -- AND UPPER(COALESCE(NULLIF(TRIM(r.jenis_prelist),''), a.jenis_dr_data6))
-  --     IN ('UMKM','OSS PERORANGAN','OSS BADAN USAHA')   -- hanya prelist SBR/OSS
-  -- AND UPPER(TRIM(COALESCE(n.skala_usaha, a.skala_prelist,''))) IN ('UB','UM')
-  -- AND n.keberadaan_usaha_value IN ('1','2')            -- hanya usaha aktif
-  -- AND n.keberadaan_usaha_value IN ('00','0')           -- hanya tidak ditemukan
-  -- AND a.assignment_status_alias = 'OPEN'               -- hanya belum digarap
-ORDER BY a.level_6_full_code, a.assignment_id
+SELECT r.kab AS kabupaten, r.kec AS kecamatan, r.desa AS desa_kel,
+       r.sls, r.sub_sls, r.id_sub_sls,
+       r.total_usaha, r.prelist, r.tambahan,
+       r.ditemukan, r.baru, r.tidak_ditemukan, r.tutup, r.belum_terdata,
+       CAST(100.0 * r.tidak_ditemukan / r.total_usaha AS DECIMAL(18,1)) AS pct_tdk_ditemukan,
+       CAST(100.0 * (r.total_usaha - r.belum_terdata) / r.total_usaha
+            AS DECIMAL(18,1))                                          AS pct_selesai,
+       CAST(100.0 * r.belum_terdata / r.total_usaha AS DECIMAL(18,1))  AS pct_belum_terdata,
+       -- ================= SKOR PERHATIAN (0-100) =================
+       -- 40% tingkat tidak ditemukan | 25% nihil tambahan
+       -- 20% belum terdata           | 15% bobot volume
+       CAST( 40.0 * r.tidak_ditemukan / r.total_usaha
+           + 25.0 * (CASE WHEN r.tambahan = 0 THEN 1 ELSE 0 END)
+           + 20.0 * r.belum_terdata / r.total_usaha
+           + 15.0 * (CASE WHEN r.total_usaha >= 100 THEN 1
+                          ELSE r.total_usaha / 100.0 END)
+           AS DECIMAL(18,1))                                           AS skor_perhatian,
+       CASE WHEN 40.0*r.tidak_ditemukan/r.total_usaha
+               + 25.0*(CASE WHEN r.tambahan=0 THEN 1 ELSE 0 END)
+               + 20.0*r.belum_terdata/r.total_usaha
+               + 15.0*(CASE WHEN r.total_usaha>=100 THEN 1
+                            ELSE r.total_usaha/100.0 END) >= 70 THEN 'PRIORITAS 1 - SISIR SEGERA'
+            WHEN 40.0*r.tidak_ditemukan/r.total_usaha
+               + 25.0*(CASE WHEN r.tambahan=0 THEN 1 ELSE 0 END)
+               + 20.0*r.belum_terdata/r.total_usaha
+               + 15.0*(CASE WHEN r.total_usaha>=100 THEN 1
+                            ELSE r.total_usaha/100.0 END) >= 50 THEN 'PRIORITAS 2 - PERLU CEK'
+            ELSE 'PRIORITAS 3 - WAJAR' END                             AS kategori_sisir
+FROM rekap r
+WHERE r.total_usaha > 0
+  -- OPSI: hanya yang perlu disisir
+  -- AND r.tambahan = 0
+ORDER BY skor_perhatian DESC, r.total_usaha DESC
 LIMIT 9000 OFFSET 0;
