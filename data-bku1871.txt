@@ -30,7 +30,7 @@ b AS (
                                                r.assignment_date_modified
                                   ORDER BY r.assignment_id) AS rn
         FROM tgr_fd68e454.root_table r 
-        -- WHERE r.level_2_full_code = '1871'
+         WHERE r.level_2_full_code = '1871'
     ) x WHERE rn = 1
 ),
 usa AS (
@@ -50,7 +50,7 @@ usa AS (
                                                n.assignment_date_modified
                                   ORDER BY n.index1) AS rn
         FROM tgr_fd68e454.se2026_nested n
-        -- WHERE n.level_2_full_code = '1871'
+         WHERE n.level_2_full_code = '1871'
     ) x WHERE rn = 1
 )
 SELECT a.level_2_name      AS kabupaten,
