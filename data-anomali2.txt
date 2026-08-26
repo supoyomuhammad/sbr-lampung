@@ -1,6 +1,7 @@
 SELECT n.level_2_name AS kabupaten, n.level_3_name AS kecamatan,
        n.level_4_name AS desa_kel, n.level_5_name AS sls,
        n.level_6_name AS sub_sls, n.level_6_full_code AS id_sub_sls,
+       COALESCE(r.dtsen_nama_kk, r.nama_kk, '(bukan usaha keluarga)') AS nama_kepala_keluarga,
        n.nama_usaha, n.assignment_id,
        '3.Penyertaan Modal Korporasi' AS flag_anomali,
        n.idsbr, n.skala_usaha,
@@ -18,6 +19,9 @@ SELECT n.level_2_name AS kabupaten, n.level_3_name AS kecamatan,
        CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
               n.survey_period_id,'/',n.assignment_id) AS link_fasih
 FROM tgr_fd68e454.se2026_nested n
+LEFT JOIN tgr_fd68e454.root_table r
+       ON r.assignment_id = n.assignment_id
+      AND r.assignment_date_modified = n.assignment_date_modified
 WHERE n.assignment_status_id > 0
   AND n.keberadaan_usaha_value IN ('1','2')
   AND n.badan_usaha_value = '13'
