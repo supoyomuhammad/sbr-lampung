@@ -1,11 +1,10 @@
--- QUERY 1 — Anomali #1, #2, #4 (Keuangan) — 24 kolom
 WITH d AS (
     SELECT n.assignment_id, n.survey_period_id,
            n.level_2_name, n.level_3_name, n.level_4_name,
            n.level_5_name, n.level_6_name, n.level_6_full_code,
+           COALESCE(r.dtsen_nama_kk, r.nama_kk, '(bukan usaha keluarga)') AS nama_kk,
            n.nama_usaha, n.idsbr,
-           n.jenis_usaha_value, n.kategori, n.produk_sendiri_label,
-           n.peran_mbg_label,
+           n.jenis_usaha_value, n.kategori, n.produk_sendiri_label, n.peran_mbg_label,
            n.gaji, n.biaya_produksi, n.biaya_pembelian,
            n.operasional, n.non_operasional,
            n.nilai_pendapatan, n.pendapatan_lain,
@@ -14,19 +13,22 @@ WITH d AS (
            COALESCE(n.total_pendapatan,  n.total_pendapatan_bln)  AS r27c,
            n.produk_sendiri_value, n.peran_mbg_value
     FROM tgr_fd68e454.se2026_nested n
+    LEFT JOIN tgr_fd68e454.root_table r
+           ON r.assignment_id = n.assignment_id
+          AND r.assignment_date_modified = n.assignment_date_modified
     WHERE n.assignment_status_id > 0
       AND n.keberadaan_usaha_value IN ('1','2')
+      -- OPSI: AND n.level_2_full_code = '1871'
 ),
 f AS (
     SELECT d.assignment_id, d.survey_period_id,
            d.level_2_name, d.level_3_name, d.level_4_name,
            d.level_5_name, d.level_6_name, d.level_6_full_code,
-           d.nama_usaha, d.idsbr, d.kategori,
+           d.nama_kk, d.nama_usaha, d.idsbr, d.kategori,
            d.jenis_usaha_value, d.produk_sendiri_label, d.peran_mbg_label,
            d.gaji, d.biaya_produksi, d.biaya_pembelian,
            d.operasional, d.non_operasional,
-           d.nilai_pendapatan, d.pendapatan_lain,
-           d.r26b, d.r26f, d.r27c,
+           d.nilai_pendapatan, d.pendapatan_lain, d.r26b, d.r26f, d.r27c,
            CASE WHEN CAST(NULLIF(TRIM(d.jenis_usaha_value),'') AS SIGNED) < 6
                  AND UPPER(TRIM(COALESCE(d.kategori,''))) NOT IN ('B','C','D','E','F')
                  AND d.produk_sendiri_value = '2'
@@ -38,35 +40,27 @@ f AS (
                                                              THEN 1 ELSE 0 END AS a4
     FROM d
 )
-SELECT f.level_2_name AS kabupaten,
-       f.level_3_name AS kecamatan,
-       f.level_4_name AS desa_kel,
-       f.level_5_name AS sls,
-       f.level_6_name AS sub_sls,
-       f.level_6_full_code AS id_sub_sls,
-       f.nama_usaha,
-       f.assignment_id,
+SELECT f.level_2_name AS kabupaten, f.level_3_name AS kecamatan,
+       f.level_4_name AS desa_kel, f.level_5_name AS sls,
+       f.level_6_name AS sub_sls, f.level_6_full_code AS id_sub_sls,
+       f.nama_kk AS nama_kepala_keluarga,
+       f.nama_usaha, f.assignment_id,
        SUBSTR(CONCAT(
           CASE WHEN f.a1=1 THEN ' | 1.Biaya Produksi Dominan' ELSE '' END,
           CASE WHEN f.a2=1 THEN ' | 2.Keuntungan Negatif'     ELSE '' END,
           CASE WHEN f.a4=1 THEN ' | 4.Keuangan MBG'           ELSE '' END), 4) AS flag_anomali,
-       f.idsbr,
-       f.kategori,
+       f.idsbr, f.kategori,
        f.jenis_usaha_value    AS r9a_jenis_usaha,
        f.produk_sendiri_label AS r13b1_produksi_sendiri,
        f.peran_mbg_label      AS r22_mbg,
-       f.gaji                 AS r26a,
-       f.biaya_produksi       AS r26b,
-       f.biaya_pembelian      AS r26c,
-       f.operasional          AS r26d,
-       f.non_operasional      AS r26e,
-       f.r26f                 AS r26f_total_pengeluaran,
-       f.nilai_pendapatan     AS r27a,
-       f.pendapatan_lain      AS r27b,
-       f.r27c                 AS r27c_total_pendapatan,
+       f.gaji AS r26a, f.biaya_produksi AS r26b, f.biaya_pembelian AS r26c,
+       f.operasional AS r26d, f.non_operasional AS r26e,
+       f.r26f AS r26f_total_pengeluaran,
+       f.nilai_pendapatan AS r27a, f.pendapatan_lain AS r27b,
+       f.r27c AS r27c_total_pendapatan,
        CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
               f.survey_period_id,'/',f.assignment_id) AS link_fasih
 FROM f
 WHERE f.a1 + f.a2 + f.a4 > 0
 ORDER BY f.level_6_full_code, f.assignment_id
-LIMIT 9000 OFFSET 9000;
+LIMIT 9000 OFFSET 0;
