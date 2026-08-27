@@ -1,0 +1,38 @@
+WITH kel AS (
+    SELECT 
+        r.assignment_id,
+        r.assignment_date_modified
+    FROM tgr_fd68e454.root_table r
+    WHERE r.assignment_status_id > 0
+),
+ush AS (
+    SELECT 
+        n.assignment_id,
+        n.assignment_date_modified,
+        n.kbli_akhir
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1', '2')
+      -- Filter berdasarkan daftar KBLI target dari gambar
+      AND TRIM(n.kbli_akhir) IN (
+          '38110', '38121', '38122', '38212', '38219', '38221', '38222', '38301', '38309', 
+          '47901', 
+          '58110', '58120', '58130', '58190', '58211', '58219', '58290', 
+          '60312', '60390', 
+          '63101', '63102', '63900', 
+          '68291', '68292', '68299', 
+          '75001', '75002', '75009', 
+          '81100', '81210', '81290', '81300', 
+          '82100', '82110', '82200', '82300', '82302', '82400', '82911', '82912', '82921', '82922', '82923', '82924', '82925', '82929', '82990', 
+          '95101', '95102', '95200', '95210', '95230', '95240', '95291', '95299'
+      )
+)
+SELECT 
+    COUNT(*) AS total_keseluruhan_data
+FROM kel k
+INNER JOIN ush u 
+    ON k.assignment_id = u.assignment_id 
+    AND k.assignment_date_modified = u.assignment_date_modified
+INNER JOIN tgr_fd68e454.base_table_assignment b 
+    ON k.assignment_id = b.assignment_id
+WHERE b.is_active = 1;
