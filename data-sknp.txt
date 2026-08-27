@@ -1,0 +1,137 @@
+WITH kel AS (
+    -- Ambil data dasar dan alamat dari tabel root (untuk usaha keluarga)
+    SELECT 
+        r.assignment_id,
+        r.assignment_date_modified,
+        r.survey_period_id,
+        r.level_2_name, r.level_3_name, r.level_4_name, 
+        r.level_5_name, r.level_6_name, r.level_6_full_code,
+        -- Mengambil alamat keluarga yang valid
+        COALESCE(NULLIF(TRIM(r.alamat_klrg), ''), NULLIF(TRIM(r.alamat_prelist), '')) AS alamat_keluarga,
+        COALESCE(r.dtsen_nama_kk, r.nama_kk) AS nama_kepala_keluarga
+    FROM tgr_fd68e454.root_table r
+    WHERE r.assignment_status_id > 0
+),
+ush AS (
+    -- Ambil rincian usaha, KBLI, dan variabel ekonomi dari tabel nested
+    SELECT 
+        n.assignment_id,
+        n.assignment_date_modified,
+        n.nama_usaha,
+        n.keberadaan_usaha_value,
+        n.keberadaan_usaha_label,
+        n.kbli_akhir,
+        n.alamat_usaha_utama,
+        n.alamat_usaha_view,
+        n.alamat_usaha,
+        
+        -- Variabel Identitas & Kategori Tambahan
+        n.keg_utama,
+        n.jenis_usaha_label,
+        n.badan_usaha_label,
+        n.skala_usaha,
+        n.tahun_operasi,
+        
+        -- Variabel Ketenagakerjaan
+        n.tk_laki,
+        n.tk_pr,
+        n.total_tk_jk,
+        
+        -- Variabel Keuangan Tahunan
+        n.gaji,
+        n.biaya_produksi,
+        n.operasional,
+        n.total_pengeluaran,
+        n.nilai_pendapatan,
+        n.pendapatan_lain,
+        n.total_pendapatan,
+        n.total_aset_thn,
+        
+        -- Variabel Teknologi, Izin & Keuangan
+        n.punya_nib_label,
+        n.internet_label,
+        n.digital_label,
+        n.lap_keuangan_label
+
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      -- Filter hanya usaha yang Ditemukan (1) atau Baru (2)
+      AND n.keberadaan_usaha_value IN ('1', '2')
+      -- Filter berdasarkan daftar KBLI target dari gambar
+      AND TRIM(n.kbli_akhir) IN (
+          '38110', '38121', '38122', '38212', '38219', '38221', '38222', '38301', '38309', 
+          '47901', 
+          '58110', '58120', '58130', '58190', '58211', '58219', '58290', 
+          '60312', '60390', 
+          '63101', '63102', '63900', 
+          '68291', '68292', '68299', 
+          '75001', '75002', '75009', 
+          '81100', '81210', '81290', '81300', 
+          '82100', '82110', '82200', '82300', '82302', '82400', '82911', '82912', '82921', '82922', '82923', '82924', '82925', '82929', '82990', 
+          '95101', '95102', '95200', '95210', '95230', '95240', '95291', '95299'
+      )
+)
+SELECT 
+    k.level_2_name AS kabupaten,
+    k.level_3_name AS kecamatan,
+    k.level_4_name AS desa_kel,
+    k.level_5_name AS sls,
+    k.level_6_name AS sub_sls,
+    k.level_6_full_code AS id_sub_sls,
+    u.nama_usaha,
+    u.keberadaan_usaha_label AS status_keberadaan,
+    u.kbli_akhir AS kbli_2025,
+    -- Prioritaskan alamat usaha, jika kosong gunakan alamat keluarga
+    COALESCE(
+        NULLIF(TRIM(u.alamat_usaha_utama), ''), 
+        NULLIF(TRIM(u.alamat_usaha_view), ''), 
+        NULLIF(TRIM(u.alamat_usaha), ''), 
+        k.alamat_keluarga
+    ) AS alamat_lengkap,
+    
+    k.nama_kepala_keluarga,
+    
+    -- =========================================================================
+    -- VAR TAMBAHAN (Silakan hapus tanda -- di awal baris untuk menampilkannya)
+    -- =========================================================================
+    
+    -- [ Profil Usaha ]
+    -- u.keg_utama,
+    -- u.jenis_usaha_label,
+    -- u.badan_usaha_label,
+    -- u.skala_usaha,
+    -- u.tahun_operasi,
+    
+    -- [ Tenaga Kerja ]
+    -- u.tk_laki,
+    -- u.tk_pr,
+    -- u.total_tk_jk,
+    
+    -- [ Keuangan (Tahunan) ]
+    -- u.gaji,
+    -- u.biaya_produksi,
+    -- u.operasional,
+    -- u.total_pengeluaran,
+    -- u.nilai_pendapatan,
+    -- u.pendapatan_lain,
+    -- u.total_pendapatan,
+    -- u.total_aset_thn,
+    
+    -- [ Perizinan, Teknologi & Lainnya ]
+    -- u.punya_nib_label,
+    -- u.internet_label,
+    -- u.digital_label,
+    -- u.lap_keuangan_label,
+
+    CONCAT('https://fasih-sm.bps.go.id/app/assignment/', COALESCE(k.survey_period_id, 'SE2026'), '/', k.assignment_id) AS link_fasih
+FROM kel k
+-- JOIN Roster Usaha menggunakan multi-key
+INNER JOIN ush u 
+    ON k.assignment_id = u.assignment_id 
+    AND k.assignment_date_modified = u.assignment_date_modified
+-- JOIN Induk Assignment untuk filter Is_Active = 1
+INNER JOIN tgr_fd68e454.base_table_assignment b 
+    ON k.assignment_id = b.assignment_id
+WHERE b.is_active = 1
+ORDER BY k.level_6_full_code, k.assignment_id
+LIMIT 9000 OFFSET 0;
