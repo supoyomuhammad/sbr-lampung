@@ -1,0 +1,8 @@
+SELECT COUNT(*) AS total_sub_sls
+FROM (
+    SELECT a.level_6_full_code
+    FROM tgr_fd68e454.base_table_assignment a
+    WHERE a.is_active = 1
+      -- SALIN FILTER WILAYAH DARI QUERY UTAMA KE SINI
+    GROUP BY a.level_6_full_code
+) x;
