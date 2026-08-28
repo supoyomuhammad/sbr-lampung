@@ -1,0 +1,59 @@
+-- ============================================================================
+-- REKAP STATUS ASSIGNMENT PER SUB-SLS
+-- Semua status: OPEN, DRAFT, SUBMITTED, APPROVED, REJECTED, dst.
+-- ============================================================================
+WITH asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified,
+           a.level_2_full_code, a.level_2_name,
+           a.level_3_name, a.level_4_name, a.level_5_name,
+           a.level_6_name, a.level_6_full_code,
+           a.assignment_status_alias AS status,
+           CASE WHEN UPPER(a.code_identity) LIKE '%DTSEN%' THEN 'KELUARGA'
+                WHEN TRIM(COALESCE(a.data6,'')) <> ''      THEN 'USAHA PRELIST'
+                ELSE 'TAMBAHAN LAPANGAN' END AS kelompok
+    FROM tgr_fd68e454.base_table_assignment a
+    WHERE a.is_active = 1
+      -- ================= OPSI FILTER WILAYAH =================
+      -- AND a.level_2_full_code = '1871'
+      -- AND a.level_3_full_code = '1803060'
+      -- AND a.level_5_full_code IN ('18710710060045','18710710060047')
+)
+SELECT a.level_2_full_code AS kode_kab,
+       a.level_2_name      AS kabupaten,
+       a.level_3_name      AS kecamatan,
+       a.level_4_name      AS desa_kel,
+       a.level_5_name      AS sls,
+       a.level_6_name      AS sub_sls,
+       a.level_6_full_code AS id_sub_sls,
+       COUNT(*)            AS total_assignment,
+       -- ===== STATUS DOKUMEN =====
+       SUM(CASE WHEN a.status = 'OPEN'  THEN 1 ELSE 0 END) AS open_,
+       SUM(CASE WHEN a.status = 'DRAFT' THEN 1 ELSE 0 END) AS draft,
+       SUM(CASE WHEN a.status = 'SUBMITTED BY Pencacah'  THEN 1 ELSE 0 END) AS submit_pcl,
+       SUM(CASE WHEN a.status = 'SUBMITTED RESPONDENT'   THEN 1 ELSE 0 END) AS submit_responden,
+       SUM(CASE WHEN a.status LIKE '%APPROVED%'          THEN 1 ELSE 0 END) AS approved,
+       SUM(CASE WHEN a.status LIKE '%REJECTED%'          THEN 1 ELSE 0 END) AS rejected,
+       SUM(CASE WHEN a.status LIKE '%REVOKED%'           THEN 1 ELSE 0 END) AS revoked,
+       SUM(CASE WHEN a.status LIKE '%EDITED%'
+                  OR a.status LIKE '%COMPLETED%'         THEN 1 ELSE 0 END) AS admin_edit,
+       -- ===== KELOMPOK ASSIGNMENT =====
+       SUM(CASE WHEN a.kelompok = 'KELUARGA'          THEN 1 ELSE 0 END) AS jml_keluarga,
+       SUM(CASE WHEN a.kelompok = 'USAHA PRELIST'     THEN 1 ELSE 0 END) AS jml_usaha_prelist,
+       SUM(CASE WHEN a.kelompok = 'TAMBAHAN LAPANGAN' THEN 1 ELSE 0 END) AS jml_tambahan,
+       -- ===== RINGKASAN PROGRES =====
+       SUM(CASE WHEN a.status IN ('OPEN','DRAFT') THEN 1 ELSE 0 END)      AS belum_selesai,
+       SUM(CASE WHEN a.status NOT IN ('OPEN','DRAFT') THEN 1 ELSE 0 END)  AS sudah_selesai,
+       CAST(100.0 * SUM(CASE WHEN a.status NOT IN ('OPEN','DRAFT')
+                             THEN 1 ELSE 0 END) / COUNT(*)
+            AS DECIMAL(18,2)) AS pct_selesai,
+       CAST(100.0 * SUM(CASE WHEN a.status = 'OPEN' THEN 1 ELSE 0 END)
+            / COUNT(*) AS DECIMAL(18,2)) AS pct_open
+FROM asg a
+GROUP BY a.level_2_full_code, a.level_2_name, a.level_3_name,
+         a.level_4_name, a.level_5_name, a.level_6_name, a.level_6_full_code
+-- ================= OPSI FILTER HASIL =================
+-- HAVING SUM(CASE WHEN a.status = 'OPEN' THEN 1 ELSE 0 END) > 0        -- ada yang OPEN
+-- HAVING SUM(CASE WHEN a.status IN ('OPEN','DRAFT') THEN 1 ELSE 0 END) = COUNT(*)  -- belum tersentuh
+-- HAVING 100.0*SUM(CASE WHEN a.status NOT IN ('OPEN','DRAFT') THEN 1 ELSE 0 END)/COUNT(*) < 50
+ORDER BY pct_selesai ASC, total_assignment DESC
+LIMIT 9000 OFFSET 0;
