@@ -1,0 +1,116 @@
+WITH params AS (
+    SELECT '1813' AS kab 
+),
+asg AS (
+    SELECT a.assignment_id, 
+           a.assignment_date_modified,
+           a.survey_period_id,
+           a.level_1_name AS provinsi,
+           a.level_2_name AS kabupaten,
+           a.level_3_name AS kecamatan,
+           a.level_4_name AS desa,
+           a.level_5_name AS sls,
+           a.level_6_name AS sub_sls,
+           a.level_6_full_code,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/', a.survey_period_id, '/', a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1
+      AND a.level_2_full_code = p.kab
+),
+kel AS (
+    -- Menarik data kepala keluarga dari root_table
+    SELECT r.assignment_id,
+           r.assignment_date_modified,
+           r.nama_kk
+    FROM tgr_fd68e454.root_table r
+),
+usa AS (
+    SELECT n.assignment_id, 
+           n.assignment_date_modified,
+           n.index1,
+           n.nama_usaha, 
+           n.skala_usaha, 
+           n.tahun_operasi,
+           n.badan_usaha_value,
+           n.badan_usaha_label,
+           
+           -- Pembersihan omset
+           CAST(REPLACE(COALESCE(n.total_pendapatan, '0'), '.', '') AS DOUBLE) AS omset_thn,
+           CAST(REPLACE(COALESCE(n.total_pendapatan_bln, '0'), '.', '') AS DOUBLE) AS omset_bln,
+           CAST(NULLIF(TRIM(n.tahun_operasi),'') AS SIGNED) AS thn_operasi,
+           
+           -- Pemisahan Status Pekerja (Sesuai Metadata)
+           CAST(COALESCE(n.tk_dibayar, '0') AS SIGNED) AS pekerja_dibayar,
+           CAST(COALESCE(n.tk_tdk_dibayar, '0') AS SIGNED) AS pekerja_tdk_dibayar,
+           CAST(COALESCE(n.total_tk_jk, '0') AS SIGNED) AS total_pekerja,
+           
+           -- Variabel Gaji yang benar
+           CAST(REPLACE(COALESCE(n.gaji, n.gaji_bln, '0'), '.', '') AS DOUBLE) AS biaya_pekerja
+           
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.keberadaan_usaha_value IN ('1','2')
+),
+deteksi AS (
+    SELECT a.provinsi, a.kabupaten, a.kecamatan, a.desa, a.sls, a.sub_sls, a.level_6_full_code,
+           k.nama_kk, -- << Mengambil nama KK dari CTE kel
+           u.nama_usaha, u.skala_usaha, u.badan_usaha_label,
+           u.omset_thn, u.omset_bln, u.thn_operasi,
+           u.pekerja_dibayar, u.pekerja_tdk_dibayar, u.biaya_pekerja,
+           a.link_fasih,
+           
+           SUBSTR(CONCAT(
+               -- 1. Evaluasi Umur vs Logika Waktu
+               CASE WHEN u.thn_operasi <= 2024 AND u.omset_thn = 0 AND u.omset_bln > 0 THEN ' | Usaha >1th tp isi bulanan' ELSE '' END,
+               CASE WHEN u.thn_operasi >= 2025 AND u.omset_thn > 0 THEN ' | Usaha <1th tp isi tahunan' ELSE '' END,
+               
+               -- 2. Ambang Batas Ekstrem Tunggal
+               CASE WHEN u.omset_bln > 0 AND u.omset_bln < 100000 THEN ' | Omset bln < 100rb' ELSE '' END,
+               CASE WHEN u.omset_thn > 0 AND u.omset_thn < 1000000 THEN ' | Omset thn < 1jt' ELSE '' END,
+               CASE WHEN u.omset_bln > 4000000000 OR u.omset_thn > 50000000000 THEN ' | Omset ekstrem tinggi' ELSE '' END,
+               CASE WHEN u.omset_bln = 0 AND u.omset_thn = 0 THEN ' | Omset kosong (0)' ELSE '' END,
+               
+               -- 3. Rasio Total Pekerja dan Omset Disetahunkan
+               CASE WHEN u.total_pekerja = 0 AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE (u.omset_bln * 12) END) > 500000000 THEN ' | Pekerja 0 tp omset > 500Jt' ELSE '' END,
+               CASE WHEN u.total_pekerja > 5 AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE (u.omset_bln * 12) END) < 10000000 THEN ' | Pekerja > 5 tp omset setahun < 10Jt' ELSE '' END,
+               CASE WHEN u.total_pekerja > 0 AND ((CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE (u.omset_bln * 12) END) / u.total_pekerja) > 5000000000 THEN ' | Produktivitas > 5M/Pekerja' ELSE '' END,
+                    
+               -- 4. KOREKSI LOGIKA PEKERJA & LEGALITAS BADAN HUKUM (BERDASARKAN METADATA & PEDOMAN 4.4)
+               CASE WHEN u.pekerja_dibayar > 0 AND u.biaya_pekerja = 0 
+                    THEN ' | Ada pekerja dibayar tp total gaji 0' ELSE '' END,
+                    
+               CASE WHEN COALESCE(u.badan_usaha_value, '') NOT IN ('13', '') AND u.pekerja_tdk_dibayar > 0 
+                    THEN ' | Badan hukum tp ada pekerja tdk dibayar' ELSE '' END
+                    
+           ), 4) AS flag_anomali
+    FROM asg a
+    INNER JOIN usa u ON u.assignment_id = a.assignment_id
+                    AND u.assignment_date_modified = a.assignment_date_modified
+    -- Gunakan LEFT JOIN agar usaha murni (bukan keluarga) tidak hilang
+    LEFT JOIN kel k  ON k.assignment_id = a.assignment_id
+                    AND k.assignment_date_modified = a.assignment_date_modified
+)
+SELECT kabupaten,kecamatan,desa, 
+       sls, 
+       sub_sls, 
+       level_6_full_code,
+       nama_kk,      -- << Kolom nama kepala keluarga dimunculkan
+       nama_usaha, 
+       skala_usaha, 
+       badan_usaha_label, 
+       pekerja_dibayar, 
+       pekerja_tdk_dibayar, 
+       biaya_pekerja,
+       thn_operasi,
+       omset_thn, 
+       omset_bln,
+       flag_anomali, 
+       link_fasih
+       
+       -- ================= OPSI VARIABEL LAIN =================
+       -- , provinsi, kabupaten, kecamatan, u.total_pekerja
+       
+FROM deteksi
+WHERE flag_anomali <> ''
+ORDER BY level_6_full_code ASC, nama_usaha ASC
+LIMIT 9000 OFFSET 0;
