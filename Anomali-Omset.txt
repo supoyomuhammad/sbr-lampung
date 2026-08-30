@@ -1,0 +1,131 @@
+WITH params AS (
+    SELECT '18' AS prov 
+),
+asg AS (
+    SELECT a.assignment_id, 
+           a.assignment_date_modified,
+           a.survey_period_id,
+           a.level_2_name AS kabupaten,
+           a.level_3_name AS kecamatan,
+           a.level_4_name AS desa,
+           a.level_5_name AS sls,
+           a.level_6_name AS sub_sls,
+           a.level_6_full_code,
+           CASE WHEN UPPER(a.code_identity) LIKE '%DTSEN%' THEN 'KELUARGA'
+                WHEN TRIM(COALESCE(a.data6,'')) <> ''      THEN 'PRELIST USAHA'
+                ELSE 'TAMBAHAN LAPANGAN' END AS jenis_asg,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+                  a.survey_period_id, '/', a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = p.prov
+),
+kel AS (
+    SELECT r.assignment_id, r.assignment_date_modified, r.nama_kk
+    FROM tgr_fd68e454.root_table r
+),
+usa AS (
+    SELECT n.assignment_id,
+           n.assignment_date_modified,
+           n.index1,
+           n.nama_usaha,
+           n.skala_usaha,
+           n.kategori,
+           n.kbli_akhir,
+           n.badan_usaha_value,
+           n.badan_usaha_label,
+           COALESCE(n.total_pendapatan, 0)     AS omset_thn,
+           COALESCE(n.total_pendapatan_bln, 0) AS omset_bln,
+           COALESCE(n.gaji, n.gaji_bln, 0)     AS biaya_pekerja,
+           CAST(NULLIF(TRIM(n.tahun_operasi),'') AS SIGNED) AS thn_operasi,
+           CAST(COALESCE(n.tk_dibayar, 0)     AS SIGNED) AS pekerja_dibayar,
+           CAST(COALESCE(n.tk_tdk_dibayar, 0) AS SIGNED) AS pekerja_tdk_dibayar,
+           CAST(COALESCE(n.total_tk_jk, 0)    AS SIGNED) AS total_pekerja,
+           CASE WHEN TRIM(COALESCE(n.kbli_akhir,'')) = ''
+                 AND TRIM(COALESCE(n.kategori,'')) = ''
+                 AND COALESCE(n.total_tk_jk,0) = 0
+                 AND COALESCE(n.total_pendapatan, 0) = 0
+                 AND COALESCE(n.total_pendapatan_bln, 0) = 0
+                 AND TRIM(COALESCE(n.nama_usaha,'')) <> ''
+                THEN 1 ELSE 0 END AS tagging_saja
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1','2')
+),
+deteksi AS (
+    SELECT a.kabupaten, a.kecamatan, a.desa, a.sls, a.sub_sls,
+           a.level_6_full_code, a.jenis_asg, a.link_fasih,
+           k.nama_kk,
+           u.nama_usaha, u.skala_usaha, u.kategori, u.badan_usaha_label,
+           u.omset_thn, u.omset_bln, u.thn_operasi,
+           u.pekerja_dibayar, u.pekerja_tdk_dibayar, u.total_pekerja,
+           u.biaya_pekerja, u.tagging_saja,
+           SUBSTR(CONCAT(
+               CASE WHEN u.thn_operasi <= 2025 AND u.omset_thn = 0 AND u.omset_bln > 0
+                    THEN ' | Usaha <=2025 tp isi bulanan' ELSE '' END,
+               CASE WHEN u.thn_operasi = 2026 AND u.omset_thn > 0
+                    THEN ' | Usaha 2026 tp isi tahunan' ELSE '' END,
+               CASE WHEN u.omset_bln > 0 AND u.omset_bln < 100000
+                    THEN ' | Omset bln < 100rb' ELSE '' END,
+               CASE WHEN u.omset_thn > 0 AND u.omset_thn < 1000000
+                    THEN ' | Omset thn < 1jt' ELSE '' END,
+               CASE WHEN u.omset_bln > 4000000000 OR u.omset_thn > 50000000000
+                    THEN ' | Omset ekstrem tinggi' ELSE '' END,
+               CASE WHEN u.omset_bln = 0 AND u.omset_thn = 0 AND u.tagging_saja = 0
+                    THEN ' | Omset kosong (0)' ELSE '' END,
+               CASE WHEN u.tagging_saja = 0 AND u.total_pekerja = 0
+                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn
+                               ELSE u.omset_bln * 12 END) > 500000000
+                    THEN ' | Pekerja 0 tp omset > 500Jt' ELSE '' END,
+               CASE WHEN u.total_pekerja > 5
+                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn
+                               ELSE u.omset_bln * 12 END) < 10000000
+                    THEN ' | Pekerja > 5 tp omset setahun < 10Jt' ELSE '' END,
+               -- PENGGUNAAN NULLIF UNTUK MENCEGAH ERROR PEMBAGIAN
+               CASE WHEN u.total_pekerja > 0
+                     AND ((CASE WHEN u.omset_thn > 0 THEN u.omset_thn
+                                ELSE u.omset_bln * 12 END) / NULLIF(u.total_pekerja, 0)) > 5000000000
+                    THEN ' | Produktivitas > 5M/Pekerja' ELSE '' END,
+               CASE WHEN u.pekerja_dibayar > 0 AND u.biaya_pekerja = 0
+                    THEN ' | Ada pekerja dibayar tp total gaji 0' ELSE '' END,
+               CASE WHEN COALESCE(u.badan_usaha_value,'') NOT IN ('13','')
+                     AND u.pekerja_tdk_dibayar > 0
+                    THEN ' | Badan hukum tp ada pekerja tdk dibayar' ELSE '' END,
+               CASE WHEN u.omset_bln > 0 AND u.omset_bln < 50000
+                    THEN ' | Omset bln ekstrem kecil (<50rb)' ELSE '' END,
+               CASE WHEN u.omset_thn > 0 AND u.omset_thn < 500000
+                    THEN ' | Omset thn ekstrem kecil (<500rb)' ELSE '' END,
+               CASE WHEN u.pekerja_dibayar < 5 AND u.omset_bln > 2000000000
+                    THEN ' | Omset bln >2M tp pekerja < 5' ELSE '' END,
+               CASE WHEN u.pekerja_dibayar < 5 AND u.omset_thn > 15000000000
+                    THEN ' | Omset thn >15M tp pekerja < 5' ELSE '' END,
+               CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_bln > 50000000000
+                    THEN ' | Omset bln >50M skala menengah/besar' ELSE '' END,
+               CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_thn > 500000000000
+                    THEN ' | Omset thn >500M skala menengah/besar' ELSE '' END
+           ), 4) AS flag_anomali
+    FROM asg a
+    INNER JOIN usa u ON u.assignment_id = a.assignment_id
+                    AND u.assignment_date_modified = a.assignment_date_modified
+    LEFT JOIN kel k  ON k.assignment_id = a.assignment_id
+                    AND k.assignment_date_modified = a.assignment_date_modified
+)
+SELECT d.kabupaten, d.kecamatan, d.desa, d.sls, d.sub_sls,
+       d.level_6_full_code,
+       d.jenis_asg AS jenis_assignment,
+       d.nama_kk,
+       d.nama_usaha, d.skala_usaha, d.kategori, d.badan_usaha_label,
+       d.pekerja_dibayar, d.pekerja_tdk_dibayar, d.total_pekerja,
+       d.biaya_pekerja, d.thn_operasi,
+       d.omset_thn, d.omset_bln,
+       CASE WHEN d.tagging_saja = 1 AND d.jenis_asg = 'PRELIST USAHA'
+            THEN 'Tagging saja - isian di assignment keluarga'
+            WHEN d.tagging_saja = 1 THEN 'Kuesioner belum diisi'
+            ELSE 'Terisi' END AS status_isian,
+       d.flag_anomali,
+       d.link_fasih
+FROM deteksi d
+WHERE d.flag_anomali <> ''
+ORDER BY d.level_6_full_code ASC, d.nama_usaha ASC
+LIMIT 9000 OFFSET 0;
