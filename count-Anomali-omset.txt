@@ -3,23 +3,27 @@ WITH params AS (
 ),
 asg AS (
     SELECT a.assignment_id,
-           a.assignment_date_modified
+           a.assignment_date_modified,
+           CASE WHEN UPPER(a.code_identity) LIKE '%DTSEN%' THEN 'KELUARGA'
+                WHEN TRIM(COALESCE(a.data6,'')) <> ''      THEN 'PRELIST USAHA'
+                ELSE 'TAMBAHAN LAPANGAN' END AS jenis_asg
     FROM tgr_fd68e454.base_table_assignment a
     CROSS JOIN params p
     WHERE a.is_active = 1
       AND a.level_1_full_code = p.prov
 ),
-kel AS (
-    SELECT r.assignment_id, r.assignment_date_modified
-    FROM tgr_fd68e454.root_table r
-),
 usa AS (
     SELECT n.assignment_id,
            n.assignment_date_modified,
            n.badan_usaha_value,
+           n.kategori,
+           n.kbli_akhir,
+           n.produk_sendiri_value,
            COALESCE(n.total_pendapatan, 0)     AS omset_thn,
            COALESCE(n.total_pendapatan_bln, 0) AS omset_bln,
            COALESCE(n.gaji, n.gaji_bln, 0)     AS biaya_pekerja,
+           COALESCE(n.biaya_produksi,    n.biaya_produksi_bln, 0)    AS r26b,
+           COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) AS r26f,
            CAST(NULLIF(TRIM(n.tahun_operasi),'') AS SIGNED) AS thn_operasi,
            CAST(COALESCE(n.tk_dibayar, 0)     AS SIGNED) AS pekerja_dibayar,
            CAST(COALESCE(n.tk_tdk_dibayar, 0) AS SIGNED) AS pekerja_tdk_dibayar,
@@ -56,12 +60,17 @@ deteksi AS (
                CASE WHEN u.pekerja_dibayar < 5 AND u.omset_bln > 2000000000 THEN ' | x' ELSE '' END,
                CASE WHEN u.pekerja_dibayar < 5 AND u.omset_thn > 15000000000 THEN ' | x' ELSE '' END,
                CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_bln > 50000000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_thn > 500000000000 THEN ' | x' ELSE '' END
+               CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_thn > 500000000000 THEN ' | x' ELSE '' END,
+               CASE WHEN u.produk_sendiri_value = '2' 
+                     AND u.r26f > 0 
+                     AND u.r26b / u.r26f > 0.5 
+                     AND UPPER(TRIM(COALESCE(u.kategori,''))) NOT IN ('A','B','C','D','E','F','I') 
+                     AND LEFT(TRIM(COALESCE(u.kbli_akhir,'')),2) NOT IN ('01','02','03')
+                    THEN ' | x' ELSE '' END
            ), 4) AS flag_anomali
     FROM asg a
     INNER JOIN usa u ON u.assignment_id = a.assignment_id
                     AND u.assignment_date_modified = a.assignment_date_modified
-    -- KEL CTE tidak perlu dipanggil di COUNT karena tidak mempengaruhi jumlah baris agregat
 )
 SELECT COUNT(*) AS total_baris_anomali
 FROM deteksi d
