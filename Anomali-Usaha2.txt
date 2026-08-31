@@ -54,4 +54,27 @@ deteksi AS (
     INNER JOIN usa u ON u.assignment_id = a.assignment_id AND u.assignment_date_modified = a.assignment_date_modified
     LEFT JOIN kel k  ON k.assignment_id = a.assignment_id AND k.assignment_date_modified = a.assignment_date_modified
 )
-SELECT * FROM deteksi WHERE flag_anomali <> '' ORDER BY level_6_full_code ASC, nama_usaha ASC LIMIT 9000 OFFSET 0;
+SELECT d.kabupaten, 
+       d.kecamatan, 
+       d.desa, 
+       d.sls, 
+       d.sub_sls, 
+       d.level_6_full_code, 
+       d.jenis_asg, 
+       d.nama_kk,
+       d.nama_usaha, 
+       d.skala_usaha, 
+       d.badan_usaha_label, 
+       d.total_pekerja,
+       d.omset_thn, 
+       d.omset_bln, 
+       d.pengeluaran_thn, 
+       d.pengeluaran_bln, 
+       d.aset_thn, 
+       d.aset_bln,
+       d.flag_anomali,
+       d.link_fasih
+FROM deteksi d 
+WHERE d.flag_anomali <> '' 
+ORDER BY d.level_6_full_code ASC, d.nama_usaha ASC 
+LIMIT 9000 OFFSET 0;
