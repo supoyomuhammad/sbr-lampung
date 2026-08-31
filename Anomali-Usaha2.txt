@@ -1,0 +1,57 @@
+WITH params AS (
+    SELECT '18' AS prov
+),
+asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, a.level_5_name AS sls,
+           a.level_6_name AS sub_sls, a.level_6_full_code,
+           CASE WHEN UPPER(a.code_identity) LIKE '%DTSEN%' THEN 'KELUARGA'
+                WHEN TRIM(COALESCE(a.data6,'')) <> ''      THEN 'PRELIST USAHA'
+                ELSE 'TAMBAHAN LAPANGAN' END AS jenis_asg,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/', a.survey_period_id, '/', a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1 AND a.level_1_full_code = p.prov
+),
+kel AS (
+    SELECT r.assignment_id, r.assignment_date_modified, r.nama_kk
+    FROM tgr_fd68e454.root_table r
+),
+usa AS (
+    SELECT n.assignment_id, n.assignment_date_modified, n.nama_usaha, n.skala_usaha,
+           n.badan_usaha_value, n.badan_usaha_label, n.punya_nib_value, n.peran_mbg_value, 
+           n.internet_value, n.lap_keuangan_value,
+           CAST(NULLIF(TRIM(n.publik), '') AS DOUBLE) AS publik,
+           CAST(NULLIF(TRIM(n.non_publik), '') AS DOUBLE) AS non_publik,
+           CAST(NULLIF(TRIM(n.publik_didirikan), '') AS DOUBLE) AS publik_bln,
+           CAST(NULLIF(TRIM(n.nonpublik_didirikan), '') AS DOUBLE) AS non_publik_bln,
+           CAST(REPLACE(COALESCE(n.total_aset_thn, '0'), '.', '') AS DOUBLE) AS aset_thn,
+           CAST(REPLACE(COALESCE(n.total_aset_bln, '0'), '.', '') AS DOUBLE) AS aset_bln,
+           COALESCE(n.total_pendapatan, 0)     AS omset_thn,
+           COALESCE(n.total_pendapatan_bln, 0) AS omset_bln,
+           CAST(REPLACE(COALESCE(n.total_pengeluaran, '0'), '.', '') AS DOUBLE) AS pengeluaran_thn,
+           CAST(REPLACE(COALESCE(n.total_pengeluaran_bln, '0'), '.', '') AS DOUBLE) AS pengeluaran_bln,
+           CAST(COALESCE(n.total_tk_jk, 0)    AS SIGNED) AS total_pekerja
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0 AND n.keberadaan_usaha_value IN ('1','2')
+),
+deteksi AS (
+    SELECT a.kabupaten, a.kecamatan, a.desa, a.sls, a.sub_sls, a.level_6_full_code, a.jenis_asg, a.link_fasih, k.nama_kk,
+           u.nama_usaha, u.skala_usaha, u.badan_usaha_label, u.total_pekerja,
+           u.omset_thn, u.omset_bln, u.pengeluaran_thn, u.pengeluaran_bln, u.aset_thn, u.aset_bln,
+           SUBSTR(CONCAT(
+               CASE WHEN u.punya_nib_value = '2' AND LOWER(COALESCE(u.badan_usaha_label, '')) LIKE '%perseroan perorangan%' THEN ' | Tdk pny NIB tp Perseroan Perorangan' ELSE '' END,
+               CASE WHEN LOWER(COALESCE(u.badan_usaha_label, '')) LIKE '%dana pensiun%' OR LOWER(COALESCE(u.badan_usaha_label, '')) LIKE '%perwakilan luar negeri%' OR LOWER(COALESCE(u.badan_usaha_label, '')) LIKE '%badan usaha luar negeri%' THEN ' | [WARNING] Cek BU Dana Pensiun/KPLN/BULN' ELSE '' END,
+               CASE WHEN COALESCE(u.badan_usaha_value, '') = '13' AND (COALESCE(u.publik, 0) > 0 OR COALESCE(u.non_publik, 0) > 0 OR COALESCE(u.publik_bln, 0) > 0 OR COALESCE(u.non_publik_bln, 0) > 0) THEN ' | Bukan BU (13) tp pny Modal Korporasi' ELSE '' END,
+               CASE WHEN u.peran_mbg_value = '1' AND u.pengeluaran_thn > 0 AND (u.omset_thn / u.pengeluaran_thn >= 1.25 OR u.omset_thn / u.pengeluaran_thn < 1) THEN ' | MBG: Rasio Omset/Pengeluaran Thn >=1.25 atau <1' ELSE '' END,
+               CASE WHEN u.peran_mbg_value = '1' AND u.pengeluaran_bln > 0 AND (u.omset_bln / u.pengeluaran_bln >= 1.25 OR u.omset_bln / u.pengeluaran_bln < 1) THEN ' | MBG: Rasio Omset/Pengeluaran Bln >=1.25 atau <1' ELSE '' END,
+               CASE WHEN (u.aset_thn > 10000000000 OR u.aset_bln > 10000000000) AND u.total_pekerja = 1 AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) < 300000000 THEN ' | Aset > 10M & Pekerja=1, tp Omset Kecil (<300Jt)' ELSE '' END,
+               CASE WHEN UPPER(TRIM(COALESCE(u.skala_usaha, ''))) IN ('UM', 'UB') AND u.internet_value = '2' THEN ' | Skala UM/UB tp tidak pakai Internet' ELSE '' END,
+               CASE WHEN UPPER(TRIM(COALESCE(u.skala_usaha, ''))) IN ('UM', 'UB') AND u.lap_keuangan_value = '2' THEN ' | Skala UM/UB tp tdk pny Laporan Keuangan' ELSE '' END
+           ), 4) AS flag_anomali
+    FROM asg a
+    INNER JOIN usa u ON u.assignment_id = a.assignment_id AND u.assignment_date_modified = a.assignment_date_modified
+    LEFT JOIN kel k  ON k.assignment_id = a.assignment_id AND k.assignment_date_modified = a.assignment_date_modified
+)
+SELECT * FROM deteksi WHERE flag_anomali <> '' ORDER BY level_6_full_code ASC, nama_usaha ASC LIMIT 9000 OFFSET 0;
