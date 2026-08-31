@@ -1,16 +1,11 @@
 WITH params AS (
-    SELECT '18' AS prov 
+    SELECT '18' AS prov
 ),
 asg AS (
-    SELECT a.assignment_id, 
-           a.assignment_date_modified,
-           a.survey_period_id,
-           a.level_2_name AS kabupaten,
-           a.level_3_name AS kecamatan,
-           a.level_4_name AS desa,
-           a.level_5_name AS sls,
-           a.level_6_name AS sub_sls,
-           a.level_6_full_code,
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, a.level_5_name AS sls,
+           a.level_6_name AS sub_sls, a.level_6_full_code,
            CASE WHEN UPPER(a.code_identity) LIKE '%DTSEN%' THEN 'KELUARGA'
                 WHEN TRIM(COALESCE(a.data6,'')) <> ''      THEN 'PRELIST USAHA'
                 ELSE 'TAMBAHAN LAPANGAN' END AS jenis_asg,
@@ -26,18 +21,16 @@ kel AS (
     FROM tgr_fd68e454.root_table r
 ),
 usa AS (
-    SELECT n.assignment_id,
-           n.assignment_date_modified,
-           n.index1,
-           n.nama_usaha,
-           n.skala_usaha,
-           n.kategori,
-           n.kbli_akhir,
-           n.badan_usaha_value,
-           n.badan_usaha_label,
+    SELECT n.assignment_id, n.assignment_date_modified, n.index1,
+           n.nama_usaha, n.skala_usaha, n.kategori, n.kbli_akhir,
+           n.badan_usaha_value, n.badan_usaha_label,
+           n.jenis_usaha_value, n.produk_sendiri_value,
+           n.lokasi_usaha_value, -- << TAMBAHAN VARIABEL LOKASI
            COALESCE(n.total_pendapatan, 0)     AS omset_thn,
            COALESCE(n.total_pendapatan_bln, 0) AS omset_bln,
            COALESCE(n.gaji, n.gaji_bln, 0)     AS biaya_pekerja,
+           COALESCE(n.biaya_produksi,    n.biaya_produksi_bln, 0)    AS r26b,
+           COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) AS r26f,
            CAST(NULLIF(TRIM(n.tahun_operasi),'') AS SIGNED) AS thn_operasi,
            CAST(COALESCE(n.tk_dibayar, 0)     AS SIGNED) AS pekerja_dibayar,
            CAST(COALESCE(n.tk_tdk_dibayar, 0) AS SIGNED) AS pekerja_tdk_dibayar,
@@ -58,9 +51,10 @@ deteksi AS (
            a.level_6_full_code, a.jenis_asg, a.link_fasih,
            k.nama_kk,
            u.nama_usaha, u.skala_usaha, u.kategori, u.badan_usaha_label,
+           u.lokasi_usaha_value,
            u.omset_thn, u.omset_bln, u.thn_operasi,
            u.pekerja_dibayar, u.pekerja_tdk_dibayar, u.total_pekerja,
-           u.biaya_pekerja, u.tagging_saja,
+           u.biaya_pekerja, u.tagging_saja, u.r26b, u.r26f,
            SUBSTR(CONCAT(
                CASE WHEN u.thn_operasi <= 2025 AND u.omset_thn = 0 AND u.omset_bln > 0
                     THEN ' | Usaha <=2025 tp isi bulanan' ELSE '' END,
@@ -82,7 +76,6 @@ deteksi AS (
                      AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn
                                ELSE u.omset_bln * 12 END) < 10000000
                     THEN ' | Pekerja > 5 tp omset setahun < 10Jt' ELSE '' END,
-               -- PENGGUNAAN NULLIF UNTUK MENCEGAH ERROR PEMBAGIAN
                CASE WHEN u.total_pekerja > 0
                      AND ((CASE WHEN u.omset_thn > 0 THEN u.omset_thn
                                 ELSE u.omset_bln * 12 END) / NULLIF(u.total_pekerja, 0)) > 5000000000
@@ -103,7 +96,22 @@ deteksi AS (
                CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_bln > 50000000000
                     THEN ' | Omset bln >50M skala menengah/besar' ELSE '' END,
                CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_thn > 500000000000
-                    THEN ' | Omset thn >500M skala menengah/besar' ELSE '' END
+                    THEN ' | Omset thn >500M skala menengah/besar' ELSE '' END,
+               CASE WHEN u.produk_sendiri_value = '2'
+                     AND u.r26f > 0
+                     AND u.r26b / u.r26f > 0.5
+                     AND UPPER(TRIM(COALESCE(u.kategori,''))) NOT IN ('A','B','C','D','E','F','I')
+                     AND LEFT(TRIM(COALESCE(u.kbli_akhir,'')),2) NOT IN ('01','02','03')
+                    THEN ' | Biaya produksi dominan (>50%)' ELSE '' END,
+
+               -- ========== FLAG BARU: LOKASI KELILING & PEKERJA TUNGGAL ==========
+               CASE WHEN u.lokasi_usaha_value = '2'
+                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) > 50000000000
+                    THEN ' | Usaha keliling tp omset > 50M/thn' ELSE '' END,
+               CASE WHEN u.total_pekerja = 1
+                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) > 50000000000
+                    THEN ' | Pekerja cuma 1 tp omset > 50M/thn' ELSE '' END
+
            ), 4) AS flag_anomali
     FROM asg a
     INNER JOIN usa u ON u.assignment_id = a.assignment_id
@@ -116,9 +124,12 @@ SELECT d.kabupaten, d.kecamatan, d.desa, d.sls, d.sub_sls,
        d.jenis_asg AS jenis_assignment,
        d.nama_kk,
        d.nama_usaha, d.skala_usaha, d.kategori, d.badan_usaha_label,
+       d.lokasi_usaha_value, -- Dimunculkan agar Anda bisa memverifikasi kodenya
        d.pekerja_dibayar, d.pekerja_tdk_dibayar, d.total_pekerja,
        d.biaya_pekerja, d.thn_operasi,
        d.omset_thn, d.omset_bln,
+       d.r26b AS biaya_produksi,
+       d.r26f AS total_pengeluaran,
        CASE WHEN d.tagging_saja = 1 AND d.jenis_asg = 'PRELIST USAHA'
             THEN 'Tagging saja - isian di assignment keluarga'
             WHEN d.tagging_saja = 1 THEN 'Kuesioner belum diisi'
