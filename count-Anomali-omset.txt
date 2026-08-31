@@ -16,7 +16,7 @@ usa AS (
            n.kategori,
            n.kbli_akhir,
            n.produk_sendiri_value,
-           n.lokasi_usaha_value,
+           n.jenis_usaha_value, -- << DIUBAH MENJADI JENIS USAHA
            COALESCE(n.total_pendapatan, 0)     AS omset_thn,
            COALESCE(n.total_pendapatan_bln, 0) AS omset_bln,
            COALESCE(n.gaji, n.gaji_bln, 0)     AS biaya_pekerja,
@@ -63,7 +63,8 @@ deteksi AS (
                      AND UPPER(TRIM(COALESCE(u.kategori,''))) NOT IN ('A','B','C','D','E','F','I') 
                      AND LEFT(TRIM(COALESCE(u.kbli_akhir,'')),2) NOT IN ('01','02','03')
                     THEN ' | x' ELSE '' END,
-               CASE WHEN u.lokasi_usaha_value = '2' 
+               -- DIUBAH: Menggunakan jenis_usaha_value
+               CASE WHEN u.jenis_usaha_value = '2' 
                      AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) > 50000000000 THEN ' | x' ELSE '' END,
                CASE WHEN u.total_pekerja = 1 
                      AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) > 50000000000 THEN ' | x' ELSE '' END
