@@ -3,10 +3,7 @@ WITH params AS (
 ),
 asg AS (
     SELECT a.assignment_id,
-           a.assignment_date_modified,
-           CASE WHEN UPPER(a.code_identity) LIKE '%DTSEN%' THEN 'KELUARGA'
-                WHEN TRIM(COALESCE(a.data6,'')) <> ''      THEN 'PRELIST USAHA'
-                ELSE 'TAMBAHAN LAPANGAN' END AS jenis_asg
+           a.assignment_date_modified
     FROM tgr_fd68e454.base_table_assignment a
     CROSS JOIN params p
     WHERE a.is_active = 1
@@ -19,6 +16,7 @@ usa AS (
            n.kategori,
            n.kbli_akhir,
            n.produk_sendiri_value,
+           n.lokasi_usaha_value,
            COALESCE(n.total_pendapatan, 0)     AS omset_thn,
            COALESCE(n.total_pendapatan_bln, 0) AS omset_bln,
            COALESCE(n.gaji, n.gaji_bln, 0)     AS biaya_pekerja,
@@ -61,12 +59,14 @@ deteksi AS (
                CASE WHEN u.pekerja_dibayar < 5 AND u.omset_thn > 15000000000 THEN ' | x' ELSE '' END,
                CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_bln > 50000000000 THEN ' | x' ELSE '' END,
                CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_thn > 500000000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.produk_sendiri_value = '2' 
-                     AND u.r26f > 0 
-                     AND u.r26b / u.r26f > 0.5 
+               CASE WHEN u.produk_sendiri_value = '2' AND u.r26f > 0 AND u.r26b / u.r26f > 0.5 
                      AND UPPER(TRIM(COALESCE(u.kategori,''))) NOT IN ('A','B','C','D','E','F','I') 
                      AND LEFT(TRIM(COALESCE(u.kbli_akhir,'')),2) NOT IN ('01','02','03')
-                    THEN ' | x' ELSE '' END
+                    THEN ' | x' ELSE '' END,
+               CASE WHEN u.lokasi_usaha_value = '2' 
+                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) > 50000000000 THEN ' | x' ELSE '' END,
+               CASE WHEN u.total_pekerja = 1 
+                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) > 50000000000 THEN ' | x' ELSE '' END
            ), 4) AS flag_anomali
     FROM asg a
     INNER JOIN usa u ON u.assignment_id = a.assignment_id
