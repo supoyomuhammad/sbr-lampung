@@ -1,0 +1,23 @@
+WITH params AS (
+    SELECT '18' AS prov,
+           '1871' AS kab
+),
+asg_keluarga AS (
+    SELECT a.assignment_id,
+           a.assignment_date_modified
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = p.prov
+      AND a.level_2_full_code = p.kab -- Filter dieksekusi di sini
+      AND UPPER(a.code_identity) LIKE '%DTSEN%' 
+),
+dtsen_lapangan AS (
+    SELECT n.assignment_id, 
+           n.assignment_date_modified
+    FROM tgr_fd68e454.nested_dtsen n 
+)
+SELECT COUNT(*) AS total_baris_data
+FROM asg_keluarga a
+LEFT JOIN dtsen_lapangan dtsen ON dtsen.assignment_id = a.assignment_id 
+                              AND dtsen.assignment_date_modified = a.assignment_date_modified;
