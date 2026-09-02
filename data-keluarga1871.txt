@@ -1,0 +1,56 @@
+WITH params AS (
+    SELECT '18' AS prov,
+           '1871' AS kab -- Filter spesifik Kota Bandar Lampung
+),
+asg_keluarga AS (
+    SELECT a.assignment_id, 
+           a.assignment_date_modified,
+           a.survey_period_id,
+           a.level_2_name AS kabupaten, 
+           a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, 
+           a.level_5_name AS sls,
+           a.level_6_name AS sub_sls, 
+           a.level_6_full_code,
+           a.assignment_status_alias,
+           a.data1 AS nama_kk_prelist
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = p.prov
+      AND a.level_2_full_code = p.kab -- Filter dieksekusi di sini
+      AND UPPER(a.code_identity) LIKE '%DTSEN%' 
+),
+kel_lapangan AS (
+    SELECT r.assignment_id, 
+           r.assignment_date_modified,
+           r.nama_kk AS nama_kk_lapangan,
+           r.ada_keluarga_label AS status_keberadaan
+    FROM tgr_fd68e454.root_table r
+),
+dtsen_lapangan AS (
+    SELECT n.assignment_id, 
+           n.assignment_date_modified,
+           n.nama_dtsen AS nama_anggota_keluarga
+    FROM tgr_fd68e454.nested_dtsen n 
+)
+SELECT a.level_6_full_code AS id_sub_sls,
+       a.kabupaten,
+       a.kecamatan,
+       a.desa,
+       a.sls,
+       a.sub_sls,
+       COALESCE(k.nama_kk_lapangan, a.nama_kk_prelist) AS nama_kepala_keluarga,
+       dtsen.nama_anggota_keluarga,
+       a.assignment_status_alias AS status_assignment,
+       k.status_keberadaan,
+       CASE WHEN k.assignment_id IS NULL THEN 'Belum Didata' 
+            ELSE 'Sudah Didata' END AS progres_data,
+       CONCAT('https://fasih-sm.bps.go.id/app/assignment/', a.survey_period_id, '/', a.assignment_id) AS link_fasih
+FROM asg_keluarga a
+LEFT JOIN kel_lapangan k ON k.assignment_id = a.assignment_id 
+                        AND k.assignment_date_modified = a.assignment_date_modified
+LEFT JOIN dtsen_lapangan dtsen ON dtsen.assignment_id = a.assignment_id 
+                              AND dtsen.assignment_date_modified = a.assignment_date_modified
+ORDER BY a.level_6_full_code ASC, nama_kepala_keluarga ASC
+LIMIT 9000 OFFSET 0;
