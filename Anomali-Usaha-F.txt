@@ -70,7 +70,7 @@ f AS (
     INNER JOIN u ON u.assignment_id = a.assignment_id
                 AND u.assignment_date_modified = a.assignment_date_modified
 )
-SELECT f.kabupaten, f.kecamatan, f.desa, f.sls, f.sub_sls,
+SELECT f.kabupaten, f.kecamatan, f.desa, f.sls,
        f.level_6_full_code AS id_sub_sls,
        f.nama_usaha, f.kategori, f.kbli_akhir, f.keg_utama,
        f.skala_usaha, f.tahun_operasi,
