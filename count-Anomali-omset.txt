@@ -1,78 +1,71 @@
-WITH params AS (
-    SELECT '18' AS prov
-),
-asg AS (
-    SELECT a.assignment_id,
-           a.assignment_date_modified
-    FROM tgr_fd68e454.base_table_assignment a
-    CROSS JOIN params p
-    WHERE a.is_active = 1
-      AND a.level_1_full_code = p.prov
-),
-usa AS (
-    SELECT n.assignment_id,
-           n.assignment_date_modified,
-           n.badan_usaha_value,
-           n.kategori,
-           n.kbli_akhir,
-           n.produk_sendiri_value,
-           n.jenis_usaha_value, -- << DIUBAH MENJADI JENIS USAHA
-           COALESCE(n.total_pendapatan, 0)     AS omset_thn,
-           COALESCE(n.total_pendapatan_bln, 0) AS omset_bln,
-           COALESCE(n.gaji, n.gaji_bln, 0)     AS biaya_pekerja,
-           COALESCE(n.biaya_produksi,    n.biaya_produksi_bln, 0)    AS r26b,
-           COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) AS r26f,
-           CAST(NULLIF(TRIM(n.tahun_operasi),'') AS SIGNED) AS thn_operasi,
-           CAST(COALESCE(n.tk_dibayar, 0)     AS SIGNED) AS pekerja_dibayar,
-           CAST(COALESCE(n.tk_tdk_dibayar, 0) AS SIGNED) AS pekerja_tdk_dibayar,
-           CAST(COALESCE(n.total_tk_jk, 0)    AS SIGNED) AS total_pekerja,
-           CASE WHEN TRIM(COALESCE(n.kbli_akhir,'')) = ''
-                 AND TRIM(COALESCE(n.kategori,'')) = ''
-                 AND COALESCE(n.total_tk_jk,0) = 0
-                 AND COALESCE(n.total_pendapatan, 0) = 0
-                 AND COALESCE(n.total_pendapatan_bln, 0) = 0
-                 AND TRIM(COALESCE(n.nama_usaha,'')) <> ''
-                THEN 1 ELSE 0 END AS tagging_saja
-    FROM tgr_fd68e454.se2026_nested n
-    WHERE n.assignment_status_id > 0
-      AND n.keberadaan_usaha_value IN ('1','2')
-),
-deteksi AS (
-    SELECT SUBSTR(CONCAT(
-               CASE WHEN u.thn_operasi <= 2025 AND u.omset_thn = 0 AND u.omset_bln > 0 THEN ' | x' ELSE '' END,
-               CASE WHEN u.thn_operasi = 2026 AND u.omset_thn > 0 THEN ' | x' ELSE '' END,
-               CASE WHEN u.omset_bln > 0 AND u.omset_bln < 100000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.omset_thn > 0 AND u.omset_thn < 1000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.omset_bln > 4000000000 OR u.omset_thn > 50000000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.omset_bln = 0 AND u.omset_thn = 0 AND u.tagging_saja = 0 THEN ' | x' ELSE '' END,
-               CASE WHEN u.tagging_saja = 0 AND u.total_pekerja = 0 
-                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) > 500000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.total_pekerja > 5 
-                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) < 10000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.total_pekerja > 0 
-                     AND ((CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) / NULLIF(u.total_pekerja, 0)) > 5000000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.pekerja_dibayar > 0 AND u.biaya_pekerja = 0 THEN ' | x' ELSE '' END,
-               CASE WHEN COALESCE(u.badan_usaha_value,'') NOT IN ('13','') AND u.pekerja_tdk_dibayar > 0 THEN ' | x' ELSE '' END,
-               CASE WHEN u.omset_bln > 0 AND u.omset_bln < 50000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.omset_thn > 0 AND u.omset_thn < 500000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.pekerja_dibayar < 5 AND u.omset_bln > 2000000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.pekerja_dibayar < 5 AND u.omset_thn > 15000000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_bln > 50000000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.pekerja_dibayar >= 5 AND u.omset_thn > 500000000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.produk_sendiri_value = '2' AND u.r26f > 0 AND u.r26b / u.r26f > 0.5 
-                     AND UPPER(TRIM(COALESCE(u.kategori,''))) NOT IN ('A','B','C','D','E','F','I') 
-                     AND LEFT(TRIM(COALESCE(u.kbli_akhir,'')),2) NOT IN ('01','02','03')
-                    THEN ' | x' ELSE '' END,
-               -- DIUBAH: Menggunakan jenis_usaha_value
-               CASE WHEN u.jenis_usaha_value = '2' 
-                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) > 50000000000 THEN ' | x' ELSE '' END,
-               CASE WHEN u.total_pekerja = 1 
-                     AND (CASE WHEN u.omset_thn > 0 THEN u.omset_thn ELSE u.omset_bln * 12 END) > 50000000000 THEN ' | x' ELSE '' END
-           ), 4) AS flag_anomali
-    FROM asg a
-    INNER JOIN usa u ON u.assignment_id = a.assignment_id
-                    AND u.assignment_date_modified = a.assignment_date_modified
-)
-SELECT COUNT(*) AS total_baris_anomali
-FROM deteksi d
-WHERE d.flag_anomali <> '';
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.base_table_assignment a
+INNER JOIN tgr_fd68e454.se2026_nested n
+        ON n.assignment_id = a.assignment_id
+       AND n.assignment_date_modified = a.assignment_date_modified
+WHERE a.is_active = 1
+  AND a.level_1_full_code = '18'
+  AND n.assignment_status_id > 0
+  AND n.keberadaan_usaha_value IN ('1','2')
+  AND (
+    -- A
+       ( COALESCE(n.total_pendapatan,0) > 0 AND COALESCE(n.total_pengeluaran,0) > 0
+         AND n.total_pendapatan / n.total_pengeluaran BETWEEN 0.04 AND 0.20 )
+    OR ( COALESCE(n.total_pendapatan_bln,0) > 0 AND COALESCE(n.total_pengeluaran_bln,0) > 0
+         AND n.total_pendapatan_bln / n.total_pengeluaran_bln BETWEEN 5 AND 20 )
+    OR ( COALESCE(n.total_pendapatan,0) > 0 AND COALESCE(n.gaji,0) > 0
+         AND n.total_pendapatan / n.gaji BETWEEN 0.05 AND 0.20 )
+    OR ( UPPER(TRIM(COALESCE(n.skala_usaha,''))) IN ('UM','UB')
+         AND CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) > 0
+         AND (CASE WHEN COALESCE(n.total_pendapatan,0) > 0 THEN n.total_pendapatan
+                   ELSE COALESCE(n.total_pendapatan_bln,0)*12 END)
+             / 12 / CAST(COALESCE(n.total_tk_jk,1) AS SIGNED) < 1000000 )
+    -- B
+    OR ( COALESCE(n.total_pendapatan_bln,0) > 0 AND COALESCE(n.total_pendapatan_bln,0) < 100000 )
+    OR ( COALESCE(n.total_pendapatan,0) > 0 AND COALESCE(n.total_pendapatan,0) < 1000000 )
+    -- C
+    OR COALESCE(n.total_pendapatan_bln,0) > 4000000000
+    OR COALESCE(n.total_pendapatan,0) > 50000000000
+    OR ( CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) < 5
+         AND COALESCE(n.total_pendapatan_bln,0) > 2000000000 )
+    OR ( CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) < 5
+         AND COALESCE(n.total_pendapatan,0) > 15000000000 )
+    OR ( CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) >= 5
+         AND COALESCE(n.total_pendapatan_bln,0) > 50000000000 )
+    OR ( CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) >= 5
+         AND COALESCE(n.total_pendapatan,0) > 500000000000 )
+    -- D
+    OR ( COALESCE(n.total_pendapatan,0) = 0 AND COALESCE(n.total_pendapatan_bln,0) = 0
+         AND NOT ( TRIM(COALESCE(n.kbli_akhir,'')) = ''
+               AND TRIM(COALESCE(n.kategori,'')) = ''
+               AND COALESCE(n.total_tk_jk,0) = 0
+               AND TRIM(COALESCE(n.nama_usaha,'')) <> '' ) )
+    OR ( CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) = 0
+         AND (CASE WHEN COALESCE(n.total_pendapatan,0) > 0 THEN n.total_pendapatan
+                   ELSE COALESCE(n.total_pendapatan_bln,0)*12 END) > 500000000
+         AND NOT ( TRIM(COALESCE(n.kbli_akhir,'')) = ''
+               AND TRIM(COALESCE(n.kategori,'')) = ''
+               AND TRIM(COALESCE(n.nama_usaha,'')) <> '' ) )
+    OR ( CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) > 5
+         AND (CASE WHEN COALESCE(n.total_pendapatan,0) > 0 THEN n.total_pendapatan
+                   ELSE COALESCE(n.total_pendapatan_bln,0)*12 END) < 10000000 )
+    OR ( CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) > 0
+         AND (CASE WHEN COALESCE(n.total_pendapatan,0) > 0 THEN n.total_pendapatan
+                   ELSE COALESCE(n.total_pendapatan_bln,0)*12 END)
+             / CAST(COALESCE(n.total_tk_jk,1) AS SIGNED) > 5000000000 )
+    OR ( CAST(COALESCE(n.tk_dibayar,0) AS SIGNED) > 0
+         AND COALESCE(n.gaji, n.gaji_bln, 0) = 0 )
+    OR ( COALESCE(n.badan_usaha_value,'') NOT IN ('13','')
+         AND CAST(COALESCE(n.tk_tdk_dibayar,0) AS SIGNED) > 0 )
+    -- E
+    OR ( n.produk_sendiri_value = '2'
+         AND COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) > 0
+         AND COALESCE(n.biaya_produksi, n.biaya_produksi_bln, 0)
+             / COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln) > 0.5
+         AND UPPER(TRIM(COALESCE(n.kategori,''))) NOT IN ('A','B','C','D','E','F','I')
+         AND LEFT(TRIM(COALESCE(n.kbli_akhir,'')),2) NOT IN ('01','02','03') )
+    OR ( ( UPPER(TRIM(COALESCE(n.jenis_usaha_label,''))) LIKE '%KELILING%'
+        OR UPPER(TRIM(COALESCE(n.lokasi_usaha_label,''))) LIKE '%KELILING%' )
+         AND (CASE WHEN COALESCE(n.total_pendapatan,0) > 0 THEN n.total_pendapatan
+                   ELSE COALESCE(n.total_pendapatan_bln,0)*12 END) > 1000000000 )
+  );
