@@ -1,0 +1,24 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.base_table_assignment a
+INNER JOIN tgr_fd68e454.se2026_nested n
+        ON n.assignment_id = a.assignment_id
+       AND n.assignment_date_modified = a.assignment_date_modified
+WHERE a.is_active = 1
+  AND a.level_1_full_code = '18'
+  AND n.assignment_status_id > 0
+  AND n.keberadaan_usaha_value IN ('1','2')
+  AND ( ( CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) > 0
+          AND COALESCE(n.nilai_pendapatan,0) - COALESCE(n.biaya_pembelian,0) = 0 )
+     OR UPPER(TRIM(COALESCE(n.kategori,''))) IN ('P','U')
+     OR ( COALESCE(n.gaji,0) > 0
+          AND COALESCE(n.nilai_pendapatan,0) - COALESCE(n.biaya_produksi,0)
+            - COALESCE(n.biaya_pembelian,0) - COALESCE(n.operasional,0)
+            < COALESCE(n.gaji,0) )
+     OR ( COALESCE(n.nilai_pendapatan,0) - COALESCE(n.biaya_produksi,0)
+        - COALESCE(n.biaya_pembelian,0) - COALESCE(n.operasional,0) < 0 )
+     OR ( ABS( COALESCE(n.total_pendapatan,0)
+             - (COALESCE(n.nilai_pendapatan,0) + COALESCE(n.pendapatan_lain,0)) ) > 1000 )
+     OR ( COALESCE(n.total_pengeluaran,0) > 0
+          AND ABS( COALESCE(n.total_pengeluaran,0)
+                 - (COALESCE(n.gaji,0) + COALESCE(n.biaya_produksi,0)
+                  + COALESCE(n.biaya_pembelian,0) + COALESCE(n.operasional,0)) ) > 1000 ) );
