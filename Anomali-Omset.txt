@@ -72,7 +72,15 @@ d AS (
                     AND k.assignment_date_modified = a.assignment_date_modified
 ),
 f AS (
-    SELECT d.*,
+    SELECT d.kabupaten, d.kecamatan, d.desa, d.sls, d.sub_sls,
+           d.level_6_full_code, d.jenis_asg, d.link_fasih, d.nama_kk,
+           d.nama_usaha, d.skala_usaha, d.kategori, d.kbli_akhir,
+           d.badan_usaha_value, d.badan_usaha_label,
+           d.jenis_usaha_label, d.lokasi_usaha_label, d.produk_sendiri_value,
+           d.omset_thn, d.omset_bln, d.pengel_thn, d.pengel_bln, d.gaji_thn,
+           d.biaya_pekerja, d.r26b, d.r26f, d.thn_operasi,
+           d.pekerja_dibayar, d.pekerja_tdk_dibayar, d.total_pekerja,
+           d.tagging_saja, d.omset_setahun,
            SUBSTR(CONCAT(
                -- A. KEWAJARAN PERIODE (rasio internal)
                CASE WHEN d.omset_thn > 0 AND d.pengel_thn > 0
