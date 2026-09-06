@@ -1,5 +1,5 @@
 -- ============================================================================
--- ANOMALI PUSAT F1-F3 — Output, Cakupan P/U, Nilai Tambah
+-- ANOMALI PUSAT F1-F6 — Output, Cakupan P/U, Nilai Tambah, Aritmatika
 -- ============================================================================
 WITH params AS (
     SELECT '18' AS prov
@@ -20,7 +20,7 @@ asg AS (
 u AS (
     SELECT n.assignment_id, n.assignment_date_modified,
            n.nama_usaha, n.kategori, n.kbli_akhir, n.keg_utama, n.skala_usaha,
-           n.tahun_operasi, n.assignment_status_alias,
+           n.tahun_operasi,
            CAST(COALESCE(n.total_tk_jk, 0) AS SIGNED) AS total_tk,
            CAST(COALESCE(n.tk_dibayar, 0)  AS SIGNED) AS tk_dibayar,
            COALESCE(n.nilai_pendapatan, 0)  AS r27a,
@@ -30,6 +30,7 @@ u AS (
            COALESCE(n.biaya_produksi, 0)    AS r26b,
            COALESCE(n.biaya_pembelian, 0)   AS r26c,
            COALESCE(n.operasional, 0)       AS r26d,
+           COALESCE(n.non_operasional, 0)   AS r26e,
            COALESCE(n.total_pengeluaran, 0) AS r26f,
            COALESCE(n.nilai_pendapatan, 0) - COALESCE(n.biaya_pembelian, 0) AS nilai_output,
            COALESCE(n.nilai_pendapatan, 0) - COALESCE(n.biaya_produksi, 0)
@@ -44,7 +45,7 @@ f AS (
            u.assignment_id, u.nama_usaha, u.kategori, u.kbli_akhir,
            u.keg_utama, u.skala_usaha, u.tahun_operasi,
            u.total_tk, u.tk_dibayar,
-           u.r26a, u.r26b, u.r26c, u.r26d, u.r26f,
+           u.r26a, u.r26b, u.r26c, u.r26d, u.r26e, u.r26f,
            u.r27a, u.r27b, u.r27c,
            u.nilai_output, u.nilai_tambah,
            SUBSTR(CONCAT(
@@ -52,14 +53,17 @@ f AS (
                     THEN ' | F1 TK>0 tp output=0' ELSE '' END,
                CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) IN ('P','U')
                     THEN ' | F2 Cakupan kategori P/U' ELSE '' END,
-               CASE WHEN u.nilai_tambah < u.r26a AND u.r26a > 0
+               CASE WHEN u.r26a > 0 AND u.nilai_tambah < u.r26a
                     THEN ' | F3 Nilai tambah < upah' ELSE '' END,
                CASE WHEN u.nilai_tambah < 0
                     THEN ' | F4 Nilai tambah negatif' ELSE '' END,
-               CASE WHEN ABS(u.r27c - (u.r27a + u.r27b)) > 1000
+               -- FIX: ambang nol, total dihitung otomatis oleh aplikasi
+               CASE WHEN u.r27c > 0
+                     AND ABS(u.r27c - (u.r27a + u.r27b)) > 0
                     THEN ' | F5 R27c <> R27a+R27b' ELSE '' END,
-               CASE WHEN ABS(u.r26f - (u.r26a + u.r26b + u.r26c + u.r26d)) > 1000
-                     AND u.r26f > 0
+               -- FIX: R26e ikut dijumlahkan, ambang nol
+               CASE WHEN u.r26f > 0
+                     AND ABS(u.r26f - (u.r26a + u.r26b + u.r26c + u.r26d + u.r26e)) > 0
                     THEN ' | F6 R26f <> jumlah rincian' ELSE '' END
            ), 4) AS flag_anomali
     FROM asg a
@@ -73,7 +77,7 @@ SELECT f.kabupaten, f.kecamatan, f.desa, f.sls, f.sub_sls,
        f.total_tk, f.tk_dibayar,
        f.r26a AS upah_gaji, f.r26b AS biaya_produksi,
        f.r26c AS biaya_pembelian, f.r26d AS operasional,
-       f.r26f AS total_pengeluaran,
+       f.r26e AS non_operasional, f.r26f AS total_pengeluaran,
        f.r27a AS nilai_pendapatan, f.r27c AS total_pendapatan,
        f.nilai_output, f.nilai_tambah,
        f.flag_anomali,
