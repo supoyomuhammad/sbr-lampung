@@ -1,0 +1,106 @@
+-- ============================================================================
+-- ANOMALI RESMI #2-#8 (yang belum tercakup query lain)
+-- ============================================================================
+WITH params AS (
+    SELECT '18' AS prov
+),
+asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, a.level_5_name AS sls,
+           a.level_6_name AS sub_sls, a.level_6_full_code,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+                  a.survey_period_id, '/', a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = p.prov
+      -- OPSI: AND a.level_2_full_code = '1871'
+),
+u AS (
+    SELECT n.assignment_id, n.assignment_date_modified,
+           n.nama_usaha, n.kategori, n.kbli_akhir, n.kbli_prelist,
+           n.skala_usaha, n.tahun_operasi,
+           n.badan_usaha_value, n.badan_usaha_label,
+           n.peran_mbg_value, n.peran_mbg_label,
+           n.internet_value, n.internet_label,
+           n.lap_keuangan_value, n.lap_keuangan_label,
+           COALESCE(n.publik, 0)              AS r29c,
+           COALESCE(n.non_publik, 0)          AS r29d,
+           COALESCE(n.publik_didirikan, 0)    AS r33c,
+           COALESCE(n.nonpublik_didirikan, 0) AS r33d,
+           CAST(COALESCE(n.total_tk_jk, 0) AS SIGNED)  AS r24c1,
+           CAST(COALESCE(n.total_tk_bayar,0) AS SIGNED) AS r24c2,
+           COALESCE(n.total_aset_thn, 0)                             AS r28c,
+           COALESCE(n.total_pendapatan,  n.total_pendapatan_bln,  0) AS r27c,
+           COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) AS r26f
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1','2')
+),
+f AS (
+    SELECT a.kabupaten, a.kecamatan, a.desa, a.sls, a.sub_sls,
+           a.level_6_full_code, a.link_fasih,
+           u.assignment_id, u.nama_usaha, u.kategori, u.kbli_akhir, u.kbli_prelist,
+           u.skala_usaha, u.tahun_operasi,
+           u.badan_usaha_label, u.peran_mbg_label,
+           u.internet_label, u.lap_keuangan_label,
+           u.r29c, u.r29d, u.r33c, u.r33d,
+           u.r24c1, u.r24c2, u.r28c, u.r27c, u.r26f,
+           SUBSTR(CONCAT(
+               -- #2 Keuntungan usaha negatif (definisi resmi)
+               CASE WHEN u.r27c > 0 AND u.r26f > 0 AND (u.r27c - u.r26f) < 0
+                    THEN ' | R2 Rugi (R27c-R26f<0)' ELSE '' END,
+               -- #3 Modal korporasi pada bukan badan usaha
+               CASE WHEN u.badan_usaha_value = '13'
+                     AND (u.r29c > 0 OR u.r29d > 0 OR u.r33c > 0 OR u.r33d > 0)
+                    THEN ' | R3 Modal korporasi' ELSE '' END,
+               -- #4 Rasio keuangan MBG
+               CASE WHEN u.peran_mbg_value = '1' AND u.r26f > 0
+                     AND ( u.r27c / u.r26f >= 1.25 OR u.r27c / u.r26f < 1 )
+                    THEN ' | R4 Rasio MBG' ELSE '' END,
+               -- #5 Aset besar, pekerja 1, pendapatan kecil
+               CASE WHEN u.r28c > 10000000000
+                     AND COALESCE(NULLIF(u.r24c1,0), u.r24c2) = 1
+                     AND u.r27c < 60000000
+                    THEN ' | R5 Aset>10M TK=1 omset kecil' ELSE '' END,
+               -- #6 Tidak pakai internet pada UM/UB
+               CASE WHEN UPPER(TRIM(COALESCE(u.skala_usaha,''))) IN ('UM','UB')
+                     AND u.internet_value = '2'
+                    THEN ' | R6 UM/UB tanpa internet' ELSE '' END,
+               -- #7 Tidak punya laporan keuangan pada UM/UB
+               CASE WHEN UPPER(TRIM(COALESCE(u.skala_usaha,''))) IN ('UM','UB')
+                     AND u.lap_keuangan_value = '2'
+                    THEN ' | R7 UM/UB tanpa lap.keuangan' ELSE '' END,
+               -- #8 Beda KBLI 2 digit pendataan vs SBR
+               CASE WHEN TRIM(COALESCE(u.kbli_prelist,'')) <> ''
+                     AND TRIM(COALESCE(u.kbli_akhir,'')) <> ''
+                     AND LEFT(TRIM(u.kbli_prelist),2) <> LEFT(TRIM(u.kbli_akhir),2)
+                    THEN ' | R8 Beda KBLI vs SBR' ELSE '' END
+           ), 4) AS flag_anomali
+    FROM asg a
+    INNER JOIN u ON u.assignment_id = a.assignment_id
+                AND u.assignment_date_modified = a.assignment_date_modified
+)
+SELECT f.kabupaten, f.kecamatan, f.desa, f.sls, f.sub_sls,
+       f.level_6_full_code AS id_sub_sls,
+       f.nama_usaha, f.skala_usaha, f.kategori,
+       f.kbli_prelist, f.kbli_akhir,
+       f.badan_usaha_label AS r11a_badan_usaha,
+       f.lap_keuangan_label AS r11d_lap_keuangan,
+       f.internet_label     AS r16a_internet,
+       f.peran_mbg_label    AS r22_mbg,
+       f.r24c1 AS total_pekerja,
+       f.r29c  AS r29c_korp_publik,
+       f.r29d  AS r29d_korp_nonpublik,
+       f.r28c  AS r28c_aset,
+       f.r26f  AS r26f_pengeluaran,
+       f.r27c  AS r27c_pendapatan,
+       f.r27c - f.r26f AS laba_rugi,
+       CAST(f.r27c / NULLIF(f.r26f,0) AS DECIMAL(18,3)) AS rasio_pdpt_pengel,
+       f.flag_anomali,
+       f.link_fasih
+FROM f
+WHERE f.flag_anomali <> ''
+ORDER BY f.level_6_full_code, f.nama_usaha
+LIMIT 9000 OFFSET 0;
