@@ -1,0 +1,84 @@
+-- ============================================================================
+-- ANOMALI PUSAT F1-F3 — Output, Cakupan P/U, Nilai Tambah
+-- ============================================================================
+WITH params AS (
+    SELECT '18' AS prov
+),
+asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, a.level_5_name AS sls,
+           a.level_6_name AS sub_sls, a.level_6_full_code,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+                  a.survey_period_id, '/', a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = p.prov
+      -- OPSI: AND a.level_2_full_code = '1871'
+),
+u AS (
+    SELECT n.assignment_id, n.assignment_date_modified,
+           n.nama_usaha, n.kategori, n.kbli_akhir, n.keg_utama, n.skala_usaha,
+           n.tahun_operasi, n.assignment_status_alias,
+           CAST(COALESCE(n.total_tk_jk, 0) AS SIGNED) AS total_tk,
+           CAST(COALESCE(n.tk_dibayar, 0)  AS SIGNED) AS tk_dibayar,
+           COALESCE(n.nilai_pendapatan, 0)  AS r27a,
+           COALESCE(n.pendapatan_lain, 0)   AS r27b,
+           COALESCE(n.total_pendapatan, 0)  AS r27c,
+           COALESCE(n.gaji, 0)              AS r26a,
+           COALESCE(n.biaya_produksi, 0)    AS r26b,
+           COALESCE(n.biaya_pembelian, 0)   AS r26c,
+           COALESCE(n.operasional, 0)       AS r26d,
+           COALESCE(n.total_pengeluaran, 0) AS r26f,
+           COALESCE(n.nilai_pendapatan, 0) - COALESCE(n.biaya_pembelian, 0) AS nilai_output,
+           COALESCE(n.nilai_pendapatan, 0) - COALESCE(n.biaya_produksi, 0)
+             - COALESCE(n.biaya_pembelian, 0) - COALESCE(n.operasional, 0) AS nilai_tambah
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1','2')
+),
+f AS (
+    SELECT a.kabupaten, a.kecamatan, a.desa, a.sls, a.sub_sls,
+           a.level_6_full_code, a.link_fasih,
+           u.assignment_id, u.nama_usaha, u.kategori, u.kbli_akhir,
+           u.keg_utama, u.skala_usaha, u.tahun_operasi,
+           u.total_tk, u.tk_dibayar,
+           u.r26a, u.r26b, u.r26c, u.r26d, u.r26f,
+           u.r27a, u.r27b, u.r27c,
+           u.nilai_output, u.nilai_tambah,
+           SUBSTR(CONCAT(
+               CASE WHEN u.total_tk > 0 AND u.nilai_output = 0
+                    THEN ' | F1 TK>0 tp output=0' ELSE '' END,
+               CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) IN ('P','U')
+                    THEN ' | F2 Cakupan kategori P/U' ELSE '' END,
+               CASE WHEN u.nilai_tambah < u.r26a AND u.r26a > 0
+                    THEN ' | F3 Nilai tambah < upah' ELSE '' END,
+               CASE WHEN u.nilai_tambah < 0
+                    THEN ' | F4 Nilai tambah negatif' ELSE '' END,
+               CASE WHEN ABS(u.r27c - (u.r27a + u.r27b)) > 1000
+                    THEN ' | F5 R27c <> R27a+R27b' ELSE '' END,
+               CASE WHEN ABS(u.r26f - (u.r26a + u.r26b + u.r26c + u.r26d)) > 1000
+                     AND u.r26f > 0
+                    THEN ' | F6 R26f <> jumlah rincian' ELSE '' END
+           ), 4) AS flag_anomali
+    FROM asg a
+    INNER JOIN u ON u.assignment_id = a.assignment_id
+                AND u.assignment_date_modified = a.assignment_date_modified
+)
+SELECT f.kabupaten, f.kecamatan, f.desa, f.sls, f.sub_sls,
+       f.level_6_full_code AS id_sub_sls,
+       f.nama_usaha, f.kategori, f.kbli_akhir, f.keg_utama,
+       f.skala_usaha, f.tahun_operasi,
+       f.total_tk, f.tk_dibayar,
+       f.r26a AS upah_gaji, f.r26b AS biaya_produksi,
+       f.r26c AS biaya_pembelian, f.r26d AS operasional,
+       f.r26f AS total_pengeluaran,
+       f.r27a AS nilai_pendapatan, f.r27c AS total_pendapatan,
+       f.nilai_output, f.nilai_tambah,
+       f.flag_anomali,
+       f.link_fasih
+FROM f
+WHERE f.flag_anomali <> ''
+ORDER BY f.level_6_full_code, f.nama_usaha
+LIMIT 9000 OFFSET 0;
