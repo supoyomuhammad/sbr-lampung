@@ -1,0 +1,34 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.base_table_assignment a
+INNER JOIN tgr_fd68e454.se2026_nested n
+        ON n.assignment_id = a.assignment_id
+       AND n.assignment_date_modified = a.assignment_date_modified
+WHERE a.is_active = 1
+  AND a.level_1_full_code = '18'
+  AND n.assignment_status_id > 0
+  AND n.keberadaan_usaha_value IN ('1','2')
+  AND ( ( COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0) > 0
+          AND COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) > 0
+          AND COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0)
+            - COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) < 0 )
+     OR ( n.badan_usaha_value = '13'
+          AND ( COALESCE(n.publik,0) > 0 OR COALESCE(n.non_publik,0) > 0
+             OR COALESCE(n.publik_didirikan,0) > 0
+             OR COALESCE(n.nonpublik_didirikan,0) > 0 ) )
+     OR ( n.peran_mbg_value = '1'
+          AND COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) > 0
+          AND ( COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0)
+                / COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln) >= 1.25
+             OR COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0)
+                / COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln) < 1 ) )
+     OR ( COALESCE(n.total_aset_thn,0) > 10000000000
+          AND COALESCE(NULLIF(CAST(COALESCE(n.total_tk_jk,0) AS SIGNED),0),
+                       CAST(COALESCE(n.total_tk_bayar,0) AS SIGNED)) = 1
+          AND COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0) < 60000000 )
+     OR ( UPPER(TRIM(COALESCE(n.skala_usaha,''))) IN ('UM','UB')
+          AND n.internet_value = '2' )
+     OR ( UPPER(TRIM(COALESCE(n.skala_usaha,''))) IN ('UM','UB')
+          AND n.lap_keuangan_value = '2' )
+     OR ( TRIM(COALESCE(n.kbli_prelist,'')) <> ''
+          AND TRIM(COALESCE(n.kbli_akhir,'')) <> ''
+          AND LEFT(TRIM(n.kbli_prelist),2) <> LEFT(TRIM(n.kbli_akhir),2) ) );
