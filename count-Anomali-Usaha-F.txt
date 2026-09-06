@@ -16,9 +16,12 @@ WHERE a.is_active = 1
             < COALESCE(n.gaji,0) )
      OR ( COALESCE(n.nilai_pendapatan,0) - COALESCE(n.biaya_produksi,0)
         - COALESCE(n.biaya_pembelian,0) - COALESCE(n.operasional,0) < 0 )
-     OR ( ABS( COALESCE(n.total_pendapatan,0)
-             - (COALESCE(n.nilai_pendapatan,0) + COALESCE(n.pendapatan_lain,0)) ) > 1000 )
+     OR ( COALESCE(n.total_pendapatan,0) > 0
+          AND ABS( COALESCE(n.total_pendapatan,0)
+                 - (COALESCE(n.nilai_pendapatan,0)
+                  + COALESCE(n.pendapatan_lain,0)) ) > 0 )
      OR ( COALESCE(n.total_pengeluaran,0) > 0
           AND ABS( COALESCE(n.total_pengeluaran,0)
                  - (COALESCE(n.gaji,0) + COALESCE(n.biaya_produksi,0)
-                  + COALESCE(n.biaya_pembelian,0) + COALESCE(n.operasional,0)) ) > 1000 ) );
+                  + COALESCE(n.biaya_pembelian,0) + COALESCE(n.operasional,0)
+                  + COALESCE(n.non_operasional,0)) ) > 0 ) );
