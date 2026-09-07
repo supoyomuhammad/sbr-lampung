@@ -1,0 +1,78 @@
+WITH params AS ( SELECT '18' AS prov ),
+asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, a.level_6_full_code AS id_sub_sls,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+                  a.survey_period_id,'/',a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1 AND a.level_1_full_code = p.prov
+),
+u AS (
+    SELECT n.assignment_id, n.assignment_date_modified,
+           n.nama_usaha, n.kategori, n.kbli_akhir, n.skala_usaha,
+           n.internet_value, n.internet_label,
+           n.internet_pesanan_value, n.internet_produksi_value,
+           n.internet_distribusi_value, n.internet_beli_value,
+           n.internet_promosi_value, n.internet_lainnya_value,
+           n.digital_value, n.digital_label,
+           n.lokasi_usaha_value, n.lokasi_usaha_label,
+           n.perlindungan_lingkungan_value, n.perlindungan_lingkungan_label,
+           n.produk_seni_value, n.produk_seni_label,
+           CAST(COALESCE(n.pendapatan_online,0)     AS DECIMAL(18,2)) AS r27d,
+           CAST(COALESCE(n.pendapatan_online_bln,0) AS DECIMAL(18,2)) AS r31d,
+           COALESCE(n.operasional,0)     AS r26d,
+           COALESCE(n.operasional_bln,0) AS r30d
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1','2')
+),
+f AS (
+    SELECT a.kabupaten, a.kecamatan, a.desa, a.id_sub_sls, a.link_fasih,
+           u.nama_usaha, u.kategori, u.kbli_akhir, u.skala_usaha,
+           u.internet_label, u.digital_label, u.lokasi_usaha_label,
+           u.perlindungan_lingkungan_label, u.produk_seni_label,
+           u.r27d, u.r31d, u.r26d, u.r30d,
+           SUBSTR(CONCAT(
+             CASE WHEN u.r27d > 0
+                   AND COALESCE(u.internet_pesanan_value,'2') = '2'
+                   AND COALESCE(u.internet_promosi_value,'2') = '2'
+                   AND COALESCE(u.internet_lainnya_value,'2') = '2'
+                  THEN ' | I1 Pdpt online tp tujuan internet kosong' ELSE '' END,
+             CASE WHEN u.lokasi_usaha_value = '11' AND u.internet_value = '2'
+                  THEN ' | I2 Usaha daring tanpa internet' ELSE '' END,
+             CASE WHEN u.internet_value = '2'
+                   AND ( u.internet_pesanan_value = '1' OR u.internet_produksi_value = '1'
+                      OR u.internet_distribusi_value = '1' OR u.internet_beli_value = '1'
+                      OR u.internet_promosi_value = '1' OR u.internet_lainnya_value = '1'
+                      OR u.digital_value = '1' )
+                  THEN ' | I3 Klaim digital tanpa internet' ELSE '' END,
+             CASE WHEN (u.r27d > 0 OR u.r31d > 0) AND u.internet_value = '2'
+                  THEN ' | I4 Pdpt online tanpa internet' ELSE '' END,
+             CASE WHEN u.perlindungan_lingkungan_value = '1'
+                   AND u.r26d = 0 AND u.r30d = 0
+                  THEN ' | I5 Input lingkungan tanpa biaya operasional' ELSE '' END,
+             CASE WHEN LEFT(TRIM(COALESCE(u.kbli_akhir,'')),2) = '62'
+                   AND u.produk_seni_value = '2'
+                  THEN ' | I6 Misklasifikasi ekraf' ELSE '' END
+           ), 4) AS flag_anomali
+    FROM asg a
+    INNER JOIN u ON u.assignment_id = a.assignment_id
+                AND u.assignment_date_modified = a.assignment_date_modified
+)
+SELECT f.kabupaten, f.kecamatan, f.desa, f.id_sub_sls,
+       f.nama_usaha, f.kategori, f.kbli_akhir, f.skala_usaha,
+       f.internet_label AS r16a_internet,
+       f.digital_label  AS r16c_teknologi_digital,
+       f.lokasi_usaha_label AS r13c_lokasi,
+       f.perlindungan_lingkungan_label AS r17b_input_lingkungan,
+       f.produk_seni_label AS r18_produk_kreatif,
+       f.r27d AS r27d_pct_online_thn,
+       f.r31d AS r31d_pct_online_bln,
+       f.r26d AS r26d_operasional_thn,
+       f.r30d AS r30d_operasional_bln,
+       f.flag_anomali, f.link_fasih
+FROM f WHERE f.flag_anomali <> ''
+ORDER BY f.id_sub_sls, f.nama_usaha
+LIMIT 9000 OFFSET 0;
