@@ -1,0 +1,21 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.base_table_assignment a
+INNER JOIN tgr_fd68e454.se2026_nested n
+        ON n.assignment_id = a.assignment_id
+       AND n.assignment_date_modified = a.assignment_date_modified
+WHERE a.is_active = 1 AND a.level_1_full_code = '18'
+  AND n.assignment_status_id > 0 AND n.keberadaan_usaha_value IN ('1','2')
+  AND ( ( CAST(COALESCE(n.tk_dibayar,0) AS SIGNED) > 0
+          AND COALESCE(n.gaji,0)/CAST(COALESCE(n.tk_dibayar,1) AS SIGNED) > 120000000 )
+     OR ( CAST(COALESCE(n.tk_dibayar,0) AS SIGNED) > 0
+          AND COALESCE(n.gaji_bln,0)/CAST(COALESCE(n.tk_dibayar,1) AS SIGNED) > 10000000 )
+     OR ( CAST(COALESCE(n.tk_dibayar,0) AS SIGNED) > 0 AND COALESCE(n.gaji,0) > 0
+          AND COALESCE(n.gaji,0)/CAST(COALESCE(n.tk_dibayar,1) AS SIGNED) < 1200000 )
+     OR ( CAST(COALESCE(n.tk_dibayar,0) AS SIGNED) > 0 AND COALESCE(n.gaji_bln,0) > 0
+          AND COALESCE(n.gaji_bln,0)/CAST(COALESCE(n.tk_dibayar,1) AS SIGNED) < 100000 )
+     OR ( UPPER(TRIM(COALESCE(n.kategori,''))) IN ('A','B','C','D')
+          AND COALESCE(n.total_pendapatan,0) > 0
+          AND COALESCE(n.total_pengeluaran,0)/COALESCE(n.total_pendapatan,1) < 0.5 )
+     OR ( n.badan_usaha_value = '01a' AND COALESCE(n.total_aset_thn,0) < 1000000000
+          AND TRIM(COALESCE(n.rentang_aset_thn_label,'')) = '' )
+     OR ( UPPER(COALESCE(n.nama_usaha,'')) LIKE '%TBK%' AND COALESCE(n.pribadi,0) = 0 ) );
