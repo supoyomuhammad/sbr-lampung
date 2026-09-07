@@ -1,0 +1,24 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.base_table_assignment a
+INNER JOIN tgr_fd68e454.se2026_nested n
+        ON n.assignment_id = a.assignment_id
+       AND n.assignment_date_modified = a.assignment_date_modified
+WHERE a.is_active = 1 AND a.level_1_full_code = '18'
+  AND n.assignment_status_id > 0 AND n.keberadaan_usaha_value IN ('1','2')
+  AND ( ( CAST(COALESCE(n.pendapatan_online,0) AS DECIMAL(18,2)) > 0
+          AND COALESCE(n.internet_pesanan_value,'2') = '2'
+          AND COALESCE(n.internet_promosi_value,'2') = '2'
+          AND COALESCE(n.internet_lainnya_value,'2') = '2' )
+     OR ( n.lokasi_usaha_value = '11' AND n.internet_value = '2' )
+     OR ( n.internet_value = '2'
+          AND ( n.internet_pesanan_value = '1' OR n.internet_produksi_value = '1'
+             OR n.internet_distribusi_value = '1' OR n.internet_beli_value = '1'
+             OR n.internet_promosi_value = '1' OR n.internet_lainnya_value = '1'
+             OR n.digital_value = '1' ) )
+     OR ( ( CAST(COALESCE(n.pendapatan_online,0) AS DECIMAL(18,2)) > 0
+         OR CAST(COALESCE(n.pendapatan_online_bln,0) AS DECIMAL(18,2)) > 0 )
+          AND n.internet_value = '2' )
+     OR ( n.perlindungan_lingkungan_value = '1'
+          AND COALESCE(n.operasional,0) = 0 AND COALESCE(n.operasional_bln,0) = 0 )
+     OR ( LEFT(TRIM(COALESCE(n.kbli_akhir,'')),2) = '62'
+          AND n.produk_seni_value = '2' ) );
