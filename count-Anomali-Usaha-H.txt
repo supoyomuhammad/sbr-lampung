@@ -13,7 +13,7 @@ WHERE a.is_active = 1 AND a.level_1_full_code = '18'
           AND COALESCE(n.gaji,0)/CAST(COALESCE(n.tk_dibayar,1) AS SIGNED) < 1200000 )
      OR ( CAST(COALESCE(n.tk_dibayar,0) AS SIGNED) > 0 AND COALESCE(n.gaji_bln,0) > 0
           AND COALESCE(n.gaji_bln,0)/CAST(COALESCE(n.tk_dibayar,1) AS SIGNED) < 100000 )
-     OR ( UPPER(TRIM(COALESCE(n.kategori,''))) IN ('A','B','C','D')
+     OR ( UPPER(TRIM(COALESCE(n.kategori,''))) IN ('B','C','D')
           AND COALESCE(n.total_pendapatan,0) > 0
           AND COALESCE(n.total_pengeluaran,0)/COALESCE(n.total_pendapatan,1) < 0.5 )
      OR ( n.badan_usaha_value = '01a' AND COALESCE(n.total_aset_thn,0) < 1000000000
