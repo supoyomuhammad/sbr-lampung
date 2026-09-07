@@ -1,0 +1,31 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.base_table_assignment a
+INNER JOIN tgr_fd68e454.se2026_nested n
+        ON n.assignment_id = a.assignment_id
+       AND n.assignment_date_modified = a.assignment_date_modified
+LEFT JOIN tgr_fd68e454.root_table r
+       ON r.assignment_id = a.assignment_id
+      AND r.assignment_date_modified = a.assignment_date_modified
+WHERE a.is_active = 1 AND a.level_1_full_code = '18'
+  AND n.assignment_status_id > 0 AND n.keberadaan_usaha_value IN ('1','2')
+  AND ( ( n.jaringan_value = '1' AND CAST(COALESCE(n.jumlah_kc,0) AS SIGNED) > 0 )
+     OR ( n.jaringan_value = '2' AND CAST(COALESCE(n.jumlah_kc,0) AS SIGNED) = 0 )
+     OR ( n.jaringan_value IN ('3','4','5','6') AND TRIM(COALESCE(n.nama_kp,'')) = '' )
+     OR ( n.jaringan_value = '6'
+          AND ( TRIM(COALESCE(n.internet_value,'')) <> ''
+             OR COALESCE(n.total_pengeluaran,0) > 0
+             OR COALESCE(n.total_pendapatan,0) > 0 ) )
+     OR n.jenis_kawasan_value IN ('01','02')
+     OR ( n.produk_sendiri_value = '1' AND UPPER(TRIM(COALESCE(n.kategori,''))) = 'A' )
+     OR ( n.layanan_mamin_value = '1'
+          AND ( UPPER(COALESCE(n.keg_utama,'')) LIKE '%HOTEL%'
+             OR UPPER(COALESCE(n.keg_utama,'')) LIKE '%PENGINAPAN%'
+             OR UPPER(COALESCE(n.keg_utama,'')) LIKE '%LOSMEN%'
+             OR UPPER(COALESCE(n.keg_utama,'')) LIKE '%WISMA%' ) )
+     OR ( r.kode_bang_value = '1' AND n.lokasi_usaha_value = '10' )
+     OR ( UPPER(TRIM(COALESCE(n.kategori,''))) NOT IN ('B','C','D','E','F')
+          AND ( TRIM(COALESCE(n.input,'')) <> '' OR TRIM(COALESCE(n.proses,'')) <> '' ) )
+     OR ( COALESCE(n.aset_usaha_thn,0) > 0
+          AND CAST(COALESCE(n.luas_tanah_thn,0) AS DECIMAL(18,2)) = 0 )
+     OR ( n.lokasi_usaha_value IN ('01','02','03','04','05','06','07','08','09')
+          AND CAST(COALESCE(n.luas_tanah_thn,0) AS DECIMAL(18,2)) = 0 ) );
