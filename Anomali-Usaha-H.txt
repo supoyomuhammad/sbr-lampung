@@ -40,9 +40,9 @@ f AS (
                   THEN ' | H3 Upah thn/pekerja <1,2jt' ELSE '' END,
              CASE WHEN u.r24a2 > 0 AND u.r30a > 0 AND u.r30a / u.r24a2 < 100000
                   THEN ' | H4 Upah bln/pekerja <100rb' ELSE '' END,
-             CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) IN ('A','B','C','D')
+             CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) IN ('B','C','D')
                    AND u.r27c > 0 AND u.r26f / u.r27c < 0.5
-                  THEN ' | H5 Rasio pengel/pdpt <0,5 kat A-D' ELSE '' END,
+                  THEN ' | H5 Rasio pengel/pdpt <0,5 kat B-D' ELSE '' END,
              CASE WHEN u.badan_usaha_value = '01a'
                    AND u.r28c < 1000000000
                    AND TRIM(COALESCE(u.rentang_aset_thn_label,'')) = ''
