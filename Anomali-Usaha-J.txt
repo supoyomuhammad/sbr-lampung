@@ -1,0 +1,103 @@
+WITH params AS ( SELECT '18' AS prov ),
+asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, a.level_6_full_code AS id_sub_sls,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+                  a.survey_period_id,'/',a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1 AND a.level_1_full_code = p.prov
+),
+bang AS (
+    SELECT assignment_id, assignment_date_modified, kode_bang_value
+    FROM (
+        SELECT r.assignment_id, r.assignment_date_modified, r.kode_bang_value,
+               ROW_NUMBER() OVER (PARTITION BY r.assignment_id,
+                                               r.assignment_date_modified
+                                  ORDER BY r.assignment_id) AS rn
+        FROM tgr_fd68e454.root_table r
+    ) x WHERE rn = 1
+),
+u AS (
+    SELECT n.assignment_id, n.assignment_date_modified,
+           n.nama_usaha, n.kategori, n.kbli_akhir, n.keg_utama,
+           n.jaringan_value, n.jaringan_label, n.nama_kp,
+           n.jenis_kawasan_value, n.jenis_kawasan_label,
+           n.produk_sendiri_value, n.layanan_mamin_value,
+           n.lokasi_usaha_value, n.lokasi_usaha_label,
+           n.input, n.proses, n.internet_value,
+           CAST(COALESCE(n.jumlah_kc,0)     AS SIGNED) AS r14b,
+           CAST(COALESCE(n.luas_tanah_thn,0) AS DECIMAL(18,2)) AS r28d,
+           COALESCE(n.aset_usaha_thn,0)     AS r28a,
+           COALESCE(n.total_pengeluaran,0)  AS r26f,
+           COALESCE(n.total_pendapatan,0)   AS r27c
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1','2')
+),
+f AS (
+    SELECT a.kabupaten, a.kecamatan, a.desa, a.id_sub_sls, a.link_fasih,
+           u.nama_usaha, u.kategori, u.kbli_akhir, u.keg_utama,
+           u.jaringan_label, u.nama_kp, u.jenis_kawasan_label,
+           u.lokasi_usaha_label, u.r14b, u.r28a, u.r28d, u.input, u.proses,
+           b.kode_bang_value,
+           SUBSTR(CONCAT(
+             CASE WHEN u.jaringan_value = '1' AND u.r14b > 0
+                  THEN ' | J1 Tunggal tp ada cabang' ELSE '' END,
+             CASE WHEN u.jaringan_value = '2' AND u.r14b = 0
+                  THEN ' | J2 Kantor pusat tanpa cabang' ELSE '' END,
+             CASE WHEN u.jaringan_value IN ('3','4','5','6')
+                   AND TRIM(COALESCE(u.nama_kp,'')) = ''
+                  THEN ' | J3 Cabang tanpa identitas induk' ELSE '' END,
+             CASE WHEN u.jaringan_value = '6'
+                   AND ( TRIM(COALESCE(u.internet_value,'')) <> ''
+                      OR u.r26f > 0 OR u.r27c > 0 )
+                  THEN ' | J4 Unit pembantu tetap isi blok lanjutan' ELSE '' END,
+             CASE WHEN u.jenis_kawasan_value IN ('01','02')
+                  THEN ' | J5 KEK/KI di Lampung' ELSE '' END,
+             CASE WHEN u.produk_sendiri_value = '1'
+                   AND UPPER(TRIM(COALESCE(u.kategori,''))) = 'A'
+                  THEN ' | J6 Pertanian tp produksi barang' ELSE '' END,
+             CASE WHEN u.layanan_mamin_value = '1'
+                   AND ( UPPER(COALESCE(u.keg_utama,'')) LIKE '%HOTEL%'
+                      OR UPPER(COALESCE(u.keg_utama,'')) LIKE '%PENGINAPAN%'
+                      OR UPPER(COALESCE(u.keg_utama,'')) LIKE '%LOSMEN%'
+                      OR UPPER(COALESCE(u.keg_utama,'')) LIKE '%WISMA%' )
+                  THEN ' | J7 Akomodasi tp mamin kegiatan utama' ELSE '' END,
+             CASE WHEN b.kode_bang_value = '1' AND u.lokasi_usaha_value = '10'
+                  THEN ' | J8 Di BKU tp lokasi keliling' ELSE '' END,
+             CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) NOT IN ('B','C','D','E','F')
+                   AND ( TRIM(COALESCE(u.input,'')) <> ''
+                      OR TRIM(COALESCE(u.proses,'')) <> '' )
+                  THEN ' | J9 Jasa tp isi input/proses' ELSE '' END,
+             CASE WHEN u.r28a > 0 AND u.r28d = 0
+                  THEN ' | J10 Aset tanah tp luas 0' ELSE '' END,
+             CASE WHEN u.lokasi_usaha_value IN ('01','02','03','04','05',
+                                                '06','07','08','09')
+                   AND u.r28d = 0
+                  THEN ' | J11 Ada bangunan tp lahan 0' ELSE '' END
+           ), 4) AS flag_anomali
+    FROM asg a
+    INNER JOIN u ON u.assignment_id = a.assignment_id
+                AND u.assignment_date_modified = a.assignment_date_modified
+    LEFT JOIN bang b ON b.assignment_id = a.assignment_id
+                    AND b.assignment_date_modified = a.assignment_date_modified
+)
+SELECT f.kabupaten, f.kecamatan, f.desa, f.id_sub_sls,
+       f.nama_usaha, f.kategori, f.kbli_akhir,
+       f.keg_utama AS r13a_kegiatan_utama,
+       f.jaringan_label   AS r14a_jaringan,
+       f.r14b             AS r14b_jml_cabang,
+       f.nama_kp          AS r15a_kantor_pusat,
+       f.jenis_kawasan_label AS r8d_kawasan,
+       f.lokasi_usaha_label  AS r13c_lokasi,
+       f.kode_bang_value  AS kode_bangunan,
+       f.input            AS r13d_input,
+       f.proses           AS r13e_proses,
+       f.r28a             AS r28a_aset_tanah,
+       f.r28d             AS r28d_luas_tanah,
+       f.flag_anomali, f.link_fasih
+FROM f WHERE f.flag_anomali <> ''
+ORDER BY f.id_sub_sls, f.nama_usaha
+LIMIT 9000 OFFSET 0;
