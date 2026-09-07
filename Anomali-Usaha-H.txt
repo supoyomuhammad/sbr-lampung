@@ -1,0 +1,71 @@
+WITH params AS ( SELECT '18' AS prov ),
+asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, a.level_6_full_code AS id_sub_sls,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+                  a.survey_period_id,'/',a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1 AND a.level_1_full_code = p.prov
+),
+u AS (
+    SELECT n.assignment_id, n.assignment_date_modified,
+           n.nama_usaha, n.kategori, n.kbli_akhir, n.skala_usaha,
+           n.badan_usaha_value, n.badan_usaha_label,
+           n.rentang_aset_thn_label,
+           CAST(COALESCE(n.tk_dibayar,0) AS SIGNED)  AS r24a2,
+           CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) AS r24c1,
+           COALESCE(n.gaji,0)              AS r26a,
+           COALESCE(n.gaji_bln,0)          AS r30a,
+           COALESCE(n.total_pengeluaran,0) AS r26f,
+           COALESCE(n.total_pendapatan,0)  AS r27c,
+           COALESCE(n.total_aset_thn,0)    AS r28c,
+           COALESCE(n.pribadi,0)           AS r29a
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1','2')
+),
+f AS (
+    SELECT a.kabupaten, a.kecamatan, a.desa, a.id_sub_sls, a.link_fasih,
+           u.nama_usaha, u.kategori, u.kbli_akhir, u.skala_usaha,
+           u.badan_usaha_label, u.rentang_aset_thn_label,
+           u.r24a2, u.r24c1, u.r26a, u.r30a, u.r26f, u.r27c, u.r28c, u.r29a,
+           SUBSTR(CONCAT(
+             CASE WHEN u.r24a2 > 0 AND u.r26a / u.r24a2 > 120000000
+                  THEN ' | H1 Upah thn/pekerja >120jt' ELSE '' END,
+             CASE WHEN u.r24a2 > 0 AND u.r30a / u.r24a2 > 10000000
+                  THEN ' | H2 Upah bln/pekerja >10jt' ELSE '' END,
+             CASE WHEN u.r24a2 > 0 AND u.r26a > 0 AND u.r26a / u.r24a2 < 1200000
+                  THEN ' | H3 Upah thn/pekerja <1,2jt' ELSE '' END,
+             CASE WHEN u.r24a2 > 0 AND u.r30a > 0 AND u.r30a / u.r24a2 < 100000
+                  THEN ' | H4 Upah bln/pekerja <100rb' ELSE '' END,
+             CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) IN ('A','B','C','D')
+                   AND u.r27c > 0 AND u.r26f / u.r27c < 0.5
+                  THEN ' | H5 Rasio pengel/pdpt <0,5 kat A-D' ELSE '' END,
+             CASE WHEN u.badan_usaha_value = '01a'
+                   AND u.r28c < 1000000000
+                   AND TRIM(COALESCE(u.rentang_aset_thn_label,'')) = ''
+                  THEN ' | H6 PT tetapi aset <1M' ELSE '' END,
+             CASE WHEN UPPER(COALESCE(u.nama_usaha,'')) LIKE '%TBK%'
+                   AND u.r29a = 0
+                  THEN ' | H7 Tbk tanpa rincian modal' ELSE '' END
+           ), 4) AS flag_anomali
+    FROM asg a
+    INNER JOIN u ON u.assignment_id = a.assignment_id
+                AND u.assignment_date_modified = a.assignment_date_modified
+)
+SELECT f.kabupaten, f.kecamatan, f.desa, f.id_sub_sls,
+       f.nama_usaha, f.kategori, f.kbli_akhir, f.skala_usaha,
+       f.badan_usaha_label, f.rentang_aset_thn_label AS rentang_aset,
+       f.r24a2 AS r24a2_pekerja_dibayar, f.r24c1 AS r24c1_total_pekerja,
+       f.r26a AS r26a_upah_thn, f.r30a AS r30a_upah_bln,
+       CAST(f.r26a / NULLIF(f.r24a2,0) AS DECIMAL(18,0)) AS upah_thn_per_pekerja,
+       CAST(f.r30a / NULLIF(f.r24a2,0) AS DECIMAL(18,0)) AS upah_bln_per_pekerja,
+       f.r26f AS r26f_pengeluaran, f.r27c AS r27c_pendapatan,
+       CAST(f.r26f / NULLIF(f.r27c,0) AS DECIMAL(18,3)) AS rasio_pengel_pdpt,
+       f.r28c AS r28c_aset, f.r29a AS r29a_modal_pribadi,
+       f.flag_anomali, f.link_fasih
+FROM f WHERE f.flag_anomali <> ''
+ORDER BY f.id_sub_sls, f.nama_usaha
+LIMIT 9000 OFFSET 0;
