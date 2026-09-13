@@ -1,9 +1,4 @@
--- ============================================================================
--- ANOMALI RESMI #2-#8 (yang belum tercakup query lain)
--- ============================================================================
-WITH params AS (
-    SELECT '18' AS prov
-),
+WITH params AS ( SELECT '18' AS prov ),
 asg AS (
     SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
            a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
@@ -15,7 +10,6 @@ asg AS (
     CROSS JOIN params p
     WHERE a.is_active = 1
       AND a.level_1_full_code = p.prov
-      -- OPSI: AND a.level_2_full_code = '1871'
 ),
 u AS (
     SELECT n.assignment_id, n.assignment_date_modified,
@@ -29,9 +23,12 @@ u AS (
            COALESCE(n.non_publik, 0)          AS r29d,
            COALESCE(n.publik_didirikan, 0)    AS r33c,
            COALESCE(n.nonpublik_didirikan, 0) AS r33d,
-           CAST(COALESCE(n.total_tk_jk, 0) AS SIGNED)  AS r24c1,
+           CAST(COALESCE(n.total_tk_jk, 0) AS SIGNED)   AS r24c1,
            CAST(COALESCE(n.total_tk_bayar,0) AS SIGNED) AS r24c2,
-           COALESCE(n.total_aset_thn, 0)                             AS r28c,
+           -- aset: kolom bulanan bertipe NVARCHAR dengan titik ribuan
+           CASE WHEN CAST(NULLIF(TRIM(n.tahun_operasi),'') AS SIGNED) = 2026
+                THEN CAST(REPLACE(COALESCE(n.total_aset_bln,'0'),'.','') AS DOUBLE)
+                ELSE COALESCE(n.total_aset_thn, 0) END                AS r28c,
            COALESCE(n.total_pendapatan,  n.total_pendapatan_bln,  0) AS r27c,
            COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) AS r26f
     FROM tgr_fd68e454.se2026_nested n
@@ -48,31 +45,25 @@ f AS (
            u.r29c, u.r29d, u.r33c, u.r33d,
            u.r24c1, u.r24c2, u.r28c, u.r27c, u.r26f,
            SUBSTR(CONCAT(
-               -- #2 Keuntungan usaha negatif (definisi resmi)
                CASE WHEN u.r27c > 0 AND u.r26f > 0 AND (u.r27c - u.r26f) < 0
                     THEN ' | R2 Rugi (R27c-R26f<0)' ELSE '' END,
-               -- #3 Modal korporasi pada bukan badan usaha
                CASE WHEN u.badan_usaha_value = '13'
                      AND (u.r29c > 0 OR u.r29d > 0 OR u.r33c > 0 OR u.r33d > 0)
                     THEN ' | R3 Modal korporasi' ELSE '' END,
-               -- #4 Rasio keuangan MBG
                CASE WHEN u.peran_mbg_value = '1' AND u.r26f > 0
                      AND ( u.r27c / u.r26f >= 1.25 OR u.r27c / u.r26f < 1 )
                     THEN ' | R4 Rasio MBG' ELSE '' END,
-               -- #5 Aset besar, pekerja 1, pendapatan kecil
                CASE WHEN u.r28c > 10000000000
                      AND COALESCE(NULLIF(u.r24c1,0), u.r24c2) = 1
-                     AND u.r27c < 60000000
+                     AND ( CASE WHEN CAST(NULLIF(TRIM(u.tahun_operasi),'') AS SIGNED) = 2026
+                                THEN u.r27c * 12 ELSE u.r27c END ) < 60000000
                     THEN ' | R5 Aset>10M TK=1 omset kecil' ELSE '' END,
-               -- #6 Tidak pakai internet pada UM/UB
                CASE WHEN UPPER(TRIM(COALESCE(u.skala_usaha,''))) IN ('UM','UB')
                      AND u.internet_value = '2'
                     THEN ' | R6 UM/UB tanpa internet' ELSE '' END,
-               -- #7 Tidak punya laporan keuangan pada UM/UB
                CASE WHEN UPPER(TRIM(COALESCE(u.skala_usaha,''))) IN ('UM','UB')
                      AND u.lap_keuangan_value = '2'
                     THEN ' | R7 UM/UB tanpa lap.keuangan' ELSE '' END,
-               -- #8 Beda KBLI 2 digit pendataan vs SBR
                CASE WHEN TRIM(COALESCE(u.kbli_prelist,'')) <> ''
                      AND TRIM(COALESCE(u.kbli_akhir,'')) <> ''
                      AND LEFT(TRIM(u.kbli_prelist),2) <> LEFT(TRIM(u.kbli_akhir),2)
@@ -86,7 +77,7 @@ SELECT f.kabupaten, f.kecamatan, f.desa, f.sls, f.sub_sls,
        f.level_6_full_code AS id_sub_sls,
        f.nama_usaha, f.skala_usaha, f.kategori,
        f.kbli_prelist, f.kbli_akhir,
-       f.badan_usaha_label AS r11a_badan_usaha,
+       f.badan_usaha_label  AS r11a_badan_usaha,
        f.lap_keuangan_label AS r11d_lap_keuangan,
        f.internet_label     AS r16a_internet,
        f.peran_mbg_label    AS r22_mbg,
