@@ -1,0 +1,29 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.base_table_assignment a
+INNER JOIN tgr_fd68e454.root_table r
+        ON r.assignment_id = a.assignment_id
+       AND r.assignment_date_modified = a.assignment_date_modified
+WHERE a.is_active = 1
+  AND a.level_1_full_code = '18'
+  AND UPPER(a.code_identity) LIKE '%DTSEN%'
+  AND r.assignment_status_id > 0
+  AND r.ada_keluarga_value IN ('1','2','4')
+  AND ( r.jns_bangunan_value IN ('3','4')
+     OR ( r.ada_keluarga_value = '4' AND TRIM(COALESCE(r.catatan,'')) = '' )
+     OR ( r.status_kepemilikan_value = '1' AND r.bukti_kepemilikan_value = '4' )
+     OR ( r.jns_lantai_value IN ('6','7','8','9')
+          AND COALESCE(r.jumlah_mobil_new,0) > 0 )
+     OR ( r.jns_dinding_value IN ('4','5','6','7')
+          AND COALESCE(r.jumlah_mobil_new,0) > 0 )
+     OR r.kondisi_lantai_value = '4'
+     OR r.kondisi_dinding_value = '4'
+     OR r.kondisi_atap_value = '4'
+     OR r.tempat_bab_value IN ('3','4','6')
+     OR r.buang_tinja_value IN ('5','6')
+     OR r.air_minum_value = '11'
+     OR ( COALESCE(r.pulsa_sebulan,0) > 0
+          AND COALESCE(r.pulsa_sebulan,0) < 15000 )
+     OR ( COALESCE(r.pengeluaran_makanan_mingguan,0) > 0
+          AND COALESCE(r.pengeluaran_makanan_mingguan,0) < 50000 )
+     OR COALESCE(r.sewa_kontrak,0) > 1500000
+     OR CAST(NULLIF(TRIM(r.jml_ak_tinggal),'') AS SIGNED) > 2 );
