@@ -53,7 +53,7 @@ f AS (
              CASE WHEN u.thn_op = 2026 AND u.r24a2 > 0 AND u.r30a > 0
                    AND u.r30a / u.r24a2 < 100000
                   THEN ' | H4 Upah bln/pekerja <100rb' ELSE '' END,
-             CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) IN ('A','B','C','D')
+             CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) IN ('B','C','D')
                    AND u.pdpt_blok > 0 AND u.pengel_blok / u.pdpt_blok < 0.5
                   THEN ' | H5 Rasio pengel/pdpt <0,5 kat A-D' ELSE '' END,
              CASE WHEN u.badan_usaha_value = '01a'
