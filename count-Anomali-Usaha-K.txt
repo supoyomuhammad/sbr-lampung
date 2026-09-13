@@ -1,0 +1,24 @@
+SELECT COUNT(*) AS total_baris
+FROM tgr_fd68e454.base_table_assignment a
+INNER JOIN tgr_fd68e454.se2026_nested n
+        ON n.assignment_id = a.assignment_id
+       AND n.assignment_date_modified = a.assignment_date_modified
+WHERE a.is_active = 1 AND a.level_1_full_code = '18'
+  AND n.assignment_status_id > 0 AND n.keberadaan_usaha_value IN ('1','2')
+  AND ( n.badan_usaha_value IN ('01a','01b','04','09','10','11')
+     OR n.koperasi_kdkmp_value = '1'
+     OR n.lokasi_usaha_value IN ('06','07')
+     OR n.klasifikasi_value IN ('1','2','3','4','5')
+     OR ( COALESCE(n.badan_usaha_value,'') NOT IN ('13','')
+          AND n.lap_keuangan_value = '2' )
+     OR ( UPPER(TRIM(COALESCE(n.kategori,''))) <> 'E'
+          AND n.produksi_lingkungan_value = '1' )
+     OR ( n.badan_usaha_value = '03'
+          AND CAST(COALESCE(n.tk_dibayar,0) AS SIGNED) < 3 )
+     OR ( UPPER(TRIM(COALESCE(n.kategori,''))) = 'A' AND n.digital_value = '1' )
+     OR ( COALESCE(n.aset_usaha_thn, n.aset_tanah_bln, 0) > 0
+          AND COALESCE(n.aset_usaha_thn, n.aset_tanah_bln, 0) < 3000000 )
+     OR ( n.badan_usaha_value IN ('04','05') AND COALESCE(n.pemerintah,0) = 0 )
+     OR ( UPPER(COALESCE(n.nama_usaha,'')) LIKE '%KDKMP%'
+          AND COALESCE(n.koperasi_kdkmp_value,'') <> '1' )
+     OR CAST(NULLIF(TRIM(n.umur),'') AS SIGNED) BETWEEN 1 AND 9 );
