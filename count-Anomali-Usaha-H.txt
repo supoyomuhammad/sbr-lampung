@@ -18,7 +18,7 @@ WHERE a.is_active = 1 AND a.level_1_full_code = '18'
      OR ( CAST(NULLIF(TRIM(n.tahun_operasi),'') AS SIGNED) = 2026
           AND CAST(COALESCE(n.tk_dibayar,0) AS SIGNED) > 0 AND COALESCE(n.gaji_bln,0) > 0
           AND COALESCE(n.gaji_bln,0)/CAST(COALESCE(n.tk_dibayar,1) AS SIGNED) < 100000 )
-     OR ( UPPER(TRIM(COALESCE(n.kategori,''))) IN ('A','B','C','D')
+     OR ( UPPER(TRIM(COALESCE(n.kategori,''))) IN ('B','C','D')
           AND COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0) > 0
           AND COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0)
               / COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 1) < 0.5 )
