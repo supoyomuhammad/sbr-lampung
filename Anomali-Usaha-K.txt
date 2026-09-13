@@ -1,0 +1,105 @@
+WITH params AS ( SELECT '18' AS prov ),
+asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, a.level_5_name AS sls,
+           a.level_6_full_code AS id_sub_sls,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+                  a.survey_period_id,'/',a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1 AND a.level_1_full_code = p.prov
+      -- OPSI: AND a.level_2_full_code = '1801'
+),
+u AS (
+    SELECT n.assignment_id, n.assignment_date_modified,
+           n.nama_usaha, n.kategori, n.kbli_akhir, n.keg_utama, n.skala_usaha,
+           n.badan_usaha_value, n.badan_usaha_label,
+           n.koperasi_kdkmp_value, n.koperasi_kdkmp_label,
+           n.lokasi_usaha_value, n.lokasi_usaha_label,
+           n.klasifikasi_value, n.klasifikasi_label,
+           n.lap_keuangan_value, n.lap_keuangan_label,
+           n.produksi_lingkungan_value, n.produksi_lingkungan_label,
+           n.digital_value, n.digital_label,
+           n.pengusaha, n.umur,
+           CAST(COALESCE(n.tk_dibayar,0)  AS SIGNED) AS r24a2,
+           CAST(COALESCE(n.total_tk_jk,0) AS SIGNED) AS r24c1,
+           COALESCE(n.pemerintah, 0) AS r29e,
+           COALESCE(n.aset_usaha_thn, n.aset_tanah_bln, 0) AS r28a,
+           UPPER(COALESCE(n.nama_usaha,'')) AS nm
+    FROM tgr_fd68e454.se2026_nested n
+    WHERE n.assignment_status_id > 0
+      AND n.keberadaan_usaha_value IN ('1','2')
+),
+f AS (
+    SELECT a.kabupaten, a.kecamatan, a.desa, a.sls, a.id_sub_sls, a.link_fasih,
+           u.nama_usaha, u.kategori, u.kbli_akhir, u.keg_utama, u.skala_usaha,
+           u.badan_usaha_label, u.koperasi_kdkmp_label, u.lokasi_usaha_label,
+           u.klasifikasi_label, u.lap_keuangan_label,
+           u.produksi_lingkungan_label, u.digital_label,
+           u.pengusaha, u.umur, u.r24a2, u.r24c1, u.r29e, u.r28a,
+           SUBSTR(CONCAT(
+             CASE WHEN u.badan_usaha_value IN ('01a','01b','04','09','10','11')
+                   AND u.nm NOT LIKE '%SPBU%'   AND u.nm NOT LIKE '%TBK%'
+                   AND u.nm NOT LIKE '%PT %'    AND u.nm NOT LIKE '%KCP%'
+                   AND u.nm NOT LIKE '%ALFAMA%' AND u.nm NOT LIKE '%INDOMARET%'
+                   AND u.nm NOT LIKE '%KANTOR%' AND u.nm NOT LIKE '%KADAKA%'
+                  THEN ' | K1 Badan usaha meragukan' ELSE '' END,
+             CASE WHEN u.koperasi_kdkmp_value = '1'
+                  THEN ' | K2 Koperasi KDKMP' ELSE '' END,
+             CASE WHEN u.lokasi_usaha_value IN ('06','07')
+                  THEN ' | K3 Lokasi bar/kelab malam' ELSE '' END,
+             CASE WHEN u.klasifikasi_value IN ('1','2','3','4','5')
+                  THEN ' | K4 Hotel berbintang' ELSE '' END,
+             CASE WHEN COALESCE(u.badan_usaha_value,'') NOT IN ('13','')
+                   AND u.lap_keuangan_value = '2'
+                  THEN ' | K5 Badan usaha tanpa lap.keuangan' ELSE '' END,
+             CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) <> 'E'
+                   AND u.produksi_lingkungan_value = '1'
+                  THEN ' | K6 Produksi ramah lingkungan non-E' ELSE '' END,
+             CASE WHEN u.badan_usaha_value = '03' AND u.r24a2 < 3
+                  THEN ' | K7 Koperasi pekerja dibayar <3' ELSE '' END,
+             CASE WHEN UPPER(TRIM(COALESCE(u.kategori,''))) = 'A'
+                   AND u.digital_value = '1'
+                  THEN ' | K8 Pertanian pakai AI/IoT' ELSE '' END,
+             CASE WHEN u.r28a > 0 AND u.r28a < 3000000
+                  THEN ' | K9 Aset tanah <3jt' ELSE '' END,
+             CASE WHEN u.badan_usaha_value IN ('04','05') AND u.r29e = 0
+                  THEN ' | K10 Perum/Perumda tanpa modal pemerintah' ELSE '' END,
+             CASE WHEN u.nm LIKE '%KDKMP%'
+                   AND COALESCE(u.koperasi_kdkmp_value,'') <> '1'
+                  THEN ' | K11 Nama KDKMP tp status bukan KDKMP' ELSE '' END,
+             CASE WHEN CAST(NULLIF(TRIM(u.umur),'') AS SIGNED) BETWEEN 1 AND 9
+                  THEN ' | K12 Usia penanggung jawab <10 thn' ELSE '' END,
+             CASE WHEN ( u.nm LIKE '%UTP%'         OR u.nm LIKE '%PERKEBUNAN%'
+                      OR u.nm LIKE '%PETERNAKAN%'  OR u.nm LIKE '%PERIKANAN%'
+                      OR u.nm LIKE '%HORTIKULTURA%' )
+                   AND UPPER(TRIM(COALESCE(u.kategori,''))) <> 'A'
+                   AND TRIM(COALESCE(u.kategori,'')) <> ''
+                  THEN ' | K13 Nama UTP/tani tp bukan kategori A' ELSE '' END
+           ), 4) AS flag_anomali
+    FROM asg a
+    INNER JOIN u ON u.assignment_id = a.assignment_id
+                AND u.assignment_date_modified = a.assignment_date_modified
+)
+SELECT f.kabupaten, f.kecamatan, f.desa, f.sls, f.id_sub_sls,
+       f.nama_usaha, f.kategori, f.kbli_akhir, f.skala_usaha,
+       f.keg_utama                 AS r13a_kegiatan_utama,
+       f.badan_usaha_label         AS r11a_badan_usaha,
+       f.lap_keuangan_label        AS r11d_lap_keuangan,
+       f.koperasi_kdkmp_label      AS koperasi_kdkmp,
+       f.lokasi_usaha_label        AS r13c_lokasi,
+       f.klasifikasi_label         AS klasifikasi_akomodasi,
+       f.produksi_lingkungan_label AS r17a_produksi_lingkungan,
+       f.digital_label             AS r16c_teknologi,
+       f.pengusaha                 AS nama_penanggung_jawab,
+       f.umur                      AS umur_penanggung_jawab,
+       f.r24a2 AS pekerja_dibayar,
+       f.r24c1 AS total_pekerja,
+       f.r29e  AS r29e_modal_pemerintah,
+       f.r28a  AS r28a_aset_tanah,
+       f.flag_anomali,
+       f.link_fasih
+FROM f WHERE f.flag_anomali <> ''
+ORDER BY f.id_sub_sls, f.nama_usaha
+LIMIT 9000 OFFSET 0;
