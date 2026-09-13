@@ -25,7 +25,9 @@ WHERE a.is_active = 1 AND a.level_1_full_code = '18'
      OR ( r.kode_bang_value = '1' AND n.lokasi_usaha_value = '10' )
      OR ( UPPER(TRIM(COALESCE(n.kategori,''))) NOT IN ('B','C','D','E','F')
           AND ( TRIM(COALESCE(n.input,'')) <> '' OR TRIM(COALESCE(n.proses,'')) <> '' ) )
-     OR ( COALESCE(n.aset_usaha_thn,0) > 0
-          AND CAST(COALESCE(n.luas_tanah_thn,0) AS DECIMAL(18,2)) = 0 )
+     OR ( COALESCE(n.aset_usaha_thn, n.aset_tanah_bln, 0) > 0
+          AND CAST(COALESCE(n.luas_tanah_thn, n.luas_tanah_bln, 0)
+                   AS DECIMAL(18,2)) = 0 )
      OR ( n.lokasi_usaha_value IN ('01','02','03','04','05','06','07','08','09')
-          AND CAST(COALESCE(n.luas_tanah_thn,0) AS DECIMAL(18,2)) = 0 ) );
+          AND CAST(COALESCE(n.luas_tanah_thn, n.luas_tanah_bln, 0)
+                   AS DECIMAL(18,2)) = 0 ) );
