@@ -27,11 +27,12 @@ u AS (
            n.produk_sendiri_value, n.layanan_mamin_value,
            n.lokasi_usaha_value, n.lokasi_usaha_label,
            n.input, n.proses, n.internet_value,
-           CAST(COALESCE(n.jumlah_kc,0)     AS SIGNED) AS r14b,
-           CAST(COALESCE(n.luas_tanah_thn,0) AS DECIMAL(18,2)) AS r28d,
-           COALESCE(n.aset_usaha_thn,0)     AS r28a,
-           COALESCE(n.total_pengeluaran,0)  AS r26f,
-           COALESCE(n.total_pendapatan,0)   AS r27c
+           CAST(COALESCE(n.jumlah_kc,0)      AS SIGNED)        AS r14b,
+           CAST(COALESCE(n.luas_tanah_thn, n.luas_tanah_bln, 0)
+                AS DECIMAL(18,2))           AS r28d,
+           COALESCE(n.aset_usaha_thn, n.aset_tanah_bln, 0)           AS r28a,
+           COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) AS r26f,
+           COALESCE(n.total_pendapatan,  n.total_pendapatan_bln,  0) AS r27c
     FROM tgr_fd68e454.se2026_nested n
     WHERE n.assignment_status_id > 0
       AND n.keberadaan_usaha_value IN ('1','2')
@@ -86,17 +87,17 @@ f AS (
 )
 SELECT f.kabupaten, f.kecamatan, f.desa, f.id_sub_sls,
        f.nama_usaha, f.kategori, f.kbli_akhir,
-       f.keg_utama AS r13a_kegiatan_utama,
-       f.jaringan_label   AS r14a_jaringan,
-       f.r14b             AS r14b_jml_cabang,
-       f.nama_kp          AS r15a_kantor_pusat,
+       f.keg_utama           AS r13a_kegiatan_utama,
+       f.jaringan_label      AS r14a_jaringan,
+       f.r14b                AS r14b_jml_cabang,
+       f.nama_kp             AS r15a_kantor_pusat,
        f.jenis_kawasan_label AS r8d_kawasan,
        f.lokasi_usaha_label  AS r13c_lokasi,
-       f.kode_bang_value  AS kode_bangunan,
-       f.input            AS r13d_input,
-       f.proses           AS r13e_proses,
-       f.r28a             AS r28a_aset_tanah,
-       f.r28d             AS r28d_luas_tanah,
+       f.kode_bang_value     AS kode_bangunan,
+       f.input               AS r13d_input,
+       f.proses              AS r13e_proses,
+       f.r28a                AS r28a_aset_tanah,
+       f.r28d                AS r28d_luas_tanah,
        f.flag_anomali, f.link_fasih
 FROM f WHERE f.flag_anomali <> ''
 ORDER BY f.id_sub_sls, f.nama_usaha
