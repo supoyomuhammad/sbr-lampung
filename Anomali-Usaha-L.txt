@@ -1,0 +1,151 @@
+WITH params AS ( SELECT '18' AS prov ),
+asg AS (
+    SELECT a.assignment_id, a.assignment_date_modified, a.survey_period_id,
+           a.level_2_name AS kabupaten, a.level_3_name AS kecamatan,
+           a.level_4_name AS desa, a.level_5_name AS sls,
+           a.level_6_full_code AS id_sub_sls, a.data1,
+           CONCAT('https://fasih-sm.bps.go.id/app/assignment/',
+                  a.survey_period_id,'/',a.assignment_id) AS link_fasih
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = p.prov
+      AND UPPER(a.code_identity) LIKE '%DTSEN%'
+      -- OPSI: AND a.level_2_full_code = '1801'
+),
+r AS (
+    SELECT assignment_id, assignment_date_modified, assignment_status_id,
+           no_kk, nama_kk, dtsen_nama_kk, ada_keluarga_value, ada_keluarga_label,
+           catatan, jns_bangunan_value, jns_bangunan_label,
+           status_kepemilikan_value, bukti_kepemilikan_value, bukti_kepemilikan_label,
+           jns_lantai_value, jns_lantai_label, kondisi_lantai_value,
+           jns_dinding_value, jns_dinding_label, kondisi_dinding_value,
+           kondisi_atap_value, tempat_bab_value, tempat_bab_label,
+           buang_tinja_value, buang_tinja_label, air_minum_value, air_minum_label,
+           luas_lantai, jml_ak_tinggal, jumlah_mobil_new, jumlah_motor_new,
+           pulsa_sebulan, sewa_kontrak, pengeluaran_makanan_mingguan
+    FROM (
+        SELECT r.assignment_id, r.assignment_date_modified, r.assignment_status_id,
+               r.no_kk, r.nama_kk, r.dtsen_nama_kk,
+               r.ada_keluarga_value, r.ada_keluarga_label, r.catatan,
+               r.jns_bangunan_value, r.jns_bangunan_label,
+               r.status_kepemilikan_value,
+               r.bukti_kepemilikan_value, r.bukti_kepemilikan_label,
+               r.jns_lantai_value, r.jns_lantai_label, r.kondisi_lantai_value,
+               r.jns_dinding_value, r.jns_dinding_label, r.kondisi_dinding_value,
+               r.kondisi_atap_value, r.tempat_bab_value, r.tempat_bab_label,
+               r.buang_tinja_value, r.buang_tinja_label,
+               r.air_minum_value, r.air_minum_label,
+               r.luas_lantai, r.jml_ak_tinggal,
+               r.jumlah_mobil_new, r.jumlah_motor_new,
+               r.pulsa_sebulan, r.sewa_kontrak, r.pengeluaran_makanan_mingguan,
+               ROW_NUMBER() OVER (PARTITION BY r.assignment_id,
+                                               r.assignment_date_modified
+                                  ORDER BY r.assignment_id) AS rn
+        FROM tgr_fd68e454.root_table r
+    ) x WHERE rn = 1
+),
+art AS (
+    SELECT d.assignment_id, d.assignment_date_modified,
+           COUNT(*) AS jml_art,
+           SUM(CASE WHEN CAST(NULLIF(TRIM(d.umur_ak),'') AS SIGNED) > 5
+                     AND ( LENGTH(TRIM(COALESCE(d.nik_dtsen,''))) <> 16
+                        OR TRIM(d.nik_dtsen) LIKE '%99999999%' )
+                    THEN 1 ELSE 0 END) AS nik_kosong
+    FROM tgr_fd68e454.nested_dtsen d
+    GROUP BY d.assignment_id, d.assignment_date_modified
+),
+var AS (
+    SELECT v.assignment_id, v.assignment_date_modified,
+           SUM(CASE WHEN COALESCE(v.pend_gaji,0) > 0
+                     AND COALESCE(v.pend_gaji,0) < 100000
+                    THEN 1 ELSE 0 END) AS upah_kecil,
+           SUM(CASE WHEN UPPER(COALESCE(v.sekolah_label,'')) LIKE '%MASIH%'
+                     AND ( UPPER(COALESCE(v.ijazah_label,'')) LIKE '%SD%'
+                        OR UPPER(COALESCE(v.ijazah_label,'')) LIKE '%SMP%'
+                        OR UPPER(COALESCE(v.ijazah_label,'')) LIKE '%SMA%' )
+                    THEN 1 ELSE 0 END) AS sekolah_janggal,
+           SUM(CASE WHEN COALESCE(v.nilai_pend_pekerjaan,0) = 0
+                     AND COALESCE(v.pend_usaha,0) = 0
+                     AND COALESCE(v.nilai_pend_lain,0) > 0
+                    THEN 1 ELSE 0 END) AS hanya_transfer
+    FROM tgr_fd68e454.nested_dtsen_var v
+    GROUP BY v.assignment_id, v.assignment_date_modified
+)
+SELECT a.kabupaten, a.kecamatan, a.desa, a.sls, a.id_sub_sls,
+       COALESCE(r.dtsen_nama_kk, r.nama_kk, a.data1) AS nama_kepala_keluarga,
+       r.no_kk,
+       r.ada_keluarga_label      AS keberadaan_keluarga,
+       LEFT(COALESCE(r.catatan,''), 60) AS catatan_petugas,
+       r.jns_bangunan_label      AS jenis_bangunan,
+       r.bukti_kepemilikan_label AS bukti_kepemilikan,
+       r.jns_lantai_label        AS jenis_lantai,
+       r.jns_dinding_label       AS jenis_dinding,
+       r.tempat_bab_label        AS fasilitas_bab,
+       r.buang_tinja_label       AS pembuangan_tinja,
+       r.air_minum_label         AS sumber_air_minum,
+       r.luas_lantai, r.jml_ak_tinggal,
+       r.jumlah_mobil_new        AS jml_mobil,
+       r.pulsa_sebulan, r.sewa_kontrak,
+       r.pengeluaran_makanan_mingguan AS pengeluaran_makanan,
+       COALESCE(ar.jml_art, 0)   AS jml_art,
+       SUBSTR(CONCAT(
+         CASE WHEN r.jns_bangunan_value IN ('3','4')
+              THEN ' | L1 Rusun/apartemen' ELSE '' END,
+         CASE WHEN r.ada_keluarga_value = '4'
+               AND TRIM(COALESCE(r.catatan,'')) = ''
+              THEN ' | L2 Tidak eligible tanpa catatan' ELSE '' END,
+         CASE WHEN r.status_kepemilikan_value = '1'
+               AND r.bukti_kepemilikan_value = '4'
+              THEN ' | L3 Milik sendiri tanpa bukti' ELSE '' END,
+         CASE WHEN r.jns_lantai_value IN ('6','7','8','9')
+               AND COALESCE(r.jumlah_mobil_new,0) > 0
+              THEN ' | L4 Lantai buruk tp punya mobil' ELSE '' END,
+         CASE WHEN r.jns_dinding_value IN ('4','5','6','7')
+               AND COALESCE(r.jumlah_mobil_new,0) > 0
+              THEN ' | L5 Dinding buruk tp punya mobil' ELSE '' END,
+         CASE WHEN r.kondisi_lantai_value = '4'
+              THEN ' | L6 Lantai rusak berat' ELSE '' END,
+         CASE WHEN r.kondisi_dinding_value = '4'
+              THEN ' | L7 Dinding rusak berat' ELSE '' END,
+         CASE WHEN r.kondisi_atap_value = '4'
+              THEN ' | L8 Atap rusak berat' ELSE '' END,
+         CASE WHEN r.tempat_bab_value IN ('3','4')
+              THEN ' | L9 MCK komunal/umum' ELSE '' END,
+         CASE WHEN r.tempat_bab_value = '6'
+              THEN ' | L10 Tidak ada fasilitas BAB' ELSE '' END,
+         CASE WHEN r.buang_tinja_value IN ('5','6')
+              THEN ' | L11 Pembuangan tinja tidak layak' ELSE '' END,
+         CASE WHEN r.air_minum_value = '11'
+              THEN ' | L12 Sumber air minum lainnya' ELSE '' END,
+         CASE WHEN COALESCE(r.pulsa_sebulan,0) > 0
+               AND COALESCE(r.pulsa_sebulan,0) < 15000
+              THEN ' | L13 Pulsa <15rb' ELSE '' END,
+         CASE WHEN COALESCE(r.pengeluaran_makanan_mingguan,0) > 0
+               AND COALESCE(r.pengeluaran_makanan_mingguan,0) < 50000
+              THEN ' | L14 Makanan mingguan <50rb' ELSE '' END,
+         CASE WHEN COALESCE(r.sewa_kontrak,0) > 1500000
+              THEN ' | L15 Sewa >1,5jt' ELSE '' END,
+         CASE WHEN CAST(NULLIF(TRIM(r.jml_ak_tinggal),'') AS SIGNED) > 2
+              THEN ' | L16 >2 keluarga dalam 1 rumah' ELSE '' END,
+         CASE WHEN COALESCE(v.sekolah_janggal,0) > 0
+              THEN ' | L17 Ijazah vs partisipasi sekolah' ELSE '' END,
+         CASE WHEN COALESCE(v.hanya_transfer,0) > 0
+              THEN ' | L18 Hanya berpendapatan transfer' ELSE '' END,
+         CASE WHEN COALESCE(v.upah_kecil,0) > 0
+              THEN ' | L19 Upah ART <100rb' ELSE '' END,
+         CASE WHEN COALESCE(ar.nik_kosong,0) > 0
+              THEN ' | L20 Usia >5 thn NIK kosong' ELSE '' END
+       ), 4) AS flag_anomali,
+       a.link_fasih
+FROM asg a
+INNER JOIN r ON r.assignment_id = a.assignment_id
+            AND r.assignment_date_modified = a.assignment_date_modified
+LEFT JOIN art ar ON ar.assignment_id = a.assignment_id
+                AND ar.assignment_date_modified = a.assignment_date_modified
+LEFT JOIN var v  ON v.assignment_id = a.assignment_id
+                AND v.assignment_date_modified = a.assignment_date_modified
+WHERE r.assignment_status_id > 0
+  AND r.ada_keluarga_value IN ('1','2','4')
+ORDER BY a.id_sub_sls, nama_kepala_keluarga
+LIMIT 9000 OFFSET 0;
