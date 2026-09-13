@@ -21,10 +21,13 @@ WHERE a.is_active = 1
                 / COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln) >= 1.25
              OR COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0)
                 / COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln) < 1 ) )
-     OR ( COALESCE(n.total_aset_thn,0) > 10000000000
+     OR ( COALESCE(n.total_aset_thn,
+                   CAST(REPLACE(COALESCE(n.total_aset_bln,'0'),'.','') AS DOUBLE), 0)
+              > 10000000000
           AND COALESCE(NULLIF(CAST(COALESCE(n.total_tk_jk,0) AS SIGNED),0),
                        CAST(COALESCE(n.total_tk_bayar,0) AS SIGNED)) = 1
-          AND COALESCE(n.total_pendapatan, n.total_pendapatan_bln, 0) < 60000000 )
+          AND (CASE WHEN COALESCE(n.total_pendapatan,0) > 0 THEN n.total_pendapatan
+                    ELSE COALESCE(n.total_pendapatan_bln,0)*12 END) < 60000000 )
      OR ( UPPER(TRIM(COALESCE(n.skala_usaha,''))) IN ('UM','UB')
           AND n.internet_value = '2' )
      OR ( UPPER(TRIM(COALESCE(n.skala_usaha,''))) IN ('UM','UB')
