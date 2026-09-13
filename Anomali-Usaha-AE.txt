@@ -1,7 +1,3 @@
--- ============================================================================
--- ANOMALI USAHA SE2026 LAMPUNG — 20 flag
--- Blok A: kewajaran periode (berbasis rasio internal, bukan penempatan kolom)
--- ============================================================================
 WITH params AS (
     SELECT '18' AS prov
 ),
@@ -36,6 +32,14 @@ usa AS (
            COALESCE(n.total_pengeluaran_bln, 0) AS pengel_bln,
            COALESCE(n.gaji, 0)                  AS gaji_thn,
            COALESCE(n.gaji, n.gaji_bln, 0)      AS biaya_pekerja,
+           -- penanda nonpertanian (untuk pengecualian flag omset rendah)
+           CASE WHEN UPPER(TRIM(COALESCE(n.kategori,''))) = 'A'
+                  OR LEFT(TRIM(COALESCE(n.kbli_akhir,'')),2) IN ('01','02','03')
+                THEN 0 ELSE 1 END AS bukan_tani,
+           -- BLOK-AWARE: nilai dari blok yang seharusnya diisi
+           COALESCE(n.total_pendapatan,  n.total_pendapatan_bln,  0) AS omset_blok,
+           COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) AS pengel_blok,
+           COALESCE(n.gaji, n.gaji_bln, 0)                           AS gaji_blok,
            COALESCE(n.biaya_produksi,    n.biaya_produksi_bln, 0)    AS r26b,
            COALESCE(n.total_pengeluaran, n.total_pengeluaran_bln, 0) AS r26f,
            CAST(NULLIF(TRIM(n.tahun_operasi),'') AS SIGNED) AS thn_operasi,
@@ -61,10 +65,11 @@ d AS (
            u.jenis_usaha_label, u.lokasi_usaha_label, u.produk_sendiri_value,
            u.omset_thn, u.omset_bln, u.pengel_thn, u.pengel_bln, u.gaji_thn,
            u.biaya_pekerja, u.r26b, u.r26f, u.thn_operasi,
+           u.omset_blok, u.pengel_blok, u.gaji_blok, u.bukan_tani,
            u.pekerja_dibayar, u.pekerja_tdk_dibayar, u.total_pekerja,
            u.tagging_saja,
-           CASE WHEN u.omset_thn > 0 THEN u.omset_thn
-                ELSE u.omset_bln * 12 END AS omset_setahun
+           CASE WHEN u.thn_operasi = 2026 THEN u.omset_bln * 12
+                ELSE u.omset_thn END AS omset_setahun
     FROM asg a
     INNER JOIN usa u ON u.assignment_id = a.assignment_id
                     AND u.assignment_date_modified = a.assignment_date_modified
@@ -75,68 +80,72 @@ f AS (
     SELECT d.kabupaten, d.kecamatan, d.desa, d.sls, d.sub_sls,
            d.level_6_full_code, d.jenis_asg, d.link_fasih, d.nama_kk,
            d.nama_usaha, d.skala_usaha, d.kategori, d.kbli_akhir,
-           d.badan_usaha_value, d.badan_usaha_label,
-           d.jenis_usaha_label, d.lokasi_usaha_label, d.produk_sendiri_value,
-           d.omset_thn, d.omset_bln, d.pengel_thn, d.pengel_bln, d.gaji_thn,
-           d.biaya_pekerja, d.r26b, d.r26f, d.thn_operasi,
-           d.pekerja_dibayar, d.pekerja_tdk_dibayar, d.total_pekerja,
-           d.tagging_saja, d.omset_setahun,
+           d.jenis_usaha_label, d.omset_thn, d.omset_bln,
+           d.pengel_thn, d.pengel_bln, d.gaji_thn, d.thn_operasi,
+           d.omset_blok, d.pengel_blok, d.gaji_blok, d.bukan_tani,
+           d.pekerja_dibayar, d.total_pekerja, d.omset_setahun,
            SUBSTR(CONCAT(
-               -- A. KEWAJARAN PERIODE (rasio internal)
                CASE WHEN d.omset_thn > 0 AND d.pengel_thn > 0
                      AND d.omset_thn / d.pengel_thn BETWEEN 0.04 AND 0.20
                     THEN ' | A1 Omset thn setara nilai bulanan' ELSE '' END,
                CASE WHEN d.omset_bln > 0 AND d.pengel_bln > 0
                      AND d.omset_bln / d.pengel_bln BETWEEN 5 AND 20
                     THEN ' | A2 Omset bln setara nilai tahunan' ELSE '' END,
-               CASE WHEN d.omset_thn > 0 AND d.gaji_thn > 0
-                     AND d.omset_thn / d.gaji_thn BETWEEN 0.05 AND 0.20
-                    THEN ' | A3 Omset thn kecil vs upah thn' ELSE '' END,
+               CASE WHEN d.omset_blok > 0 AND d.gaji_blok > 0
+                     AND d.omset_blok / d.gaji_blok BETWEEN 0.05 AND 0.20
+                    THEN ' | A3 Omset kecil vs upah (blok sama)' ELSE '' END,
                CASE WHEN UPPER(TRIM(COALESCE(d.skala_usaha,''))) IN ('UM','UB')
+                     AND d.bukan_tani = 1
                      AND d.total_pekerja > 0 AND d.omset_setahun > 0
                      AND d.omset_setahun / 12 / d.total_pekerja < 1000000
                     THEN ' | A4 Omset/pekerja/bln <1jt utk UM-UB' ELSE '' END,
-               -- B. OMSET KECIL
-               CASE WHEN d.omset_bln > 0 AND d.omset_bln < 50000
+               -- B1-B4 mengecualikan pertanian: usaha tani rumahan wajar beromzet kecil
+               CASE WHEN d.thn_operasi = 2026 AND d.bukan_tani = 1
+                     AND d.omset_blok > 0 AND d.omset_blok < 50000
                     THEN ' | B1 Omset bln <50rb' ELSE '' END,
-               CASE WHEN d.omset_bln >= 50000 AND d.omset_bln < 100000
+               CASE WHEN d.thn_operasi = 2026 AND d.bukan_tani = 1
+                     AND d.omset_blok >= 50000 AND d.omset_blok < 100000
                     THEN ' | B2 Omset bln 50-100rb' ELSE '' END,
-               CASE WHEN d.omset_thn > 0 AND d.omset_thn < 500000
+               CASE WHEN d.thn_operasi <= 2025 AND d.bukan_tani = 1
+                     AND d.omset_blok > 0 AND d.omset_blok < 500000
                     THEN ' | B3 Omset thn <500rb' ELSE '' END,
-               CASE WHEN d.omset_thn >= 500000 AND d.omset_thn < 1000000
+               CASE WHEN d.thn_operasi <= 2025 AND d.bukan_tani = 1
+                     AND d.omset_blok >= 500000 AND d.omset_blok < 1000000
                     THEN ' | B4 Omset thn 500rb-1jt' ELSE '' END,
-               -- C. OMSET BESAR
-               CASE WHEN d.omset_bln > 4000000000 OR d.omset_thn > 50000000000
+               CASE WHEN d.omset_setahun > 50000000000
                     THEN ' | C1 Omset ekstrem tinggi' ELSE '' END,
-               CASE WHEN d.total_pekerja < 5 AND d.omset_bln > 2000000000
+               CASE WHEN d.thn_operasi = 2026 AND d.total_pekerja < 5
+                     AND d.omset_blok > 2000000000
                     THEN ' | C2 Omset bln >2M pekerja<5' ELSE '' END,
-               CASE WHEN d.total_pekerja < 5 AND d.omset_thn > 15000000000
+               CASE WHEN d.thn_operasi <= 2025 AND d.total_pekerja < 5
+                     AND d.omset_blok > 15000000000
                     THEN ' | C3 Omset thn >15M pekerja<5' ELSE '' END,
-               CASE WHEN d.total_pekerja >= 5 AND d.omset_bln > 50000000000
+               CASE WHEN d.thn_operasi = 2026 AND d.total_pekerja >= 5
+                     AND d.omset_blok > 50000000000
                     THEN ' | C4 Omset bln >50M' ELSE '' END,
-               CASE WHEN d.total_pekerja >= 5 AND d.omset_thn > 500000000000
+               CASE WHEN d.thn_operasi <= 2025 AND d.total_pekerja >= 5
+                     AND d.omset_blok > 500000000000
                     THEN ' | C5 Omset thn >500M' ELSE '' END,
-               -- D. OMSET KOSONG & PEKERJA
-               CASE WHEN d.omset_bln = 0 AND d.omset_thn = 0 AND d.tagging_saja = 0
+               CASE WHEN d.omset_blok = 0 AND d.tagging_saja = 0
                     THEN ' | D1 Omset kosong' ELSE '' END,
                CASE WHEN d.tagging_saja = 0 AND d.total_pekerja = 0
                      AND d.omset_setahun > 500000000
                     THEN ' | D2 Pekerja 0 omset >500jt' ELSE '' END,
-               CASE WHEN d.total_pekerja > 5 AND d.omset_setahun < 10000000
+               CASE WHEN d.total_pekerja > 5 AND d.bukan_tani = 1
+                     AND d.omset_setahun < 10000000
                     THEN ' | D3 Pekerja >5 omset <10jt' ELSE '' END,
                CASE WHEN d.total_pekerja > 0
                      AND d.omset_setahun / NULLIF(d.total_pekerja,0) > 5000000000
                     THEN ' | D4 Produktivitas >5M/pekerja' ELSE '' END,
-               CASE WHEN d.pekerja_dibayar > 0 AND d.biaya_pekerja = 0
+               CASE WHEN d.pekerja_dibayar > 0 AND d.gaji_blok = 0
                     THEN ' | D5 Pekerja dibayar tp gaji 0' ELSE '' END,
                CASE WHEN COALESCE(d.badan_usaha_value,'') NOT IN ('13','')
                      AND d.pekerja_tdk_dibayar > 0
                     THEN ' | D6 Badan hukum ada pekerja tdk dibayar' ELSE '' END,
-               -- E. STRUKTUR BIAYA & LOKASI
                CASE WHEN d.produk_sendiri_value = '2'
-                     AND d.r26f > 0 AND d.r26b / d.r26f > 0.5
+                     AND d.pengel_blok > 0 AND d.r26b / d.pengel_blok > 0.5
                      AND UPPER(TRIM(COALESCE(d.kategori,'')))
-                         NOT IN ('A','B','C','D','E','F','I')
+                         NOT IN ('A','B','C','D','E','F','I','T')
                      AND LEFT(TRIM(COALESCE(d.kbli_akhir,'')),2)
                          NOT IN ('01','02','03')
                     THEN ' | E1 Biaya produksi dominan' ELSE '' END,
@@ -152,9 +161,9 @@ SELECT f.kabupaten, f.kecamatan, f.desa, f.sls, f.sub_sls,
        f.nama_kk, f.nama_usaha, f.skala_usaha, f.kategori, f.kbli_akhir,
        f.jenis_usaha_label AS jenis_usaha,
        f.thn_operasi, f.total_pekerja, f.pekerja_dibayar,
-       f.omset_thn, f.pengel_thn, f.omset_bln, f.pengel_bln, f.gaji_thn,
-       CAST(f.omset_thn / NULLIF(f.pengel_thn,0) AS DECIMAL(18,3)) AS i1_rasio_thn,
-       CAST(f.omset_bln / NULLIF(f.pengel_bln,0) AS DECIMAL(18,3)) AS i2_rasio_bln,
+       CASE WHEN f.thn_operasi = 2026 THEN 'BULANAN' ELSE 'TAHUNAN' END AS blok,
+       f.omset_blok, f.pengel_blok, f.gaji_blok, f.omset_setahun,
+       CAST(f.omset_blok / NULLIF(f.pengel_blok,0) AS DECIMAL(18,3)) AS rasio_blok,
        CAST(f.omset_setahun / 12 / NULLIF(f.total_pekerja,0)
             AS DECIMAL(18,0)) AS i4_omset_pekerja_bln,
        f.flag_anomali,
