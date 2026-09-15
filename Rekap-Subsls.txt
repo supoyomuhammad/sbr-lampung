@@ -1,0 +1,97 @@
+WITH asg AS (
+    SELECT a.assignment_id,
+           a.assignment_date_modified,
+           a.level_2_name AS kabupaten,
+           a.level_3_name AS kecamatan,
+           a.level_4_name AS desa,
+           a.level_5_name AS sls,
+           a.level_6_full_code AS id_sub_sls,
+           a.level_6_name AS sub_sls,
+           a.data6,
+           a.code_identity
+    FROM tgr_fd68e454.base_table_assignment a
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = '18' -- Seluruh Provinsi Lampung
+),
+r AS (
+    -- Menarik status keberadaan keluarga
+    SELECT assignment_id, assignment_date_modified, ada_keluarga_label
+    FROM tgr_fd68e454.root_table
+),
+u AS (
+    -- Menarik status keberadaan usaha
+    SELECT assignment_id, assignment_date_modified, keberadaan_usaha_label
+    FROM tgr_fd68e454.se2026_nested
+),
+gabungan AS (
+    SELECT a.kabupaten,
+           a.kecamatan,
+           a.desa,
+           a.sls,
+           a.id_sub_sls,
+           a.sub_sls,
+           COALESCE(u.keberadaan_usaha_label, r.ada_keluarga_label, '') AS label_keberadaan,
+           
+           -- Identifikasi dokumen Tambahan Lapangan (Usaha Baru di luar Prelist)
+           CASE WHEN UPPER(a.code_identity) NOT LIKE '%DTSEN%' 
+                 AND TRIM(COALESCE(a.data6,'')) = '' 
+                THEN 'BARU_TAMBAHAN' 
+                ELSE 'PRELIST' END AS sumber_data
+                
+    FROM asg a
+    LEFT JOIN r ON r.assignment_id = a.assignment_id 
+               AND r.assignment_date_modified = a.assignment_date_modified
+    LEFT JOIN u ON u.assignment_id = a.assignment_id 
+               AND u.assignment_date_modified = a.assignment_date_modified
+),
+kategori AS (
+    -- Mengklasifikasikan setiap dokumen ke dalam SATU status final
+    SELECT kabupaten, kecamatan, desa, sls, id_sub_sls, sub_sls,
+           CASE 
+             WHEN sumber_data = 'BARU_TAMBAHAN' OR LOWER(label_keberadaan) LIKE '%baru%' THEN 'BARU'
+             WHEN LOWER(label_keberadaan) LIKE '%tidak ditemukan%' OR LOWER(label_keberadaan) LIKE '%tdk ditemukan%' THEN 'TIDAK_DITEMUKAN'
+             WHEN LOWER(label_keberadaan) LIKE '%ganda%' THEN 'GANDA'
+             WHEN LOWER(label_keberadaan) LIKE '%tutup%' THEN 'TUTUP'
+             WHEN LOWER(label_keberadaan) LIKE '%ditemukan%' OR LOWER(label_keberadaan) LIKE '%aktif%' THEN 'DITEMUKAN'
+             
+             -- Menampung dokumen yang belum diapa-apakan petugas (belum diisi) atau status 'Bukan Usaha'
+             ELSE 'LAINNYA_ATAU_BELUM_DIDATA' 
+           END AS status_akhir
+    FROM gabungan
+)
+SELECT id_sub_sls, 
+       kabupaten, 
+       kecamatan, 
+       desa, 
+       sls, 
+       sub_sls,
+       COUNT(*) AS total_assignment,
+       
+       -- ==========================================
+       -- 1. REKAPITULASI JUMLAH
+       -- ==========================================
+       SUM(CASE WHEN status_akhir = 'DITEMUKAN' THEN 1 ELSE 0 END) AS jml_ditemukan,
+       SUM(CASE WHEN status_akhir = 'BARU' THEN 1 ELSE 0 END) AS jml_baru,
+       SUM(CASE WHEN status_akhir = 'GANDA' THEN 1 ELSE 0 END) AS jml_ganda,
+       SUM(CASE WHEN status_akhir = 'TUTUP' THEN 1 ELSE 0 END) AS jml_tutup,
+       SUM(CASE WHEN status_akhir = 'TIDAK_DITEMUKAN' THEN 1 ELSE 0 END) AS jml_tidak_ditemukan,
+       SUM(CASE WHEN status_akhir = 'LAINNYA_ATAU_BELUM_DIDATA' THEN 1 ELSE 0 END) AS jml_belum_didata,
+       
+       -- ==========================================
+       -- 2. REKAPITULASI PERSENTASE INDIVIDU (%)
+       -- ==========================================
+       CAST(100.0 * SUM(CASE WHEN status_akhir = 'DITEMUKAN' THEN 1 ELSE 0 END) / COUNT(*) AS DECIMAL(18,2)) AS pct_ditemukan,
+       CAST(100.0 * SUM(CASE WHEN status_akhir = 'BARU' THEN 1 ELSE 0 END) / COUNT(*) AS DECIMAL(18,2)) AS pct_baru,
+       CAST(100.0 * SUM(CASE WHEN status_akhir = 'GANDA' THEN 1 ELSE 0 END) / COUNT(*) AS DECIMAL(18,2)) AS pct_ganda,
+       CAST(100.0 * SUM(CASE WHEN status_akhir = 'TUTUP' THEN 1 ELSE 0 END) / COUNT(*) AS DECIMAL(18,2)) AS pct_tutup,
+       CAST(100.0 * SUM(CASE WHEN status_akhir = 'TIDAK_DITEMUKAN' THEN 1 ELSE 0 END) / COUNT(*) AS DECIMAL(18,2)) AS pct_tidak_ditemukan,
+       
+       -- ==========================================
+       -- 3. PERSENTASE GABUNGAN (DITEMUKAN + BARU)
+       -- ==========================================
+       CAST(100.0 * SUM(CASE WHEN status_akhir IN ('DITEMUKAN', 'BARU') THEN 1 ELSE 0 END) / COUNT(*) AS DECIMAL(18,2)) AS pct_ditemukan_dan_baru
+
+FROM kategori
+GROUP BY id_sub_sls, kabupaten, kecamatan, desa, sls, sub_sls
+ORDER BY kabupaten ASC, kecamatan ASC, id_sub_sls ASC
+LIMIT 9000 OFFSET 0;
