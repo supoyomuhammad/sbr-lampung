@@ -1,10 +1,12 @@
-WITH asg AS (
+WITH asg_sub_sls AS (
     SELECT a.level_6_full_code AS id_sub_sls
     FROM tgr_fd68e454.base_table_assignment a
     WHERE a.is_active = 1
       AND a.level_1_full_code = '18' -- Seluruh Provinsi Lampung
+      AND a.level_6_full_code IS NOT NULL 
+      AND TRIM(a.level_6_full_code) <> ''
+    -- Menggantikan DISTINCT dengan GROUP BY
+    GROUP BY a.level_6_full_code
 )
-SELECT COUNT(DISTINCT id_sub_sls) AS total_sub_sls_di_lampung
-FROM asg
-WHERE id_sub_sls IS NOT NULL 
-  AND TRIM(id_sub_sls) <> '';
+SELECT COUNT(*) AS total_sub_sls_di_lampung
+FROM asg_sub_sls;
