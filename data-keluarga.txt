@@ -1,0 +1,63 @@
+WITH d AS (
+    SELECT CONCAT_WS('^',
+               COALESCE(a.level_2_name, ''),
+               COALESCE(a.level_3_name, ''),
+               COALESCE(a.level_4_name, ''),
+               COALESCE(a.level_6_full_code, ''),
+               
+               COALESCE(CAST(r.geotag_latitude AS CHAR), ''),
+               COALESCE(CAST(r.geotag_longitude AS CHAR), ''),
+               
+               REPLACE(REPLACE(COALESCE(r.nama_kk, a.data1, ''), '^', '/'), CHAR(10), ' '),
+               REPLACE(REPLACE(COALESCE(r.nama_ak_lain, ''), '^', '/'), CHAR(10), ' '),
+               COALESCE(r.ada_keluarga_label, ''),
+               a.assignment_id
+           ) AS muatan,
+           ROW_NUMBER() OVER (ORDER BY a.level_6_full_code, a.assignment_id) AS rn
+    FROM tgr_fd68e454.base_table_assignment a
+    INNER JOIN tgr_fd68e454.root_table r
+            ON r.assignment_id = a.assignment_id
+           AND r.assignment_date_modified = a.assignment_date_modified
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = '18'
+      AND (
+          LOWER(r.ada_keluarga_label) LIKE '%ditemukan%' 
+          OR LOWER(r.ada_keluarga_label) LIKE '%baru%' 
+          OR r.ada_keluarga_value IN ('1','2')
+      )
+),
+b AS (
+    SELECT FLOOR((rn - 1) / 24) AS kelompok,
+           (rn - 1) % 24        AS slot,
+           muatan
+    FROM d
+)
+SELECT kelompok,
+       MAX(CASE WHEN slot =  0 THEN muatan END) AS s00,
+       MAX(CASE WHEN slot =  1 THEN muatan END) AS s01,
+       MAX(CASE WHEN slot =  2 THEN muatan END) AS s02,
+       MAX(CASE WHEN slot =  3 THEN muatan END) AS s03,
+       MAX(CASE WHEN slot =  4 THEN muatan END) AS s04,
+       MAX(CASE WHEN slot =  5 THEN muatan END) AS s05,
+       MAX(CASE WHEN slot =  6 THEN muatan END) AS s06,
+       MAX(CASE WHEN slot =  7 THEN muatan END) AS s07,
+       MAX(CASE WHEN slot =  8 THEN muatan END) AS s08,
+       MAX(CASE WHEN slot =  9 THEN muatan END) AS s09,
+       MAX(CASE WHEN slot = 10 THEN muatan END) AS s10,
+       MAX(CASE WHEN slot = 11 THEN muatan END) AS s11,
+       MAX(CASE WHEN slot = 12 THEN muatan END) AS s12,
+       MAX(CASE WHEN slot = 13 THEN muatan END) AS s13,
+       MAX(CASE WHEN slot = 14 THEN muatan END) AS s14,
+       MAX(CASE WHEN slot = 15 THEN muatan END) AS s15,
+       MAX(CASE WHEN slot = 16 THEN muatan END) AS s16,
+       MAX(CASE WHEN slot = 17 THEN muatan END) AS s17,
+       MAX(CASE WHEN slot = 18 THEN muatan END) AS s18,
+       MAX(CASE WHEN slot = 19 THEN muatan END) AS s19,
+       MAX(CASE WHEN slot = 20 THEN muatan END) AS s20,
+       MAX(CASE WHEN slot = 21 THEN muatan END) AS s21,
+       MAX(CASE WHEN slot = 22 THEN muatan END) AS s22,
+       MAX(CASE WHEN slot = 23 THEN muatan END) AS s23
+FROM b
+GROUP BY kelompok
+ORDER BY kelompok
+LIMIT 9000 OFFSET 0;
