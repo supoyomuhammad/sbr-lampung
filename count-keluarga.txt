@@ -1,0 +1,27 @@
+WITH base AS (
+    SELECT a.assignment_id,
+           a.level_6_full_code
+    FROM tgr_fd68e454.base_table_assignment a
+    INNER JOIN tgr_fd68e454.root_table r
+            ON r.assignment_id = a.assignment_id
+           AND r.assignment_date_modified = a.assignment_date_modified
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = '18'
+      AND (
+          LOWER(r.ada_keluarga_label) LIKE '%ditemukan%' 
+          OR LOWER(r.ada_keluarga_label) LIKE '%baru%' 
+          OR r.ada_keluarga_value IN ('1','2')
+      )
+),
+d AS (
+    SELECT assignment_id,
+           ROW_NUMBER() OVER (ORDER BY level_6_full_code, assignment_id) AS rn
+    FROM base
+),
+kelompok AS (
+    SELECT FLOOR((rn - 1) / 24) AS id_kelompok
+    FROM d
+    GROUP BY FLOOR((rn - 1) / 24)
+)
+SELECT COUNT(*) AS total_baris_pivot
+FROM kelompok;
