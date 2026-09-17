@@ -1,19 +1,68 @@
-WITH base AS (
-    -- (ISI CTE base sama seperti sebelumnya)
-    SELECT a.assignment_id, a.level_2_name, a.level_3_name, a.level_4_name, a.level_6_full_code,
-           r.geotag_latitude, r.geotag_longitude, r.nama_kk, r.nama_ak_lain, r.ada_keluarga_label, a.data1
+-- ============================================================================
+-- PEMADATAN BARIS: 24 assignment per baris, pemisah ^
+-- Kapasitas sekali jalan: 9.000 baris x 24 = 216.000 assignment
+-- ============================================================================
+WITH params AS (
+    SELECT '18' AS prov
+),
+base AS (
+    SELECT a.assignment_id,
+           a.level_2_full_code, a.level_2_name,
+           a.level_3_name, a.level_4_name, a.level_6_full_code,
+           r.geotag_latitude, r.geotag_longitude,
+           r.nama_kk, r.nama_ak_lain, r.ada_keluarga_label, a.data1
     FROM tgr_fd68e454.base_table_assignment a
-    INNER JOIN tgr_fd68e454.root_table r ON r.assignment_id = a.assignment_id AND r.assignment_date_modified = a.assignment_date_modified
-    WHERE a.is_active = 1 AND a.level_1_full_code = '18'
-      AND (LOWER(r.ada_keluarga_label) LIKE '%ditemukan%' OR LOWER(r.ada_keluarga_label) LIKE '%baru%' OR r.ada_keluarga_value IN ('1','2'))
+    CROSS JOIN params p
+    INNER JOIN tgr_fd68e454.root_table r
+            ON r.assignment_id = a.assignment_id
+           AND r.assignment_date_modified = a.assignment_date_modified
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = p.prov
+      AND ( LOWER(r.ada_keluarga_label) LIKE '%ditemukan%'
+         OR LOWER(r.ada_keluarga_label) LIKE '%baru%'
+         OR r.ada_keluarga_value IN ('1','2') )
+      -- ==================== OPSI FILTER KABUPATEN/KOTA ====================
+      -- Aktifkan SALAH SATU baris di bawah ini
+      -- AND a.level_2_full_code = '1801'   -- Lampung Barat
+      -- AND a.level_2_full_code = '1802'   -- Tanggamus
+      -- AND a.level_2_full_code = '1803'   -- Lampung Selatan
+      -- AND a.level_2_full_code = '1804'   -- Lampung Timur
+      -- AND a.level_2_full_code = '1805'   -- Lampung Tengah
+      -- AND a.level_2_full_code = '1806'   -- Lampung Utara
+      -- AND a.level_2_full_code = '1807'   -- Way Kanan
+      -- AND a.level_2_full_code = '1808'   -- Tulang Bawang
+      -- AND a.level_2_full_code = '1809'   -- Pesawaran
+      -- AND a.level_2_full_code = '1810'   -- Pringsewu
+      -- AND a.level_2_full_code = '1811'   -- Mesuji
+      -- AND a.level_2_full_code = '1812'   -- Tulang Bawang Barat
+      -- AND a.level_2_full_code = '1813'   -- Pesisir Barat
+      -- AND a.level_2_full_code = '1871'   -- Bandar Lampung
+      -- AND a.level_2_full_code = '1872'   -- Metro
+      -- ---- gabungan beberapa kabupaten ----
+      -- AND a.level_2_full_code IN ('1804','1805')          -- dua terbesar
+      -- AND a.level_2_full_code IN ('1871','1872')          -- perkotaan
+      -- AND a.level_2_full_code NOT IN ('1804','1805')      -- selain dua terbesar
+      -- ==================== OPSI FILTER WILAYAH LAIN ====================
+      -- AND a.level_3_full_code = '1871010'
+      -- AND a.level_4_full_code = '1871010001'
+      -- AND a.level_5_full_code IN ('18710710060045','18710710060047')
+      -- ==================== OPSI FILTER LAIN ====================
+      -- AND a.assignment_status_id > 0                      -- sudah digarap
+      -- AND a.assignment_status_alias LIKE '%APPROVED%'
+      -- AND COALESCE(r.geotag_latitude,0) = 0               -- belum geotag saja
 ),
 d AS (
     SELECT CONCAT_WS('^',
-               COALESCE(level_2_name, ''), COALESCE(level_3_name, ''), COALESCE(level_4_name, ''), COALESCE(level_6_full_code, ''),
-               COALESCE(CAST(geotag_latitude AS CHAR), ''), COALESCE(CAST(geotag_longitude AS CHAR), ''),
+               COALESCE(level_2_name, ''),
+               COALESCE(level_3_name, ''),
+               COALESCE(level_4_name, ''),
+               COALESCE(level_6_full_code, ''),
+               COALESCE(CAST(geotag_latitude  AS CHAR), ''),
+               COALESCE(CAST(geotag_longitude AS CHAR), ''),
                REPLACE(REPLACE(COALESCE(nama_kk, data1, ''), '^', '/'), CHAR(10), ' '),
                REPLACE(REPLACE(COALESCE(nama_ak_lain, ''), '^', '/'), CHAR(10), ' '),
-               COALESCE(ada_keluarga_label, ''), assignment_id
+               COALESCE(ada_keluarga_label, ''),
+               assignment_id
            ) AS muatan,
            ROW_NUMBER() OVER (ORDER BY level_6_full_code, assignment_id) AS rn
     FROM base
@@ -50,10 +99,6 @@ SELECT kelompok,
        MAX(CASE WHEN slot = 22 THEN muatan END) AS s22,
        MAX(CASE WHEN slot = 23 THEN muatan END) AS s23
 FROM b
--- ==========================================================
--- GANTI LIMIT & OFFSET MENJADI WHERE (KEYSET PAGINATION)
--- Ini yang akan di-*replace* oleh Tampermonkey secara dinamis
--- ==========================================================
 WHERE kelompok >= 0 AND kelompok <= 8999
 GROUP BY kelompok
 ORDER BY kelompok;
