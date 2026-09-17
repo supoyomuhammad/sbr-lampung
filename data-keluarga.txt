@@ -36,8 +36,7 @@ base AS (
       -- AND a.level_2_full_code = '1811'   -- Mesuji
       -- AND a.level_2_full_code = '1812'   -- Tulang Bawang Barat
       -- AND a.level_2_full_code = '1813'   -- Pesisir Barat
-      -- AND 
-        a.level_2_full_code = '1871'   -- Bandar Lampung
+      AND a.level_2_full_code = '1871'   -- Bandar Lampung
       -- AND a.level_2_full_code = '1872'   -- Metro
       -- ---- gabungan beberapa kabupaten ----
       -- AND a.level_2_full_code IN ('1804','1805')          -- dua terbesar
