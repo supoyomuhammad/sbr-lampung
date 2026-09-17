@@ -16,6 +16,5 @@ WHERE a.is_active = 1
      OR LOWER(r.ada_keluarga_label) LIKE '%baru%'
      OR r.ada_keluarga_value IN ('1','2') )
   -- SALIN FILTER KABUPATEN YANG SAMA PERSIS DARI QUERY UTAMA KE SINI
-  -- AND 
-    a.level_2_full_code = '1871'
+      AND a.level_2_full_code = '1871'
 ;
