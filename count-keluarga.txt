@@ -1,20 +1,45 @@
+-- ============================================================================
+-- COUNT UNTUK ITERASI — jumlah kelompok dan rentang WHERE per running
+-- ============================================================================
 WITH params AS (
     SELECT '18' AS prov
+),
+base AS (
+    SELECT a.assignment_id
+    FROM tgr_fd68e454.base_table_assignment a
+    CROSS JOIN params p
+    INNER JOIN tgr_fd68e454.root_table r
+            ON r.assignment_id = a.assignment_id
+           AND r.assignment_date_modified = a.assignment_date_modified
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = p.prov
+      AND ( LOWER(r.ada_keluarga_label) LIKE '%ditemukan%'
+         OR LOWER(r.ada_keluarga_label) LIKE '%baru%'
+         OR r.ada_keluarga_value IN ('1','2') )
+      -- ==================== SALIN FILTER DARI QUERY UTAMA ====================
+      -- AND a.level_2_full_code = '1801'   -- Lampung Barat
+      -- AND a.level_2_full_code = '1802'   -- Tanggamus
+      -- AND a.level_2_full_code = '1803'   -- Lampung Selatan
+      -- AND a.level_2_full_code = '1804'   -- Lampung Timur
+      -- AND a.level_2_full_code = '1805'   -- Lampung Tengah
+      -- AND a.level_2_full_code = '1806'   -- Lampung Utara
+      -- AND a.level_2_full_code = '1807'   -- Way Kanan
+      -- AND a.level_2_full_code = '1808'   -- Tulang Bawang
+      -- AND a.level_2_full_code = '1809'   -- Pesawaran
+      -- AND a.level_2_full_code = '1810'   -- Pringsewu
+      -- AND a.level_2_full_code = '1811'   -- Mesuji
+      -- AND a.level_2_full_code = '1812'   -- Tulang Bawang Barat
+      -- AND a.level_2_full_code = '1813'   -- Pesisir Barat
+      AND a.level_2_full_code = '1871'   -- Bandar Lampung
+      -- AND a.level_2_full_code = '1872'   -- Metro
 )
-SELECT COUNT(*) AS jml_assignment,
-       CEIL(COUNT(*) / 24.0)          AS jml_kelompok,
-       CEIL(COUNT(*) / 24.0 / 9000.0) AS jml_running,
-       CAST(CEIL(COUNT(*) / 24.0) - 1 AS SIGNED) AS kelompok_terakhir
-FROM tgr_fd68e454.base_table_assignment a
-CROSS JOIN params p
-INNER JOIN tgr_fd68e454.root_table r
-        ON r.assignment_id = a.assignment_id
-       AND r.assignment_date_modified = a.assignment_date_modified
-WHERE a.is_active = 1
-  AND a.level_1_full_code = p.prov
-  AND ( LOWER(r.ada_keluarga_label) LIKE '%ditemukan%'
-     OR LOWER(r.ada_keluarga_label) LIKE '%baru%'
-     OR r.ada_keluarga_value IN ('1','2') )
-  -- SALIN FILTER KABUPATEN YANG SAMA PERSIS DARI QUERY UTAMA KE SINI
-      AND a.level_2_full_code = '1871'
-;
+SELECT COUNT(*)                                     AS jml_assignment,
+       24                                           AS per_baris,
+       9000                                         AS baris_per_running,
+       CAST(CEIL(COUNT(*) / 24.0) AS SIGNED)        AS jml_kelompok,
+       CAST(CEIL(COUNT(*) / 24.0) - 1 AS SIGNED)    AS kelompok_terakhir,
+       CAST(CEIL(COUNT(*) / 24.0 / 9000.0) AS SIGNED) AS jml_running,
+       CONCAT('WHERE kelompok >= 0 AND kelompok <= ',
+              CAST(LEAST(8999, CAST(CEIL(COUNT(*) / 24.0) - 1 AS SIGNED)) AS CHAR))
+                                                    AS where_running_1
+FROM base;
