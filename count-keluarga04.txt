@@ -19,8 +19,8 @@ base AS (
       -- Pastikan filter di sini SAMA PERSIS dengan filter di kueri data
       -- AND a.level_2_full_code = '1801'   -- Lampung Barat
       -- AND a.level_2_full_code = '1802'   -- Tanggamus
-      AND a.level_2_full_code = '1803'   -- Lampung Selatan
-      -- AND a.level_2_full_code = '1804'   -- Lampung Timur
+      -- AND a.level_2_full_code = '1803'   -- Lampung Selatan
+      AND a.level_2_full_code = '1804'   -- Lampung Timur
       -- AND a.level_2_full_code = '1805'   -- Lampung Tengah
       -- AND a.level_2_full_code = '1806'   -- Lampung Utara
       -- AND a.level_2_full_code = '1807'   -- Way Kanan
