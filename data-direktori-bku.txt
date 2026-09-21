@@ -1,0 +1,73 @@
+WITH base AS (
+    SELECT 
+        CONCAT_WS('^',
+            COALESCE(a.level_2_name, ''),
+            COALESCE(a.level_3_name, ''),
+            COALESCE(a.level_4_name, ''),
+            COALESCE(a.level_5_name, ''),
+            COALESCE(a.level_6_name, ''),
+            COALESCE(a.level_6_full_code, ''),
+            REPLACE(REPLACE(COALESCE(n.nama_usaha, ''), '^', '/'), CHAR(10), ' '),
+            COALESCE(n.keberadaan_usaha_label, ''),
+            COALESCE(n.badan_usaha_label, ''),
+            COALESCE(n.skala_usaha, ''),
+            COALESCE(n.kbli_akhir, n.kbli_label, ''),
+            COALESCE(n.kategori, ''),
+            REPLACE(REPLACE(COALESCE(n.keg_utama, ''), '^', '/'), CHAR(10), ' '),
+            COALESCE(n.mitra_kdkmp_label, ''),
+            COALESCE(n.peran_mbg_label, ''),
+            CAST(COALESCE(n.total_tk_jk, 0) AS CHAR),
+            CAST(COALESCE(n.gaji, 0) AS CHAR),
+            CAST(COALESCE(n.operasional, 0) AS CHAR),
+            CAST(COALESCE(n.non_operasional, 0) AS CHAR),
+            CAST(COALESCE(n.total_pengeluaran, 0) AS CHAR),
+            CAST(COALESCE(n.nilai_pendapatan, 0) AS CHAR),
+            CAST(COALESCE(n.pendapatan_lain, 0) AS CHAR),
+            CAST(COALESCE(n.total_pendapatan, 0) AS CHAR),
+            COALESCE(a.current_user_fullname, ''),
+            CAST(COALESCE(a.assignment_id, '') AS CHAR)
+        ) AS muatan,
+        ROW_NUMBER() OVER (ORDER BY a.level_6_full_code, a.assignment_id) AS rn
+    FROM tgr_fd68e454.base_table_assignment a
+    JOIN tgr_fd68e454.se2026_nested n 
+      ON a.assignment_id = n.assignment_id
+     AND a.assignment_date_modified = n.assignment_date_modified
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = '18' -- Provinsi Lampung
+      -- AND a.level_2_full_code = '1804' -- Uncomment jika ingin ditarik per kabupaten (misal Lampung Timur)
+),
+cte_pivot AS (
+    SELECT FLOOR((rn - 1) / 24) AS kelompok,
+           (rn - 1) % 24        AS slot,
+           muatan
+    FROM base
+)
+SELECT kelompok,
+       MAX(CASE WHEN slot =  0 THEN muatan END) AS s00,
+       MAX(CASE WHEN slot =  1 THEN muatan END) AS s01,
+       MAX(CASE WHEN slot =  2 THEN muatan END) AS s02,
+       MAX(CASE WHEN slot =  3 THEN muatan END) AS s03,
+       MAX(CASE WHEN slot =  4 THEN muatan END) AS s04,
+       MAX(CASE WHEN slot =  5 THEN muatan END) AS s05,
+       MAX(CASE WHEN slot =  6 THEN muatan END) AS s06,
+       MAX(CASE WHEN slot =  7 THEN muatan END) AS s07,
+       MAX(CASE WHEN slot =  8 THEN muatan END) AS s08,
+       MAX(CASE WHEN slot =  9 THEN muatan END) AS s09,
+       MAX(CASE WHEN slot = 10 THEN muatan END) AS s10,
+       MAX(CASE WHEN slot = 11 THEN muatan END) AS s11,
+       MAX(CASE WHEN slot = 12 THEN muatan END) AS s12,
+       MAX(CASE WHEN slot = 13 THEN muatan END) AS s13,
+       MAX(CASE WHEN slot = 14 THEN muatan END) AS s14,
+       MAX(CASE WHEN slot = 15 THEN muatan END) AS s15,
+       MAX(CASE WHEN slot = 16 THEN muatan END) AS s16,
+       MAX(CASE WHEN slot = 17 THEN muatan END) AS s17,
+       MAX(CASE WHEN slot = 18 THEN muatan END) AS s18,
+       MAX(CASE WHEN slot = 19 THEN muatan END) AS s19,
+       MAX(CASE WHEN slot = 20 THEN muatan END) AS s20,
+       MAX(CASE WHEN slot = 21 THEN muatan END) AS s21,
+       MAX(CASE WHEN slot = 22 THEN muatan END) AS s22,
+       MAX(CASE WHEN slot = 23 THEN muatan END) AS s23
+FROM cte_pivot
+WHERE kelompok >= 0 AND kelompok <= 8999
+GROUP BY kelompok
+ORDER BY kelompok;
