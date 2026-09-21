@@ -1,0 +1,18 @@
+WITH base AS (
+    SELECT 
+        ROW_NUMBER() OVER (ORDER BY a.level_6_full_code, a.assignment_id) AS rn
+    FROM tgr_fd68e454.base_table_assignment a
+    JOIN tgr_fd68e454.se2026_nested n 
+      ON a.assignment_id = n.assignment_id
+     AND a.assignment_date_modified = n.assignment_date_modified
+    WHERE a.is_active = 1
+      AND a.level_1_full_code = '18' -- Provinsi Lampung
+      -- AND a.level_2_full_code = '1804' -- Uncomment jika ingin ditarik per kabupaten (misal Lampung Timur)
+),
+kelompok_group AS (
+    SELECT FLOOR((rn - 1) / 24) AS kelompok
+    FROM base
+    GROUP BY FLOOR((rn - 1) / 24)
+)
+SELECT COUNT(*) AS total_kelompok
+FROM kelompok_group;
